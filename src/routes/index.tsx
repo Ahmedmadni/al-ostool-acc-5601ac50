@@ -167,6 +167,7 @@ function HoldingHomePage() {
       <PublicSiteHeader
         language={lang === "ar" ? "ar" : "en"}
         menuLabel={lang === "ar" ? "فتح قائمة التنقل" : "Open navigation menu"}
+        logoHref="/log"
         navigation={[
           { href: "#portfolio", label: c.portfolio },
           { href: "#about", label: c.about },

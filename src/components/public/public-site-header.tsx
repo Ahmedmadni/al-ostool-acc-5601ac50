@@ -8,13 +8,14 @@ type PublicSiteHeaderProps = {
   language: "ar" | "en";
   navigation: PublicNavItem[];
   menuLabel: string;
+  logoHref?: string;
 };
 
-export function PublicSiteHeader({ language, navigation, menuLabel }: PublicSiteHeaderProps) {
+export function PublicSiteHeader({ language, navigation, menuLabel, logoHref = "/" }: PublicSiteHeaderProps) {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur">
       <div className="relative mx-auto flex max-w-7xl items-center justify-between gap-3 px-5 py-4 lg:px-8">
-        <a href="/" aria-label={language === "ar" ? "الرئيسية" : "Home"} className="flex min-w-0 items-center gap-3">
+        <a href={logoHref} aria-label={language === "ar" ? "الرئيسية" : "Home"} className="flex min-w-0 items-center gap-3">
           <BrandLogo language={language} compact />
         </a>
         <nav aria-label={language === "ar" ? "التنقل الرئيسي" : "Primary navigation"} className="hidden items-center gap-4 text-xs font-semibold text-muted-foreground lg:flex xl:gap-7">
