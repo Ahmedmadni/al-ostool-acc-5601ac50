@@ -4147,6 +4147,961 @@ export type Database = {
         }
         Relationships: []
       }
+      onexa_account_role_mappings: {
+        Row: {
+          account_code: string
+          account_role: string
+          created_at: string
+          id: string
+          is_active: boolean
+          legal_entity_id: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          account_code: string
+          account_role: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          legal_entity_id: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          account_code?: string
+          account_role?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          legal_entity_id?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_account_role_mappings_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_legal_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_account_role_mappings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
+      onexa_branches: {
+        Row: {
+          city: string | null
+          code: string
+          country_code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          is_default: boolean
+          legal_entity_id: string
+          name_ar: string
+          name_en: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          city?: string | null
+          code: string
+          country_code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          legal_entity_id: string
+          name_ar: string
+          name_en: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          city?: string | null
+          code?: string
+          country_code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          legal_entity_id?: string
+          name_ar?: string
+          name_en?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_branches_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_legal_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_branches_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
+      onexa_fiscal_periods: {
+        Row: {
+          closed_at: string | null
+          closed_by: string | null
+          created_at: string
+          ends_on: string
+          id: string
+          legal_entity_id: string
+          period_code: string
+          starts_on: string
+          status: string
+          tenant_id: string
+        }
+        Insert: {
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string
+          ends_on: string
+          id?: string
+          legal_entity_id: string
+          period_code: string
+          starts_on: string
+          status?: string
+          tenant_id: string
+        }
+        Update: {
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string
+          ends_on?: string
+          id?: string
+          legal_entity_id?: string
+          period_code?: string
+          starts_on?: string
+          status?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_fiscal_periods_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_legal_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_fiscal_periods_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
+      onexa_journal_headers: {
+        Row: {
+          accounting_date: string
+          currency: string
+          fiscal_period_id: string
+          id: string
+          journal_number: string
+          legal_entity_id: string
+          memo: string | null
+          posted_at: string
+          posted_by: string
+          reversal_journal_id: string | null
+          reversal_of_id: string | null
+          source_document_id: string
+          source_document_type: string
+          source_revision: number
+          source_snapshot: Json
+          state: string
+          tenant_id: string
+          total_credit: number
+          total_debit: number
+        }
+        Insert: {
+          accounting_date: string
+          currency: string
+          fiscal_period_id: string
+          id?: string
+          journal_number: string
+          legal_entity_id: string
+          memo?: string | null
+          posted_at?: string
+          posted_by: string
+          reversal_journal_id?: string | null
+          reversal_of_id?: string | null
+          source_document_id: string
+          source_document_type: string
+          source_revision: number
+          source_snapshot?: Json
+          state?: string
+          tenant_id: string
+          total_credit: number
+          total_debit: number
+        }
+        Update: {
+          accounting_date?: string
+          currency?: string
+          fiscal_period_id?: string
+          id?: string
+          journal_number?: string
+          legal_entity_id?: string
+          memo?: string | null
+          posted_at?: string
+          posted_by?: string
+          reversal_journal_id?: string | null
+          reversal_of_id?: string | null
+          source_document_id?: string
+          source_document_type?: string
+          source_revision?: number
+          source_snapshot?: Json
+          state?: string
+          tenant_id?: string
+          total_credit?: number
+          total_debit?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_journal_headers_fiscal_period_id_fkey"
+            columns: ["fiscal_period_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_fiscal_periods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_journal_headers_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_legal_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_journal_headers_reversal_journal_id_fkey"
+            columns: ["reversal_journal_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_journal_headers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_journal_headers_reversal_of_id_fkey"
+            columns: ["reversal_of_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_journal_headers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_journal_headers_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
+      onexa_journal_lines: {
+        Row: {
+          account_code: string
+          created_at: string
+          credit: number
+          debit: number
+          description: string | null
+          dimensions: Json
+          id: string
+          journal_id: string
+          line_number: number
+          tenant_id: string
+        }
+        Insert: {
+          account_code: string
+          created_at?: string
+          credit?: number
+          debit?: number
+          description?: string | null
+          dimensions?: Json
+          id?: string
+          journal_id: string
+          line_number: number
+          tenant_id: string
+        }
+        Update: {
+          account_code?: string
+          created_at?: string
+          credit?: number
+          debit?: number
+          description?: string | null
+          dimensions?: Json
+          id?: string
+          journal_id?: string
+          line_number?: number
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_journal_lines_journal_id_fkey"
+            columns: ["journal_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_journal_headers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_journal_lines_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
+      onexa_legacy_mapping_decisions: {
+        Row: {
+          created_at: string
+          id: string
+          legacy_key: string
+          notes: string | null
+          status: string
+          target_legal_entity_code: string | null
+          target_module: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          legacy_key: string
+          notes?: string | null
+          status?: string
+          target_legal_entity_code?: string | null
+          target_module?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          legacy_key?: string
+          notes?: string | null
+          status?: string
+          target_legal_entity_code?: string | null
+          target_module?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_legacy_mapping_decisions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
+      onexa_legal_entities: {
+        Row: {
+          base_currency: string
+          code: string
+          commercial_registration_number: string | null
+          country_code: string
+          created_at: string
+          fiscal_calendar: string
+          fiscal_year_start_month: number | null
+          id: string
+          is_active: boolean
+          is_default: boolean
+          legacy_code: string | null
+          name_ar: string
+          name_en: string
+          tenant_id: string
+          updated_at: string
+          vat_registration_number: string | null
+        }
+        Insert: {
+          base_currency?: string
+          code: string
+          commercial_registration_number?: string | null
+          country_code?: string
+          created_at?: string
+          fiscal_calendar?: string
+          fiscal_year_start_month?: number | null
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          legacy_code?: string | null
+          name_ar: string
+          name_en: string
+          tenant_id: string
+          updated_at?: string
+          vat_registration_number?: string | null
+        }
+        Update: {
+          base_currency?: string
+          code?: string
+          commercial_registration_number?: string | null
+          country_code?: string
+          created_at?: string
+          fiscal_calendar?: string
+          fiscal_year_start_month?: number | null
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          legacy_code?: string | null
+          name_ar?: string
+          name_en?: string
+          tenant_id?: string
+          updated_at?: string
+          vat_registration_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_legal_entities_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
+      onexa_module_entitlements: {
+        Row: {
+          created_at: string
+          is_enabled: boolean
+          module_key: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          is_enabled?: boolean
+          module_key: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          is_enabled?: boolean
+          module_key?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_module_entitlements_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
+      onexa_plans: {
+        Row: {
+          active_user_limit: number | null
+          branch_limit: number | null
+          created_at: string
+          is_active: boolean
+          legal_entity_limit: number | null
+          modules: string[]
+          name_ar: string
+          name_en: string
+          plan_key: string
+          storage_gb_limit: number | null
+          updated_at: string
+        }
+        Insert: {
+          active_user_limit?: number | null
+          branch_limit?: number | null
+          created_at?: string
+          is_active?: boolean
+          legal_entity_limit?: number | null
+          modules: string[]
+          name_ar: string
+          name_en: string
+          plan_key: string
+          storage_gb_limit?: number | null
+          updated_at?: string
+        }
+        Update: {
+          active_user_limit?: number | null
+          branch_limit?: number | null
+          created_at?: string
+          is_active?: boolean
+          legal_entity_limit?: number | null
+          modules?: string[]
+          name_ar?: string
+          name_en?: string
+          plan_key?: string
+          storage_gb_limit?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      onexa_posting_registry: {
+        Row: {
+          created_at: string
+          idempotency_key: string
+          journal_id: string
+          legal_entity_id: string
+          source_document_id: string
+          source_document_type: string
+          source_revision: number
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          idempotency_key: string
+          journal_id: string
+          legal_entity_id: string
+          source_document_id: string
+          source_document_type: string
+          source_revision: number
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          idempotency_key?: string
+          journal_id?: string
+          legal_entity_id?: string
+          source_document_id?: string
+          source_document_type?: string
+          source_revision?: number
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_posting_registry_journal_id_fkey"
+            columns: ["journal_id"]
+            isOneToOne: true
+            referencedRelation: "onexa_journal_headers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_posting_registry_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_legal_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_posting_registry_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
+      onexa_provisioning_events: {
+        Row: {
+          created_at: string
+          details: Json
+          event_type: string
+          id: string
+          status: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          details?: Json
+          event_type: string
+          id?: string
+          status: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json
+          event_type?: string
+          id?: string
+          status?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_provisioning_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_tenants"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
+      onexa_subscriptions: {
+        Row: {
+          active_user_limit_override: number | null
+          branch_limit_override: number | null
+          created_at: string
+          enabled_modules: string[]
+          ends_at: string | null
+          id: string
+          legal_entity_limit_override: number | null
+          plan_key: string
+          starts_at: string
+          status: string
+          storage_gb_limit_override: number | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          active_user_limit_override?: number | null
+          branch_limit_override?: number | null
+          created_at?: string
+          enabled_modules: string[]
+          ends_at?: string | null
+          id?: string
+          legal_entity_limit_override?: number | null
+          plan_key: string
+          starts_at?: string
+          status?: string
+          storage_gb_limit_override?: number | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          active_user_limit_override?: number | null
+          branch_limit_override?: number | null
+          created_at?: string
+          enabled_modules?: string[]
+          ends_at?: string | null
+          id?: string
+          legal_entity_limit_override?: number | null
+          plan_key?: string
+          starts_at?: string
+          status?: string
+          storage_gb_limit_override?: number | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_subscriptions_plan_key_fkey"
+            columns: ["plan_key"]
+            isOneToOne: false
+            referencedRelation: "onexa_plans"
+            referencedColumns: ["plan_key"]
+          },
+          {
+            foreignKeyName: "onexa_subscriptions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "onexa_tenants"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
+      onexa_support_access_log: {
+        Row: {
+          action: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          reason: string
+          support_user_id: string | null
+          tenant_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          reason: string
+          support_user_id?: string | null
+          tenant_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          reason?: string
+          support_user_id?: string | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_support_access_log_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_tenants"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
+      onexa_tenant_domains: {
+        Row: {
+          created_at: string
+          hostname: string
+          id: string
+          status: string
+          tenant_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          hostname: string
+          id?: string
+          status?: string
+          tenant_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          hostname?: string
+          id?: string
+          status?: string
+          tenant_id?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_domains_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_tenants"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
+      onexa_tenants: {
+        Row: {
+          activated_at: string | null
+          created_at: string
+          customer_project_ref: string | null
+          locale: string
+          name_ar: string
+          name_en: string
+          slug: string
+          status: string
+          suspended_at: string | null
+          tenant_id: string
+          tenant_number: number
+          timezone: string
+          updated_at: string
+        }
+        Insert: {
+          activated_at?: string | null
+          created_at?: string
+          customer_project_ref?: string | null
+          locale?: string
+          name_ar: string
+          name_en: string
+          slug: string
+          status?: string
+          suspended_at?: string | null
+          tenant_id: string
+          tenant_number: number
+          timezone?: string
+          updated_at?: string
+        }
+        Update: {
+          activated_at?: string | null
+          created_at?: string
+          customer_project_ref?: string | null
+          locale?: string
+          name_ar?: string
+          name_en?: string
+          slug?: string
+          status?: string
+          suspended_at?: string | null
+          tenant_id?: string
+          tenant_number?: number
+          timezone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      onexa_workspace: {
+        Row: {
+          activated_at: string | null
+          created_at: string
+          enabled_modules: string[]
+          locale: string
+          max_active_users: number | null
+          max_branches: number | null
+          max_legal_entities: number | null
+          max_storage_gb: number | null
+          name_ar: string
+          name_en: string
+          plan_key: string
+          slug: string
+          status: string
+          tenant_id: string
+          tenant_number: number
+          timezone: string
+          updated_at: string
+        }
+        Insert: {
+          activated_at?: string | null
+          created_at?: string
+          enabled_modules: string[]
+          locale?: string
+          max_active_users?: number | null
+          max_branches?: number | null
+          max_legal_entities?: number | null
+          max_storage_gb?: number | null
+          name_ar: string
+          name_en: string
+          plan_key: string
+          slug: string
+          status?: string
+          tenant_id: string
+          tenant_number: number
+          timezone?: string
+          updated_at?: string
+        }
+        Update: {
+          activated_at?: string | null
+          created_at?: string
+          enabled_modules?: string[]
+          locale?: string
+          max_active_users?: number | null
+          max_branches?: number | null
+          max_legal_entities?: number | null
+          max_storage_gb?: number | null
+          name_ar?: string
+          name_en?: string
+          plan_key?: string
+          slug?: string
+          status?: string
+          tenant_id?: string
+          tenant_number?: number
+          timezone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      onexa_workspace_audit_events: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          created_at: string
+          details: Json
+          entity_id: string | null
+          entity_type: string
+          id: string
+          tenant_id: string
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          created_at?: string
+          details?: Json
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          tenant_id: string
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          created_at?: string
+          details?: Json
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_workspace_audit_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
+      onexa_workspace_invitations: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string
+          role_key: string
+          status: string
+          tenant_id: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by: string
+          role_key: string
+          status?: string
+          tenant_id: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string
+          role_key?: string
+          status?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_workspace_invitations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
+      onexa_workspace_memberships: {
+        Row: {
+          created_at: string
+          id: string
+          role_key: string
+          status: string
+          tenant_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role_key: string
+          status?: string
+          tenant_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role_key?: string
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_workspace_memberships_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount: number
@@ -5619,6 +6574,40 @@ export type Database = {
           },
         ]
       }
+      onexa_trial_balance_v: {
+        Row: {
+          account_code: string | null
+          balance: number | null
+          credit: number | null
+          debit: number | null
+          fiscal_period_id: string | null
+          legal_entity_id: string | null
+          tenant_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_journal_headers_fiscal_period_id_fkey"
+            columns: ["fiscal_period_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_fiscal_periods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_journal_headers_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_legal_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_journal_headers_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
     }
     Functions: {
       calc_customer_balance: { Args: { _customer_id: string }; Returns: number }
@@ -6269,6 +7258,35 @@ export type Database = {
         Returns: boolean
       }
       mark_overdue_tasks: { Args: never; Returns: number }
+      onexa_post_journal: {
+        Args: {
+          _accounting_date: string
+          _currency: string
+          _legal_entity_id: string
+          _lines: Json
+          _memo: string
+          _period_code: string
+          _source_document_id: string
+          _source_document_type: string
+          _source_revision: number
+          _source_snapshot: Json
+          _source_status: string
+        }
+        Returns: string
+      }
+      onexa_reserve_invitation: {
+        Args: { _email: string; _role_key: string }
+        Returns: string
+      }
+      onexa_reverse_journal: {
+        Args: {
+          _accounting_date: string
+          _journal_id: string
+          _period_code: string
+          _reason: string
+        }
+        Returns: string
+      }
       user_has_any_role: {
         Args: { _roles: string[]; _user_id: string }
         Returns: boolean
