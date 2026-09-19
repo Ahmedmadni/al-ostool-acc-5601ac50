@@ -140,7 +140,7 @@ function Page() {
     revisionReason: "",
   });
 
-  const { data: costs = [] } = useQuery<any[]>({
+  const { data: costs = [] } = useQuery({
     queryKey: ["cost_entries"],
     queryFn: async () => (await supabase.from("cost_entries").select("*").limit(5000)).data ?? [],
   });
@@ -194,28 +194,24 @@ function Page() {
           .order("name_ar")
       ).data ?? [],
   });
-  const { data: costPeriods = [] } = useQuery<any[]>({
+  const { data: costPeriods = [] } = useQuery({
     queryKey: ["cost_periods"],
     queryFn: async () =>
-      (
-        await (supabase as any)
-          .from("cost_periods")
-          .select("*")
-          .order("period", { ascending: false })
-      ).data ?? [],
+      (await supabase.from("cost_periods").select("*").order("period", { ascending: false }))
+        .data ?? [],
   });
-  const { data: costEvents = [] } = useQuery<any[]>({
+  const { data: costEvents = [] } = useQuery({
     queryKey: ["cost_entry_status_events"],
     queryFn: async () =>
       (
-        await (supabase as any)
+        await supabase
           .from("cost_entry_status_events")
           .select("*")
           .order("changed_at", { ascending: false })
           .limit(200)
       ).data ?? [],
   });
-  const { data: periodEvents = [] } = useQuery<any[]>({
+  const { data: periodEvents = [] } = useQuery({
     queryKey: ["cost_period_status_events"],
     queryFn: async () =>
       (
@@ -226,15 +222,11 @@ function Page() {
           .limit(100)
       ).data ?? [],
   });
-  const { data: costBudgets = [] } = useQuery<any[]>({
+  const { data: costBudgets = [] } = useQuery({
     queryKey: ["cost_budgets"],
     queryFn: async () =>
-      (
-        await (supabase as any)
-          .from("cost_budgets")
-          .select("*")
-          .order("period", { ascending: false })
-      ).data ?? [],
+      (await supabase.from("cost_budgets").select("*").order("period", { ascending: false }))
+        .data ?? [],
   });
 
   const filtered = useMemo(() => {
