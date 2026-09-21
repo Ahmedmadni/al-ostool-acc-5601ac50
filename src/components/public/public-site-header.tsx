@@ -15,7 +15,7 @@ export function PublicSiteHeader({ language, navigation, menuLabel }: PublicSite
   const startLabel = language === "ar" ? "إنشاء حساب" : "Create account";
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur">
-      <div className="relative mx-auto flex max-w-7xl items-center justify-between gap-3 px-5 py-4 lg:px-8">
+      <div className="relative mx-auto flex min-h-20 max-w-7xl items-center justify-between gap-3 px-5 py-2 lg:min-h-24 lg:px-8">
         <a href="/" aria-label={language === "ar" ? "الرئيسية" : "Home"} className="flex min-w-0 items-center gap-3">
           <BrandLogo language={language} compact />
         </a>
@@ -30,7 +30,7 @@ export function PublicSiteHeader({ language, navigation, menuLabel }: PublicSite
             <summary aria-label={menuLabel} className="grid h-10 w-10 cursor-pointer list-none place-items-center rounded-lg border border-border bg-background text-foreground transition hover:border-primary hover:text-primary [&::-webkit-details-marker]:hidden">
               <Menu className="h-5 w-5" />
             </summary>
-            <nav aria-label={menuLabel} className="absolute end-0 top-12 z-50 min-w-64 overflow-hidden rounded-xl border border-border bg-card p-2 shadow-2xl">
+            <nav aria-label={menuLabel} className="absolute end-0 top-14 z-50 min-w-64 overflow-hidden rounded-xl border border-border bg-card p-2 shadow-2xl">
               {navigation.map((item) => <a key={item.href} className="block rounded-lg px-4 py-3 text-sm font-bold text-foreground transition hover:bg-primary hover:text-primary-foreground" href={item.href}>{item.label}</a>)}
               <div className="mt-2 grid grid-cols-2 gap-2 border-t border-border pt-2 sm:hidden">
                 <a href="/log" className="rounded-lg border border-border px-3 py-2 text-center text-xs font-bold">{loginLabel}</a>

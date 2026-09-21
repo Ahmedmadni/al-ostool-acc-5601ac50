@@ -29,6 +29,7 @@ import { useI18n } from "@/lib/i18n";
 import { ONEXA, onexaModules } from "@/lib/onexa-product";
 import { formatPlanLimit, ONEXA_PLANS } from "@/lib/onexa-plans";
 import { publicSeo } from "@/lib/public-seo";
+import footerAnimation from "@/assets/onexa-footer-animation.mp4.asset.json";
 
 const moduleIcons: Record<(typeof onexaModules)[number]["key"], LucideIcon> = {
   finance: Landmark,
@@ -275,7 +276,33 @@ function OnexaHomePage() {
         <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-8 px-5 lg:flex-row lg:items-center lg:px-8"><div><h2 className="text-3xl font-black sm:text-4xl">{c.finalTitle}</h2><p className="mt-3 max-w-2xl text-sm leading-7 opacity-80">{c.finalBody}</p></div><div className="flex flex-wrap gap-3"><a href="/log?mode=signup" className="rounded-xl bg-white px-5 py-3 text-sm font-black text-[#143b94]">{c.start}</a><a href="/log" className="rounded-xl border border-current/25 px-5 py-3 text-sm font-black">{c.signIn}</a></div></div>
       </section>
 
-      <footer className="border-t border-border bg-brand-ink py-8 text-sm text-slate-400"><div className="mx-auto flex max-w-7xl flex-col justify-between gap-3 px-5 sm:flex-row lg:px-8"><span className="font-black text-white">© {new Date().getFullYear()} ONEXA ERP</span><span>{c.footer}</span><span>Finance • Operations • People • Insight</span></div></footer>
+      <footer className="border-t border-border bg-brand-ink text-sm text-slate-400">
+        <div className="mx-auto grid max-w-7xl items-center gap-8 px-5 py-8 lg:grid-cols-[1.15fr_.85fr] lg:px-8">
+          <div className="overflow-hidden rounded-lg border border-white/10 bg-brand-ink shadow-2xl">
+            <video
+              className="aspect-video w-full object-cover motion-reduce:hidden"
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              poster="/onexa-logo-transparent.png"
+              aria-label={language === "ar" ? "فيديو هوية ONEXA المتحرك" : "Animated ONEXA brand film"}
+            >
+              <source src={footerAnimation.url} type="video/mp4" />
+            </video>
+            <div className="hidden aspect-video place-items-center motion-reduce:grid">
+              <img src="/onexa-logo-transparent.png" alt="ONEXA ERP SYSTEM" className="h-4/5 w-4/5 object-contain" />
+            </div>
+          </div>
+          <div className="flex flex-col gap-4 lg:items-end lg:text-end">
+            <img src="/onexa-logo-transparent.png" alt="ONEXA ERP SYSTEM" className="h-24 w-24 object-contain" />
+            <span className="text-base font-black text-white">© {new Date().getFullYear()} ONEXA ERP</span>
+            <span>{c.footer}</span>
+            <span>Finance • Operations • People • Insight</span>
+          </div>
+        </div>
+      </footer>
     </main>
   );
 }
