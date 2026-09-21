@@ -199,9 +199,9 @@ function LoginPage() {
 
   return (
     <main className="grid min-h-screen bg-background lg:grid-cols-[1.08fr_.92fr]" dir={dir}>
-      <section className="relative hidden overflow-hidden bg-[#0b1220] p-12 text-white lg:flex lg:flex-col lg:justify-between">
+      <section className="relative hidden overflow-hidden bg-brand-ink p-12 text-white lg:flex lg:flex-col lg:justify-between">
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.035)_1px,transparent_1px)] bg-[size:42px_42px]" />
-        <div className="relative"><a href="/" className="inline-flex rounded-xl bg-white px-3 py-2 text-[#0b1220]"><BrandLogo language={language} compact /></a></div>
+        <div className="relative"><a href="/" className="inline-flex rounded-xl bg-white px-3 py-2 text-brand-ink"><BrandLogo language={language} compact /></a></div>
         <div className="relative max-w-2xl">
           <div className="inline-flex items-center gap-2 rounded-full border border-blue-300/20 bg-blue-400/10 px-4 py-2 text-[10px] font-black tracking-[.12em] text-blue-200"><Layers3 className="h-4 w-4" />{c.badge}</div>
           <h1 className="mt-7 text-4xl font-black leading-tight xl:text-6xl">{c.heroTitle}</h1>

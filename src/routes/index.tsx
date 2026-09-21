@@ -183,7 +183,7 @@ function OnexaHomePage() {
         ]}
       />
 
-      <section className="relative overflow-hidden border-b border-border bg-[#0b1220] text-white">
+      <section className="relative overflow-hidden border-b border-border bg-brand-ink text-white">
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.035)_1px,transparent_1px)] bg-[size:44px_44px]" />
         <div className="relative mx-auto grid min-h-[720px] max-w-7xl items-center gap-14 px-5 py-16 lg:grid-cols-[.95fr_1.05fr] lg:px-8 lg:py-24">
           <div>
@@ -235,7 +235,7 @@ function OnexaHomePage() {
         </div>
       </section>
 
-      <section id="industries" className="border-y border-border bg-[#0b1220] py-20 text-white sm:py-24">
+      <section id="industries" className="border-y border-border bg-brand-ink py-20 text-white sm:py-24">
         <div className="mx-auto max-w-7xl px-5 lg:px-8">
           <div className="max-w-3xl"><div className="text-xs font-black tracking-[.16em] text-cyan-300">{c.industriesEyebrow}</div><h2 className="mt-4 text-3xl font-black sm:text-5xl">{c.industriesTitle}</h2></div>
           <div className="mt-12 grid gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 md:grid-cols-2 lg:grid-cols-3">{c.industries.map(([title, body], index) => { const Icon = [Building2, Wrench, Landmark, RouteIcon, CircleDollarSign, Layers3][index]; return <article key={title} className="bg-[#0f192b] p-7"><Icon className="h-7 w-7 text-cyan-300" /><h3 className="mt-6 text-lg font-black">{title}</h3><p className="mt-3 text-sm leading-7 text-slate-400">{body}</p></article>; })}</div>
@@ -275,7 +275,7 @@ function OnexaHomePage() {
         <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-8 px-5 lg:flex-row lg:items-center lg:px-8"><div><h2 className="text-3xl font-black sm:text-4xl">{c.finalTitle}</h2><p className="mt-3 max-w-2xl text-sm leading-7 opacity-80">{c.finalBody}</p></div><div className="flex flex-wrap gap-3"><a href="/log?mode=signup" className="rounded-xl bg-white px-5 py-3 text-sm font-black text-[#143b94]">{c.start}</a><a href="/log" className="rounded-xl border border-current/25 px-5 py-3 text-sm font-black">{c.signIn}</a></div></div>
       </section>
 
-      <footer className="border-t border-border bg-[#0b1220] py-8 text-sm text-slate-400"><div className="mx-auto flex max-w-7xl flex-col justify-between gap-3 px-5 sm:flex-row lg:px-8"><span className="font-black text-white">© {new Date().getFullYear()} ONEXA ERP</span><span>{c.footer}</span><span>Finance • Operations • People • Insight</span></div></footer>
+      <footer className="border-t border-border bg-brand-ink py-8 text-sm text-slate-400"><div className="mx-auto flex max-w-7xl flex-col justify-between gap-3 px-5 sm:flex-row lg:px-8"><span className="font-black text-white">© {new Date().getFullYear()} ONEXA ERP</span><span>{c.footer}</span><span>Finance • Operations • People • Insight</span></div></footer>
     </main>
   );
 }

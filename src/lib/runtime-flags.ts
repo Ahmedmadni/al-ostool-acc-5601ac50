@@ -5,8 +5,11 @@
  */
 export const ONEXA_PROVISIONING_ENABLED = import.meta.env.VITE_ENABLE_ONEXA_PROVISIONING === "true";
 export const ONEXA_POSTING_ENABLED = import.meta.env.VITE_ENABLE_ONEXA_POSTING === "true";
+export const ONEXA_SALES_POSTING_ENABLED = ONEXA_POSTING_ENABLED
+  && import.meta.env.VITE_ENABLE_ONEXA_SALES_POSTING === "true";
 
 export const ONEXA_RUNTIME_READINESS = {
   provisioning: ONEXA_PROVISIONING_ENABLED,
   posting: ONEXA_POSTING_ENABLED,
+  salesPosting: ONEXA_SALES_POSTING_ENABLED,
 } as const;

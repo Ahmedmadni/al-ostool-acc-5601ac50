@@ -92,6 +92,7 @@ const pageSources = new Map();
         relative(routesRoot, p)
           .replace(/\.tsx$/, "")
           .replace(/\./g, "/") // المسارات المسطّحة مثل statement.$id
+          .replace(/_($|\/)/g, "$1") // مسارات TanStack غير المتداخلة مثل real-estate_.reports
           .replace(/\/index$/, "");
       const normalized = url === "/" ? "/" : url;
       pages.push(normalized);
