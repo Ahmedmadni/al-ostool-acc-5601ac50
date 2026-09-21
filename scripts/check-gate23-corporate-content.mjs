@@ -5,11 +5,11 @@ const failures = [];
 const requireText = (source, needle, label) => { if (!source.includes(needle)) failures.push(label); };
 
 const styles = read("src/styles.css");
-requireText(styles, "--primary: #2158d8", "ONEXA blue is missing from the light identity");
-requireText(styles, "--primary: #4c8dff", "ONEXA blue is missing from the dark identity");
+requireText(styles, "--primary: #1d4ed8", "ONEXA blue is missing from the light identity");
+requireText(styles, "--primary: #60a5fa", "ONEXA blue is missing from the dark identity");
 
-const brand = read("src/components/public/brand-logo.tsx");
-for (const marker of ["ONEXA", "ENTERPRISE RESOURCE PLANNING", "نظام تخطيط موارد المؤسسات"]) {
+const brand = read("src/components/brand/onexa-brand.tsx");
+for (const marker of ["OnexaBrandMark", "OnexaBrandLockup", "/onexa-approved-logo.png", "ONEXA ERP SYSTEM"]) {
   requireText(brand, marker, `ONEXA shared brand marker is missing: ${marker}`);
 }
 
@@ -25,7 +25,7 @@ for (const monetaryMarker of ["SAR ", "Sar ", "ريال"]) {
 }
 
 const shell = read("src/components/layout/app-shell.tsx");
-requireText(shell, "ONEXA", "ERP shell does not use the ONEXA product identity");
+requireText(shell, "OnexaBrandLockup", "ERP shell does not use the ONEXA product identity");
 requireText(shell, "الحسابات العامة والتقارير المالية", "general ledger module group is missing");
 requireText(shell, "المشاريع والتشغيل", "projects and operations module group is missing");
 requireText(shell, "النقليات واللوجستيات", "transport and logistics module group is missing");
@@ -37,7 +37,7 @@ requireText(login, 'navigate({ to: "/apps" })', "successful login does not reach
 
 const manifest = JSON.parse(read("public/manifest.webmanifest"));
 if (manifest.name !== "ONEXA ERP") failures.push("public manifest does not use the ONEXA identity");
-if (manifest.theme_color !== "#2158D8") failures.push("public manifest does not use the ONEXA primary color");
+if (manifest.theme_color !== "#1D4ED8") failures.push("public manifest does not use the ONEXA primary color");
 if (manifest.lang !== "en" || manifest.dir !== "ltr") failures.push("public manifest does not match the English-first public website");
 
 if (failures.length) {
