@@ -142,16 +142,16 @@ function Page() {
 
   const { data: costs = [] } = useQuery({
     queryKey: ["cost_entries"],
-    queryFn: async () => (await supabase.from("cost_entries").select("*").limit(5000)).data ?? [],
+    queryFn: async () => (await (supabase as any).from("cost_entries").select("*").limit(5000)).data ?? [],
   });
   const { data: hr = [] } = useQuery({
     queryKey: ["hr_costs"],
-    queryFn: async () => (await supabase.from("hr_costs").select("*").limit(5000)).data ?? [],
+    queryFn: async () => (await (supabase as any).from("hr_costs").select("*").limit(5000)).data ?? [],
   });
   const { data: eq = [] } = useQuery({
     queryKey: ["equipment_costs"],
     queryFn: async () =>
-      (await supabase.from("equipment_costs").select("*").limit(5000)).data ?? [],
+      (await (supabase as any).from("equipment_costs").select("*").limit(5000)).data ?? [],
   });
   const { data: importBatches = [] } = useQuery({
     queryKey: ["cost_import_batches"],
@@ -181,13 +181,13 @@ function Page() {
   const { data: projectOptions = [] } = useQuery({
     queryKey: ["cost_project_options"],
     queryFn: async () =>
-      (await supabase.from("projects").select("id,name,code").order("name")).data ?? [],
+      (await (supabase as any).from("projects").select("id,name,code").order("name")).data ?? [],
   });
   const { data: departmentOptions = [] } = useQuery({
     queryKey: ["cost_department_options"],
     queryFn: async () =>
       (
-        await supabase
+        await (supabase as any)
           .from("departments")
           .select("id,name_ar,code")
           .eq("is_active", true)
@@ -197,14 +197,14 @@ function Page() {
   const { data: costPeriods = [] } = useQuery({
     queryKey: ["cost_periods"],
     queryFn: async () =>
-      (await supabase.from("cost_periods").select("*").order("period", { ascending: false }))
+      (await (supabase as any).from("cost_periods").select("*").order("period", { ascending: false }))
         .data ?? [],
   });
   const { data: costEvents = [] } = useQuery({
     queryKey: ["cost_entry_status_events"],
     queryFn: async () =>
       (
-        await supabase
+        await (supabase as any)
           .from("cost_entry_status_events")
           .select("*")
           .order("changed_at", { ascending: false })
@@ -225,7 +225,7 @@ function Page() {
   const { data: costBudgets = [] } = useQuery({
     queryKey: ["cost_budgets"],
     queryFn: async () =>
-      (await supabase.from("cost_budgets").select("*").order("period", { ascending: false }))
+      (await (supabase as any).from("cost_budgets").select("*").order("period", { ascending: false }))
         .data ?? [],
   });
 
