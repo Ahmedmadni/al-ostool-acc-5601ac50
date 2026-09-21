@@ -43,10 +43,12 @@ assert.ok(launcher.includes("<AccountingIntegrationOverview />"), "accounting in
 
 const assetsStart = shell.indexOf('key: "assets"');
 const financialsStart = shell.indexOf('key: "financials"');
-const reportsStart = shell.indexOf('key: "reports"');
-assert.ok(assetsStart >= 0 && financialsStart > assetsStart && reportsStart > financialsStart, "navigation group order changed unexpectedly");
+const hrStart = shell.indexOf('key: "hr"');
+assert.ok(assetsStart >= 0 && financialsStart > assetsStart && hrStart > financialsStart, "navigation group order changed unexpectedly");
 assert.ok(!shell.slice(assetsStart, financialsStart).includes('to: "/trial-balance"'), "trial balance remains under fixed assets");
-assert.ok(shell.slice(financialsStart, reportsStart).includes('to: "/trial-balance"'), "trial balance is missing from general ledger navigation");
+assert.ok(shell.slice(financialsStart, hrStart).includes('to: "/trial-balance"'), "trial balance is missing from general ledger navigation");
+assert.ok(!shell.includes('key: "reports"'), "reports must not remain a standalone application group");
+assert.ok(shell.slice(shell.indexOf('key: "executive"'), shell.indexOf('key: "customers"')).includes('to: "/reports"'), "consolidated reports center must be under Executive Management");
 
 for (const phrase of ["one database transaction", "immutable journal", "app_metadata", "source document → journal entry/reversal"]) {
   assert.ok(architecture.includes(phrase), `architecture contract missing: ${phrase}`);

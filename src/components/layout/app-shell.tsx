@@ -1,12 +1,11 @@
 import { Link, useRouter, useRouterState } from "@tanstack/react-router";
-import { type ReactNode, useState, useEffect, useMemo } from "react";
+import { type ReactNode, useMemo } from "react";
 import {
-  LayoutDashboard, Users, FolderKanban, Receipt, FileText, BarChart3,
-  Calculator, FileBarChart, Sparkles, Calendar, Settings, LogOut,
-  Moon, Sun, Search, ChevronLeft, ChevronDown, TrendingUp, Activity,
-  Truck, Building2, Landmark, Layers, Waves, Vault, Upload,
-  Scale, PieChart, Bell as BellIcon, Telescope, GitBranch, ClipboardList, ShieldCheck, UserCog,
-  Warehouse,
+  LayoutDashboard, Users, FolderKanban, Receipt, FileText,
+  Calculator, Sparkles, Settings, LogOut,
+  Moon, Sun, Search, ChevronLeft, ChevronsUpDown,
+  Truck, Building2, Vault, Scale, ClipboardList, UserCog,
+  Warehouse, LayoutGrid,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/components/theme-provider";
@@ -23,15 +22,18 @@ import { toast } from "sonner";
 import { usePermissions } from "@/hooks/use-permissions";
 import { pathToModule } from "@/lib/route-permissions";
 import { useTenantContext } from "@/hooks/use-tenant-context";
+import { OnexaBrandLockup } from "@/components/brand/onexa-brand";
 
 type NavLink = { to: string; label: string; label_en: string };
 type NavGroup = { key: string; label: string; label_en: string; icon: React.ComponentType<{ className?: string }>; links: NavLink[] };
 
 const GROUPS: NavGroup[] = [
   {
-    key: "executive", label: "الرئيسية والتحليلات", label_en: "Overview & Analytics", icon: LayoutDashboard,
+    key: "executive", label: "الإدارة التنفيذية", label_en: "Executive Management", icon: LayoutDashboard,
     links: [
       { to: "/executive", label: "مركز القيادة التنفيذي الموحد", label_en: "Unified Executive Command Center" },
+      { to: "/reports", label: "مركز التقارير الموحد", label_en: "Consolidated Reports Center" },
+      { to: "/imports", label: "مركز الاستيراد والتهيئة", label_en: "Import & Staging Center" },
       { to: "/forecasting", label: "محرك التوقعات", label_en: "Forecasting Engine" },
       { to: "/scenarios", label: "تحليل السيناريوهات", label_en: "Scenario Analysis" },
       { to: "/alerts", label: "مركز التنبيهات", label_en: "Alert Center" },
@@ -71,12 +73,14 @@ const GROUPS: NavGroup[] = [
       { to: "/maintenance", label: "مشاريع الصيانة والتشغيل", label_en: "Maintenance & Operations Projects" },
       { to: "/projects/progress", label: "متابعة الإنجاز", label_en: "Progress Tracking" },
       { to: "/control/projects", label: "التحكم بالمشاريع", label_en: "Project Control" },
+      { to: "/projects/reports", label: "تقارير المشاريع والتشغيل", label_en: "Projects & Operations Reports" },
     ],
   },
   {
     key: "facilities", label: "إدارة المرافق والعقارات", label_en: "Facilities & Real Estate", icon: Building2,
     links: [
       { to: "/real-estate", label: "العقارات والمرافق", label_en: "Properties & Facilities" },
+      { to: "/real-estate/reports", label: "تقارير العقارات والمرافق", label_en: "Facilities & Real Estate Reports" },
     ],
   },
   {
@@ -93,12 +97,14 @@ const GROUPS: NavGroup[] = [
       { to: "/treasury/forecast", label: "توقعات السيولة (90 يوم)", label_en: "90-Day Liquidity Forecast" },
       { to: "/cash-flow/matrix", label: "مصفوفة التدفقات النقدية", label_en: "Cash Flow Matrix" },
       { to: "/banks", label: "البنوك والنقدية", label_en: "Banks & Cash" },
+      { to: "/treasury/reports", label: "تقارير الخزينة والسيولة", label_en: "Treasury & Liquidity Reports" },
     ],
   },
   {
     key: "assets", label: "الأصول الثابتة", label_en: "Fixed Assets", icon: Building2,
     links: [
       { to: "/fixed-assets", label: "الأصول الثابتة", label_en: "Fixed Assets" },
+      { to: "/fixed-assets/reports", label: "تقارير الأصول والإهلاك", label_en: "Assets & Depreciation Reports" },
     ],
   },
   {
@@ -111,13 +117,7 @@ const GROUPS: NavGroup[] = [
       { to: "/financials/cash-flow", label: "قائمة التدفقات النقدية", label_en: "Cash Flow Statement" },
       { to: "/financials/equity", label: "قائمة حقوق الملكية", label_en: "Statement of Equity" },
       { to: "/financials/kpis", label: "محرك المؤشرات (KPI)", label_en: "KPI Engine" },
-    ],
-  },
-  {
-    key: "reports", label: "ذكاء الأعمال والتقارير", label_en: "Business Intelligence & Reports", icon: FileText,
-    links: [
-      { to: "/reports", label: "مركز التقارير", label_en: "Reports Center" },
-      { to: "/imports", label: "مركز الاستيراد الذكي", label_en: "Smart Import Center" },
+      { to: "/financials/reports", label: "تقارير الحسابات العامة", label_en: "General Ledger Reports" },
     ],
   },
   {
@@ -150,6 +150,7 @@ const GROUPS: NavGroup[] = [
       { to: "/fleet/tracking", label: "تتبع مباشر (خريطة)", label_en: "Live Tracking (Map)" },
       { to: "/fleet/maintenance", label: "الصيانة", label_en: "Maintenance" },
       { to: "/fleet/fuel", label: "الوقود", label_en: "Fuel" },
+      { to: "/fleet/reports", label: "تقارير الأسطول والرحلات", label_en: "Fleet & Trip Reports" },
     ],
   },
   {
@@ -160,6 +161,7 @@ const GROUPS: NavGroup[] = [
       { to: "/warehouses/receipts", label: "سندات التوريد", label_en: "Goods Receipts" },
       { to: "/warehouses/issues", label: "سندات الصرف", label_en: "Goods Issues" },
       { to: "/warehouses/stock", label: "رصيد وتقييم المخزون", label_en: "Stock Balance & Valuation" },
+      { to: "/warehouses/reports", label: "تقارير المخزون", label_en: "Inventory Reports" },
     ],
   },
   {
@@ -177,18 +179,6 @@ const GROUPS: NavGroup[] = [
     ],
   },
 ];
-
-
-const STORAGE_KEY = "nav-open-groups";
-
-function loadOpen(): Record<string, boolean> {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {}
-  return {};
-}
-
 export function AppShell({ children }: { children: ReactNode }) {
   const { theme, toggle } = useTheme();
   const { lang, setLang, t, dir } = useI18n();
@@ -197,13 +187,6 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { can } = usePermissions();
   const router = useRouter();
   const path = useRouterState({ select: (s) => s.location.pathname });
-
-  const activeGroupKey = useMemo(() => {
-    for (const g of GROUPS) {
-      if (g.links.some((l) => path === l.to || (l.to !== "/dashboard" && path.startsWith(l.to)))) return g.key;
-    }
-    return null;
-  }, [path]);
 
   const settingsGroup: NavGroup = useMemo(() => ({
     key: "settings", label: "الإعدادات", label_en: "Settings", icon: Settings,
@@ -230,19 +213,12 @@ export function AppShell({ children }: { children: ReactNode }) {
       .filter((g) => g.links.length > 0),
     [settingsGroup, isAdmin, can, tenant.mode, tenant.claims], // eslint-disable-line react-hooks/exhaustive-deps
   );
-
-  const [openMap, setOpenMap] = useState<Record<string, boolean>>(loadOpen);
-  useEffect(() => {
-    if (activeGroupKey && !openMap[activeGroupKey]) {
-      setOpenMap((m) => ({ ...m, [activeGroupKey]: true }));
-    }
-  }, [activeGroupKey]); // eslint-disable-line
-  useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(openMap)); } catch {}
-  }, [openMap]);
-
-
-  const toggleGroup = (k: string) => setOpenMap((m) => ({ ...m, [k]: !m[k] }));
+  const activeGroup = useMemo(
+    () => allGroups.find((group) => group.links.some((link) => path === link.to || path.startsWith(`${link.to}/`))) ?? null,
+    [allGroups, path],
+  );
+  const activeGroupLabel = activeGroup ? (lang === "en" ? activeGroup.label_en : activeGroup.label) : (lang === "en" ? "Choose an application" : "اختر تطبيقًا");
+  const ActiveGroupIcon = activeGroup?.icon ?? LayoutGrid;
 
   const logout = async () => {
     await supabase.auth.signOut();
@@ -252,71 +228,71 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen bg-background">
-      <aside className="w-64 bg-sidebar text-sidebar-foreground flex-col fixed inset-y-0 end-0 z-30 no-print hidden md:flex border-s border-sidebar-border shadow-xl shadow-foreground/5">
-        <div className="h-20 px-5 border-b border-sidebar-border flex items-center gap-3 shrink-0">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground shadow-sm" aria-hidden="true">
-            <svg viewBox="0 0 40 40" className="h-8 w-8" fill="none">
-              <path d="M10 11.5h20v17H10z" stroke="currentColor" strokeWidth="3" />
-              <path d="m11.5 28 17-16.5M11.5 12 28.5 28" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-            </svg>
-          </span>
-          <div>
-            <div className="font-extrabold tracking-[0.14em] text-sm leading-tight text-sidebar-foreground">ONEXA</div>
-            <div className="text-[11px] text-sidebar-foreground/55 mt-1">{tenant.label.name} • {tenant.label.plan}</div>
-          </div>
+      <aside className="w-72 bg-sidebar text-sidebar-foreground flex-col fixed inset-y-0 end-0 z-30 no-print hidden md:flex border-s border-sidebar-border shadow-xl shadow-foreground/5">
+        <div className="min-h-24 shrink-0 border-b border-sidebar-border px-5 py-4">
+          <OnexaBrandLockup language={lang === "ar" ? "ar" : "en"} compact inverse showDescriptor={false} />
+          <div className="mt-2 truncate ps-[52px] text-[10px] font-medium text-sidebar-foreground/55">{tenant.label.name} • {tenant.label.plan}</div>
         </div>
 
-        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1 scrollbar-thin">
-          {allGroups.map((group) => {
-            const Icon = group.icon;
-            const open = openMap[group.key] ?? group.key === activeGroupKey;
-            const groupActive = group.key === activeGroupKey;
-            return (
-              <div key={group.key} className="mb-1">
-                <button
-                  type="button"
-                  onClick={() => toggleGroup(group.key)}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md text-sm transition-colors border ${
-                    groupActive
-                      ? "bg-sidebar-accent text-sidebar-primary font-semibold border-sidebar-border"
-                      : "hover:bg-sidebar-accent/70 text-sidebar-foreground/75 border-transparent"
-                  }`}
-                >
-                  <span className={`flex items-center justify-center w-7 h-7 rounded-md shrink-0 ${
-                    groupActive
-                      ? "bg-sidebar-primary/15 text-sidebar-primary"
-                      : "bg-sidebar-accent text-sidebar-foreground/70"
-                  }`}>
-                    <Icon className="w-4 h-4" />
+        <nav className="flex-1 overflow-y-auto px-3 py-4 scrollbar-thin">
+          <Link
+            to="/apps"
+            className={`flex items-center gap-3 rounded-xl border px-3 py-3 text-sm font-bold transition ${path === "/apps" ? "border-sidebar-primary/40 bg-sidebar-primary/10 text-sidebar-primary" : "border-sidebar-border bg-sidebar-accent/45 text-sidebar-foreground hover:bg-sidebar-accent"}`}
+          >
+            <span className="grid h-9 w-9 place-items-center rounded-lg bg-sidebar-primary/10 text-sidebar-primary"><LayoutGrid className="h-4.5 w-4.5" /></span>
+            <span className="flex-1 text-start">{lang === "en" ? "App launcher" : "مشغّل التطبيقات"}</span>
+            <ChevronLeft className={`h-3.5 w-3.5 ${dir === "ltr" ? "rotate-180" : ""}`} />
+          </Link>
+
+          <div className="mt-5">
+            <div className="mb-2 px-2 text-[10px] font-extrabold uppercase tracking-[0.12em] text-sidebar-foreground/40">{lang === "en" ? "Current application" : "التطبيق الحالي"}</div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button type="button" className="flex w-full items-center gap-3 rounded-xl border border-sidebar-border bg-sidebar-accent px-3 py-3 text-start transition hover:border-sidebar-primary/40">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-sidebar-primary/10 text-sidebar-primary">
+                    <ActiveGroupIcon className="h-4.5 w-4.5" />
                   </span>
-                  <span className="flex-1 text-start font-semibold">{lang === "en" ? group.label_en : group.label}</span>
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
+                  <span className="min-w-0 flex-1 truncate text-sm font-bold">{activeGroupLabel}</span>
+                  <ChevronsUpDown className="h-4 w-4 text-sidebar-foreground/50" />
                 </button>
-                {open && (
-                  <div className="mt-1 ms-3 border-s border-sidebar-border ps-2 py-1 space-y-0.5">
-                    {group.links.map((link) => {
-                      const active = path === link.to || (link.to !== "/dashboard" && path.startsWith(link.to) && path.split("/").length === link.to.split("/").length);
-                      return (
-                        <Link
-                          key={link.to}
-                          to={link.to}
-                            className={`flex items-center gap-2 px-3 py-2 rounded-md text-[13px] transition-colors ${
-                            active
-                                ? "bg-sidebar-primary/12 text-sidebar-primary font-semibold"
-                                : "hover:bg-sidebar-accent/60 text-sidebar-foreground/65 hover:text-sidebar-foreground"
-                          }`}
-                        >
-                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${active ? "bg-sidebar-primary" : "bg-sidebar-foreground/25"}`} />
-                          <span className="flex-1">{lang === "en" ? link.label_en : link.label}</span>
-                          {active && <ChevronLeft className={`w-3 h-3 ${dir === "ltr" ? "rotate-180" : ""}`} />}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="max-h-[420px] w-64 overflow-y-auto">
+                {allGroups.map((group) => {
+                  const Icon = group.icon;
+                  return (
+                    <DropdownMenuItem asChild key={group.key}>
+                      <Link to={group.links[0].to} className="flex cursor-pointer items-center gap-3 py-2.5">
+                        <Icon className="h-4 w-4 text-primary" />
+                        <span>{lang === "en" ? group.label_en : group.label}</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          {activeGroup && (
+            <div className="mt-5">
+              <div className="mb-2 px-2 text-[10px] font-extrabold uppercase tracking-[0.12em] text-sidebar-foreground/40">{lang === "en" ? "Navigation" : "التنقل"}</div>
+              <div className="space-y-1">
+                {activeGroup.links.map((link) => {
+                  const active = path === link.to || (path.startsWith(`${link.to}/`) && path.split("/").length === link.to.split("/").length);
+                  return (
+                    <Link
+                      key={link.to}
+                      to={link.to}
+                      className={`flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] transition ${active ? "bg-sidebar-primary/12 font-semibold text-sidebar-primary" : "text-sidebar-foreground/65 hover:bg-sidebar-accent/70 hover:text-sidebar-foreground"}`}
+                    >
+                      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${active ? "bg-sidebar-primary" : "bg-sidebar-foreground/25"}`} />
+                      <span className="flex-1">{lang === "en" ? link.label_en : link.label}</span>
+                      {active && <ChevronLeft className={`h-3 w-3 ${dir === "ltr" ? "rotate-180" : ""}`} />}
+                    </Link>
+                  );
+                })}
               </div>
-            );
-          })}
+            </div>
+          )}
         </nav>
 
 
@@ -334,8 +310,13 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <div className="flex-1 md:me-64 flex flex-col min-w-0">
+      <div className="flex-1 md:me-72 flex flex-col min-w-0">
         <header className="h-16 bg-card/95 backdrop-blur border-b border-border/80 flex items-center px-4 md:px-6 gap-2 sticky top-0 z-20 no-print shadow-sm shadow-foreground/[0.02]">
+          <div className="hidden min-w-0 items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 lg:flex">
+            <Building2 className="h-4 w-4 shrink-0 text-primary" />
+            <span className="max-w-48 truncate text-xs font-bold">{tenant.label.name}</span>
+            <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[9px] font-black uppercase text-primary">{tenant.label.plan}</span>
+          </div>
           <div className="max-w-md w-full relative hidden sm:block">
             <Search className="w-4 h-4 absolute end-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input placeholder={t("search")} className="pe-10" />

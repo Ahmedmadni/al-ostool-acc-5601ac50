@@ -36,7 +36,8 @@ for (const validator of [
 assert.ok(seedTypes.includes("trusted server/admin provisioning operation only"), "app_metadata payload lacks trusted-operation warning");
 
 for (const section of [
-  "Required confirmations before activation", "Activation sequence on or after 27 September 2026",
+  "Confirmed production values", "Remaining confirmations before final enforcement",
+  "Production execution record", "Final activation sequence",
   "Mandatory isolation tests", "Financial acceptance tests", "Rollback conditions",
 ]) assert.ok(runbook.includes(section), `Tenant 001 runbook section missing: ${section}`);
 assert.ok(runbook.includes("service-role or secret key") && runbook.includes("USING") && runbook.includes("WITH CHECK"), "security acceptance checks are incomplete");
@@ -49,7 +50,7 @@ for (const brandedSurface of [product, shell, home]) {
 assert.ok(env.includes('VITE_ENFORCE_ONEXA_TENANCY=""'), "tenancy enforcement safe default changed before migration");
 
 const migrations = existsSync("supabase/migrations") ? readdirSync("supabase/migrations") : [];
-assert.ok(!migrations.some((name) => /gate29|tenant.?001|al.?ostool.*tenant/i.test(name)), "Gate 29 must not create a migration before 27 September 2026");
+assert.ok(!migrations.some((name) => /gate29|tenant.?001|al.?ostool.*tenant/i.test(name)), "Gate 29 must not create an unreviewed duplicate Tenant 001 migration");
 assert.equal(pkg.scripts["check:gate29-tenant001-seed"], "node scripts/check-gate29-tenant001-seed.mjs");
 assert.ok(pkg.scripts.verify.includes("check:gate29-tenant001-seed"), "Gate 29 is missing from verify");
 

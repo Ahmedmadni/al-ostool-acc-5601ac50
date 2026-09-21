@@ -6,6 +6,7 @@ Gate 30 connects the application to the tenant and accounting contracts without 
 
 - `VITE_ENABLE_ONEXA_PROVISIONING` gates workspace, subscription, seat, entity, branch, entitlement, and invitation queries.
 - `VITE_ENABLE_ONEXA_POSTING` gates journal posting and reversal RPC calls.
+- `VITE_ENABLE_ONEXA_SALES_POSTING` separately gates the Gate 35 atomic sales/inventory posting path and requires the general posting gate too.
 - Both values are blank/false by default and are enabled only after the matching manual SQL package and acceptance queries pass.
 - `VITE_ENFORCE_ONEXA_TENANCY` remains a separate final cutover switch.
 

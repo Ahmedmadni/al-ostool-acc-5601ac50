@@ -88,8 +88,10 @@ export const POSTING_CONTRACTS: readonly PostingContract[] = [
       { side: "debit", accountRole: "accounts_receivable", amountSource: "gross_total" },
       { side: "credit", accountRole: "sales_revenue", amountSource: "net_total" },
       { side: "credit", accountRole: "output_vat", amountSource: "tax_total" },
+      { side: "debit", accountRole: "cost_of_goods_sold", amountSource: "weighted_average_inventory_cost", note: "Stocked lines only" },
+      { side: "credit", accountRole: "inventory", amountSource: "weighted_average_inventory_cost", note: "Stocked lines only" },
     ],
-    reports: ["general_ledger", "trial_balance", "income_statement", "ar_aging", "vat_return"], reversible: true,
+    reports: ["general_ledger", "trial_balance", "income_statement", "ar_aging", "vat_return", "sales_margin", "inventory_valuation"], reversible: true,
   },
   {
     documentType: "customer_receipt", module: "sales", labelAr: "تحصيل عميل", labelEn: "Customer receipt", triggerStatus: "approved",
