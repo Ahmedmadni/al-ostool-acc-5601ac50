@@ -120,6 +120,7 @@ const RULES: { prefix: string; module: string }[] = [
 // company/module access domain and is enforced by ModuleAccessGuard.
 export const INDEPENDENTLY_GUARDED = [
   "/maintenance",
+  "/real-estate/reports",
   "/real-estate",
   "/technology",
 ] as const;
