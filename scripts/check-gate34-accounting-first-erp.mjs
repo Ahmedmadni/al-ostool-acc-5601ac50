@@ -52,7 +52,7 @@ for (const route of [
 
 for (const file of [
   "src/routes/_authenticated/projects/reports.tsx",
-  "src/routes/_authenticated/real-estate/reports.tsx",
+  "src/routes/_authenticated/real-estate_.reports.tsx",
   "src/routes/_authenticated/fixed-assets/reports.tsx",
   "src/routes/_authenticated/fleet/reports.tsx",
   "src/routes/_authenticated/warehouses/reports.tsx",
