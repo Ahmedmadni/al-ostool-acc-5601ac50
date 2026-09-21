@@ -68,7 +68,7 @@ import { Route as AuthenticatedProjectsIndexRouteImport } from './routes/_authen
 import { Route as AuthenticatedProjectsIdRouteImport } from './routes/_authenticated/projects/$id'
 import { Route as AuthenticatedProjectsProgressRouteImport } from './routes/_authenticated/projects/progress'
 import { Route as AuthenticatedProjectsReportsRouteImport } from './routes/_authenticated/projects/reports'
-import { Route as AuthenticatedRealEstateReportsRouteImport } from './routes/_authenticated/real-estate/reports'
+import { Route as AuthenticatedRealEstateReportsRouteImport } from './routes/_authenticated/real-estate_.reports'
 import { Route as AuthenticatedReportsIndexRouteImport } from './routes/_authenticated/reports/index'
 import { Route as AuthenticatedScenariosIndexRouteImport } from './routes/_authenticated/scenarios/index'
 import { Route as AuthenticatedSettingsApprovalsRouteImport } from './routes/_authenticated/settings/approvals'
@@ -466,9 +466,9 @@ const AuthenticatedProjectsReportsRoute =
   } as any)
 const AuthenticatedRealEstateReportsRoute =
   AuthenticatedRealEstateReportsRouteImport.update({
-    id: '/reports',
-    path: '/reports',
-    getParentRoute: () => AuthenticatedRealEstateRoute,
+    id: '/real-estate_/reports',
+    path: '/real-estate/reports',
+    getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedReportsIndexRoute =
   AuthenticatedReportsIndexRouteImport.update({
@@ -855,7 +855,7 @@ export interface FileRoutesByFullPath {
   '/customer-service': typeof AuthenticatedCustomerServiceRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/maintenance': typeof AuthenticatedMaintenanceRoute
-  '/real-estate': typeof AuthenticatedRealEstateRouteWithChildren
+  '/real-estate': typeof AuthenticatedRealEstateRoute
   '/technology': typeof AuthenticatedTechnologyRoute
   '/companies/al-ostool': typeof CompaniesAlOstoolRoute
   '/companies/maintenance': typeof CompaniesMaintenanceRoute
@@ -979,7 +979,7 @@ export interface FileRoutesByTo {
   '/customer-service': typeof AuthenticatedCustomerServiceRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/maintenance': typeof AuthenticatedMaintenanceRoute
-  '/real-estate': typeof AuthenticatedRealEstateRouteWithChildren
+  '/real-estate': typeof AuthenticatedRealEstateRoute
   '/technology': typeof AuthenticatedTechnologyRoute
   '/companies/al-ostool': typeof CompaniesAlOstoolRoute
   '/companies/maintenance': typeof CompaniesMaintenanceRoute
@@ -1105,7 +1105,7 @@ export interface FileRoutesById {
   '/_authenticated/customer-service': typeof AuthenticatedCustomerServiceRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/maintenance': typeof AuthenticatedMaintenanceRoute
-  '/_authenticated/real-estate': typeof AuthenticatedRealEstateRouteWithChildren
+  '/_authenticated/real-estate': typeof AuthenticatedRealEstateRoute
   '/_authenticated/technology': typeof AuthenticatedTechnologyRoute
   '/companies/al-ostool': typeof CompaniesAlOstoolRoute
   '/companies/maintenance': typeof CompaniesMaintenanceRoute
@@ -1136,7 +1136,7 @@ export interface FileRoutesById {
   '/_authenticated/projects/$id': typeof AuthenticatedProjectsIdRoute
   '/_authenticated/projects/progress': typeof AuthenticatedProjectsProgressRoute
   '/_authenticated/projects/reports': typeof AuthenticatedProjectsReportsRoute
-  '/_authenticated/real-estate/reports': typeof AuthenticatedRealEstateReportsRoute
+  '/_authenticated/real-estate_/reports': typeof AuthenticatedRealEstateReportsRoute
   '/_authenticated/settings/approvals': typeof AuthenticatedSettingsApprovalsRoute
   '/_authenticated/settings/permissions': typeof AuthenticatedSettingsPermissionsRoute
   '/_authenticated/settings/permissions-dashboard': typeof AuthenticatedSettingsPermissionsDashboardRoute
@@ -1511,7 +1511,7 @@ export interface FileRouteTypes {
     | '/_authenticated/projects/$id'
     | '/_authenticated/projects/progress'
     | '/_authenticated/projects/reports'
-    | '/_authenticated/real-estate/reports'
+    | '/_authenticated/real-estate_/reports'
     | '/_authenticated/settings/approvals'
     | '/_authenticated/settings/permissions'
     | '/_authenticated/settings/permissions-dashboard'
@@ -2026,12 +2026,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProjectsReportsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/real-estate/reports': {
-      id: '/_authenticated/real-estate/reports'
-      path: '/reports'
+    '/_authenticated/real-estate_/reports': {
+      id: '/_authenticated/real-estate_/reports'
+      path: '/real-estate/reports'
       fullPath: '/real-estate/reports'
       preLoaderRoute: typeof AuthenticatedRealEstateReportsRouteImport
-      parentRoute: typeof AuthenticatedRealEstateRoute
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/reports/': {
       id: '/_authenticated/reports/'
@@ -2477,27 +2477,13 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AuthenticatedRealEstateRouteChildren {
-  AuthenticatedRealEstateReportsRoute: typeof AuthenticatedRealEstateReportsRoute
-}
-
-const AuthenticatedRealEstateRouteChildren: AuthenticatedRealEstateRouteChildren =
-  {
-    AuthenticatedRealEstateReportsRoute: AuthenticatedRealEstateReportsRoute,
-  }
-
-const AuthenticatedRealEstateRouteWithChildren =
-  AuthenticatedRealEstateRoute._addFileChildren(
-    AuthenticatedRealEstateRouteChildren,
-  )
-
 interface AuthenticatedRouteChildren {
   AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
   AuthenticatedAppsRoute: typeof AuthenticatedAppsRoute
   AuthenticatedCustomerServiceRoute: typeof AuthenticatedCustomerServiceRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedMaintenanceRoute: typeof AuthenticatedMaintenanceRoute
-  AuthenticatedRealEstateRoute: typeof AuthenticatedRealEstateRouteWithChildren
+  AuthenticatedRealEstateRoute: typeof AuthenticatedRealEstateRoute
   AuthenticatedTechnologyRoute: typeof AuthenticatedTechnologyRoute
   AuthenticatedCashFlowMatrixRoute: typeof AuthenticatedCashFlowMatrixRoute
   AuthenticatedControlCostsRoute: typeof AuthenticatedControlCostsRoute
@@ -2524,6 +2510,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedProjectsIdRoute: typeof AuthenticatedProjectsIdRoute
   AuthenticatedProjectsProgressRoute: typeof AuthenticatedProjectsProgressRoute
   AuthenticatedProjectsReportsRoute: typeof AuthenticatedProjectsReportsRoute
+  AuthenticatedRealEstateReportsRoute: typeof AuthenticatedRealEstateReportsRoute
   AuthenticatedSettingsApprovalsRoute: typeof AuthenticatedSettingsApprovalsRoute
   AuthenticatedSettingsPermissionsRoute: typeof AuthenticatedSettingsPermissionsRoute
   AuthenticatedSettingsPermissionsDashboardRoute: typeof AuthenticatedSettingsPermissionsDashboardRoute
@@ -2608,7 +2595,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCustomerServiceRoute: AuthenticatedCustomerServiceRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedMaintenanceRoute: AuthenticatedMaintenanceRoute,
-  AuthenticatedRealEstateRoute: AuthenticatedRealEstateRouteWithChildren,
+  AuthenticatedRealEstateRoute: AuthenticatedRealEstateRoute,
   AuthenticatedTechnologyRoute: AuthenticatedTechnologyRoute,
   AuthenticatedCashFlowMatrixRoute: AuthenticatedCashFlowMatrixRoute,
   AuthenticatedControlCostsRoute: AuthenticatedControlCostsRoute,
@@ -2639,6 +2626,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedProjectsIdRoute: AuthenticatedProjectsIdRoute,
   AuthenticatedProjectsProgressRoute: AuthenticatedProjectsProgressRoute,
   AuthenticatedProjectsReportsRoute: AuthenticatedProjectsReportsRoute,
+  AuthenticatedRealEstateReportsRoute: AuthenticatedRealEstateReportsRoute,
   AuthenticatedSettingsApprovalsRoute: AuthenticatedSettingsApprovalsRoute,
   AuthenticatedSettingsPermissionsRoute: AuthenticatedSettingsPermissionsRoute,
   AuthenticatedSettingsPermissionsDashboardRoute:
