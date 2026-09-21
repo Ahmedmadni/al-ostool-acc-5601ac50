@@ -140,20 +140,20 @@ function Page() {
     revisionReason: "",
   });
 
-  const { data: costs = [] } = useQuery({
+  const { data: costs = [] } = useQuery<any[]>({
     queryKey: ["cost_entries"],
     queryFn: async () => (await (supabase as any).from("cost_entries").select("*").limit(5000)).data ?? [],
   });
-  const { data: hr = [] } = useQuery({
+  const { data: hr = [] } = useQuery<any[]>({
     queryKey: ["hr_costs"],
     queryFn: async () => (await (supabase as any).from("hr_costs").select("*").limit(5000)).data ?? [],
   });
-  const { data: eq = [] } = useQuery({
+  const { data: eq = [] } = useQuery<any[]>({
     queryKey: ["equipment_costs"],
     queryFn: async () =>
       (await (supabase as any).from("equipment_costs").select("*").limit(5000)).data ?? [],
   });
-  const { data: importBatches = [] } = useQuery({
+  const { data: importBatches = [] } = useQuery<any[]>({
     queryKey: ["cost_import_batches"],
     queryFn: async () =>
       (
@@ -166,7 +166,7 @@ function Page() {
           .limit(100)
       ).data ?? [],
   });
-  const { data: rejectedImportLines = [] } = useQuery({
+  const { data: rejectedImportLines = [] } = useQuery<any[]>({
     queryKey: ["cost_import_rejections"],
     queryFn: async () =>
       (
@@ -178,12 +178,12 @@ function Page() {
           .limit(100)
       ).data ?? [],
   });
-  const { data: projectOptions = [] } = useQuery({
+  const { data: projectOptions = [] } = useQuery<any[]>({
     queryKey: ["cost_project_options"],
     queryFn: async () =>
       (await (supabase as any).from("projects").select("id,name,code").order("name")).data ?? [],
   });
-  const { data: departmentOptions = [] } = useQuery({
+  const { data: departmentOptions = [] } = useQuery<any[]>({
     queryKey: ["cost_department_options"],
     queryFn: async () =>
       (
@@ -194,13 +194,13 @@ function Page() {
           .order("name_ar")
       ).data ?? [],
   });
-  const { data: costPeriods = [] } = useQuery({
+  const { data: costPeriods = [] } = useQuery<any[]>({
     queryKey: ["cost_periods"],
     queryFn: async () =>
       (await (supabase as any).from("cost_periods").select("*").order("period", { ascending: false }))
         .data ?? [],
   });
-  const { data: costEvents = [] } = useQuery({
+  const { data: costEvents = [] } = useQuery<any[]>({
     queryKey: ["cost_entry_status_events"],
     queryFn: async () =>
       (
@@ -211,7 +211,7 @@ function Page() {
           .limit(200)
       ).data ?? [],
   });
-  const { data: periodEvents = [] } = useQuery({
+  const { data: periodEvents = [] } = useQuery<any[]>({
     queryKey: ["cost_period_status_events"],
     queryFn: async () =>
       (
@@ -222,7 +222,7 @@ function Page() {
           .limit(100)
       ).data ?? [],
   });
-  const { data: costBudgets = [] } = useQuery({
+  const { data: costBudgets = [] } = useQuery<any[]>({
     queryKey: ["cost_budgets"],
     queryFn: async () =>
       (await (supabase as any).from("cost_budgets").select("*").order("period", { ascending: false }))
