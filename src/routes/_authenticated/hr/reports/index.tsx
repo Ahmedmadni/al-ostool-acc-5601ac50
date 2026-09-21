@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Download, FileSpreadsheet, Printer } from "lucide-react";
 import { exportToExcel } from "@/lib/export";
+import { PayrollAccountingPanel } from "@/components/payroll/payroll-accounting-panel";
 
 const LEAVE_TYPE_LABEL: Record<string, string> = {
   annual: "سنوية", sick: "مرضية", emergency: "اضطرارية", unpaid: "بدون راتب",
@@ -144,6 +145,7 @@ function HrReports() {
           <TabsTrigger value="employees">كشف الموظفين</TabsTrigger>
           <TabsTrigger value="payroll">مسيرات الرواتب</TabsTrigger>
           <TabsTrigger value="cost">تحليل التكلفة</TabsTrigger>
+          <TabsTrigger value="accounting">الربط المحاسبي</TabsTrigger>
           <TabsTrigger value="settlements">المخالصات</TabsTrigger>
           <TabsTrigger value="leaves">الإجازات</TabsTrigger>
           <TabsTrigger value="leave_balance">رصيد الإجازات</TabsTrigger>
@@ -237,6 +239,10 @@ function HrReports() {
               </TableBody>
             </Table>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="accounting">
+          <PayrollAccountingPanel />
         </TabsContent>
 
         <TabsContent value="settlements">

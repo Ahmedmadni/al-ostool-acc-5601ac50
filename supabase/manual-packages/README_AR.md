@@ -1,4 +1,4 @@
-# تشغيل Gate 34 وGate 35 وGate 36 يدويًا
+# تشغيل Gate 34 إلى Gate 37 يدويًا
 
 ## قبل البدء
 
@@ -77,3 +77,17 @@
 `gate36_purchase_posting_smoke_test | passed`
 
 الاختبار ينشئ فاتورة مورد مؤقتة تشمل مخزونًا ومصروفًا وأصلًا ثابتًا، ويتحقق من القيد والاستلام والتصنيف ثم ينفذ `ROLLBACK`؛ لا تبقى أي بيانات تجريبية. لا تفعّل `VITE_ENABLE_ONEXA_PROCUREMENT_POSTING=true` قبل نجاحه.
+
+## Gate 37 — الرواتب والحسابات العامة
+
+نفّذ كل ملف في Query مستقلة وبالترتيب:
+
+1. `gate37_payroll_gl_posting.sql`
+2. `gate37_postcheck.sql`
+3. `gate37_aoa_account_mapping.sql`
+4. أعد تنفيذ `gate37_postcheck.sql` وتأكد من عدم وجود فجوات حسابية.
+5. تأكد أن لديك مسيرًا معتمدًا تمت مزامنته مع دفتر التكاليف ومستخدمًا ماليًا مختلفًا عن منشئ المسير.
+6. `gate37_payroll_posting_smoke_test_rollback.sql`
+
+النتيجة المتوقعة: `gate37_payroll_posting_smoke_test | passed` ثم `ROLLBACK`.
+لا تفعّل `VITE_ENABLE_ONEXA_PAYROLL_POSTING=true` قبل نجاح الفحص والاختبار.
