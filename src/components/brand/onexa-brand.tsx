@@ -18,7 +18,7 @@ type BrandLockupProps = {
  * Do not redraw, recolor, crop, separate, or reconstruct its elements.
  */
 export function OnexaBrandMark({ className, title = "ONEXA ERP", ...props }: BrandMarkProps) {
-  return <img src="/onexa-approved-logo.png" className={className} alt={title} {...props} />;
+  return <img src="/onexa-logo-transparent.png" className={className} alt={title} {...props} />;
 }
 
 export function OnexaBrandLockup({
@@ -30,7 +30,7 @@ export function OnexaBrandLockup({
     <span className={`inline-flex min-w-0 items-center ${className}`.trim()}>
       <OnexaBrandMark
         title="ONEXA ERP SYSTEM"
-        className={`${compact ? "h-12 w-12" : "h-16 w-16"} shrink-0 object-contain ${markClassName}`.trim()}
+        className={`${compact ? "h-16 w-16 sm:h-20 sm:w-20" : "h-20 w-20"} shrink-0 object-contain ${markClassName}`.trim()}
       />
     </span>
   );
