@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.17"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -25,6 +25,7 @@ export type Database = {
           notes: string | null
           party_type: string
           reason: string | null
+          tenant_id: string
           type: string
           updated_at: string
           vendor_id: string | null
@@ -39,6 +40,7 @@ export type Database = {
           notes?: string | null
           party_type: string
           reason?: string | null
+          tenant_id?: string
           type?: string
           updated_at?: string
           vendor_id?: string | null
@@ -53,6 +55,7 @@ export type Database = {
           notes?: string | null
           party_type?: string
           reason?: string | null
+          tenant_id?: string
           type?: string
           updated_at?: string
           vendor_id?: string | null
@@ -71,6 +74,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "vendors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -92,6 +102,7 @@ export type Database = {
           imported_at: string
           imported_by: string | null
           period: string
+          tenant_id: string
           total_outstanding: number | null
         }
         Insert: {
@@ -111,6 +122,7 @@ export type Database = {
           imported_at?: string
           imported_by?: string | null
           period: string
+          tenant_id?: string
           total_outstanding?: number | null
         }
         Update: {
@@ -130,9 +142,18 @@ export type Database = {
           imported_at?: string
           imported_by?: string | null
           period?: string
+          tenant_id?: string
           total_outstanding?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
       }
       attachments: {
         Row: {
@@ -144,6 +165,7 @@ export type Database = {
           id: string
           mime_type: string | null
           size: number | null
+          tenant_id: string
           uploaded_by: string | null
         }
         Insert: {
@@ -155,6 +177,7 @@ export type Database = {
           id?: string
           mime_type?: string | null
           size?: number | null
+          tenant_id?: string
           uploaded_by?: string | null
         }
         Update: {
@@ -166,9 +189,18 @@ export type Database = {
           id?: string
           mime_type?: string | null
           size?: number | null
+          tenant_id?: string
           uploaded_by?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
       }
       audit_logs: {
         Row: {
@@ -178,6 +210,7 @@ export type Database = {
           entity_id: string | null
           entity_type: string
           id: string
+          tenant_id: string
           user_id: string | null
         }
         Insert: {
@@ -187,6 +220,7 @@ export type Database = {
           entity_id?: string | null
           entity_type: string
           id?: string
+          tenant_id?: string
           user_id?: string | null
         }
         Update: {
@@ -196,9 +230,18 @@ export type Database = {
           entity_id?: string | null
           entity_type?: string
           id?: string
+          tenant_id?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
       }
       bank_statements: {
         Row: {
@@ -211,6 +254,7 @@ export type Database = {
           id: string
           imported_at: string
           imported_by: string | null
+          tenant_id: string
           txn_date: string
         }
         Insert: {
@@ -223,6 +267,7 @@ export type Database = {
           id?: string
           imported_at?: string
           imported_by?: string | null
+          tenant_id?: string
           txn_date: string
         }
         Update: {
@@ -235,9 +280,18 @@ export type Database = {
           id?: string
           imported_at?: string
           imported_by?: string | null
+          tenant_id?: string
           txn_date?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
       }
       budget_lines: {
         Row: {
@@ -250,6 +304,7 @@ export type Database = {
           notes: string | null
           period: string | null
           project_id: string | null
+          tenant_id: string
         }
         Insert: {
           account_id?: string | null
@@ -261,6 +316,7 @@ export type Database = {
           notes?: string | null
           period?: string | null
           project_id?: string | null
+          tenant_id?: string
         }
         Update: {
           account_id?: string | null
@@ -272,6 +328,7 @@ export type Database = {
           notes?: string | null
           period?: string | null
           project_id?: string | null
+          tenant_id?: string
         }
         Relationships: [
           {
@@ -295,6 +352,13 @@ export type Database = {
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       budgets: {
@@ -307,6 +371,7 @@ export type Database = {
           notes: string | null
           period_type: string
           status: string
+          tenant_id: string
           total_amount: number
           updated_at: string
         }
@@ -319,6 +384,7 @@ export type Database = {
           notes?: string | null
           period_type?: string
           status?: string
+          tenant_id?: string
           total_amount?: number
           updated_at?: string
         }
@@ -331,10 +397,19 @@ export type Database = {
           notes?: string | null
           period_type?: string
           status?: string
+          tenant_id?: string
           total_amount?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
       }
       chart_of_accounts: {
         Row: {
@@ -348,6 +423,7 @@ export type Database = {
           name_ar: string
           name_en: string | null
           parent_id: string | null
+          tenant_id: string
           updated_at: string
         }
         Insert: {
@@ -361,6 +437,7 @@ export type Database = {
           name_ar: string
           name_en?: string | null
           parent_id?: string | null
+          tenant_id?: string
           updated_at?: string
         }
         Update: {
@@ -374,6 +451,7 @@ export type Database = {
           name_ar?: string
           name_en?: string | null
           parent_id?: string | null
+          tenant_id?: string
           updated_at?: string
         }
         Relationships: [
@@ -383,6 +461,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "chart_of_accounts"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -405,6 +490,7 @@ export type Database = {
           parent_id: string | null
           phone: string | null
           tax_number: string | null
+          tenant_id: string
           updated_at: string
         }
         Insert: {
@@ -425,6 +511,7 @@ export type Database = {
           parent_id?: string | null
           phone?: string | null
           tax_number?: string | null
+          tenant_id?: string
           updated_at?: string
         }
         Update: {
@@ -445,6 +532,7 @@ export type Database = {
           parent_id?: string | null
           phone?: string | null
           tax_number?: string | null
+          tenant_id?: string
           updated_at?: string
         }
         Relationships: [
@@ -454,6 +542,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -468,6 +563,7 @@ export type Database = {
           logo_url: string | null
           number_format: string | null
           settings: Json | null
+          tenant_id: string
           timezone: string | null
           updated_at: string
         }
@@ -481,6 +577,7 @@ export type Database = {
           logo_url?: string | null
           number_format?: string | null
           settings?: Json | null
+          tenant_id?: string
           timezone?: string | null
           updated_at?: string
         }
@@ -494,6 +591,7 @@ export type Database = {
           logo_url?: string | null
           number_format?: string | null
           settings?: Json | null
+          tenant_id?: string
           timezone?: string | null
           updated_at?: string
         }
@@ -504,6 +602,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -518,6 +623,7 @@ export type Database = {
           new_end_date: string | null
           notes: string | null
           reason: string | null
+          tenant_id: string
           value_change: number | null
         }
         Insert: {
@@ -530,6 +636,7 @@ export type Database = {
           new_end_date?: string | null
           notes?: string | null
           reason?: string | null
+          tenant_id?: string
           value_change?: number | null
         }
         Update: {
@@ -542,6 +649,7 @@ export type Database = {
           new_end_date?: string | null
           notes?: string | null
           reason?: string | null
+          tenant_id?: string
           value_change?: number | null
         }
         Relationships: [
@@ -551,6 +659,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contracts"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -573,6 +688,7 @@ export type Database = {
           signed_date: string | null
           start_date: string | null
           status: Database["public"]["Enums"]["contract_status"] | null
+          tenant_id: string
           title: string
           updated_at: string
           vendor_id: string | null
@@ -595,6 +711,7 @@ export type Database = {
           signed_date?: string | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["contract_status"] | null
+          tenant_id?: string
           title: string
           updated_at?: string
           vendor_id?: string | null
@@ -617,6 +734,7 @@ export type Database = {
           signed_date?: string | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["contract_status"] | null
+          tenant_id?: string
           title?: string
           updated_at?: string
           vendor_id?: string | null
@@ -643,80 +761,14 @@ export type Database = {
             referencedRelation: "vendors"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
         ]
-      }
-      cost_import_batches: {
-        Row: {
-          id: string
-          import_key: string
-          file_name: string | null
-          source_type: string
-          status: string
-          row_count: number
-          accepted_count: number
-          rejected_count: number
-          total_amount: number
-          created_by: string
-          created_at: string
-        }
-        Insert: { id?: string; import_key: string; file_name?: string | null; source_type?: string; status?: string; row_count?: number; accepted_count?: number; rejected_count?: number; total_amount?: number; created_by: string; created_at?: string }
-        Update: { id?: string; import_key?: string; file_name?: string | null; source_type?: string; status?: string; row_count?: number; accepted_count?: number; rejected_count?: number; total_amount?: number; created_by?: string; created_at?: string }
-        Relationships: []
-      }
-      cost_budgets: {
-        Row: { id: string; period: string; category: string; project_id: string | null; department_id: string | null; amount: number; status: string; revision: number; notes: string | null; created_by: string; created_at: string; updated_by: string | null; updated_at: string; approved_by: string | null; approved_at: string | null }
-        Insert: { id?: string; period: string; category: string; project_id?: string | null; department_id?: string | null; amount: number; status?: string; revision?: number; notes?: string | null; created_by: string; created_at?: string; updated_by?: string | null; updated_at?: string; approved_by?: string | null; approved_at?: string | null }
-        Update: { id?: string; period?: string; category?: string; project_id?: string | null; department_id?: string | null; amount?: number; status?: string; revision?: number; notes?: string | null; created_by?: string; created_at?: string; updated_by?: string | null; updated_at?: string; approved_by?: string | null; approved_at?: string | null }
-        Relationships: []
-      }
-      cost_budget_events: {
-        Row: { id: string; budget_id: string; event_type: string; previous_amount: number | null; new_amount: number; reason: string | null; revision: number; changed_by: string | null; changed_at: string }
-        Insert: { id?: string; budget_id: string; event_type: string; previous_amount?: number | null; new_amount: number; reason?: string | null; revision: number; changed_by?: string | null; changed_at?: string }
-        Update: { id?: string; budget_id?: string; event_type?: string; previous_amount?: number | null; new_amount?: number; reason?: string | null; revision?: number; changed_by?: string | null; changed_at?: string }
-        Relationships: []
-      }
-      cost_import_lines: {
-        Row: {
-          id: string
-          batch_id: string
-          row_number: number
-          raw_data: Json
-          validation_errors: Json
-          source_record_id: string | null
-          cost_entry_id: string | null
-          created_at: string
-        }
-        Insert: { id?: string; batch_id: string; row_number: number; raw_data: Json; validation_errors?: Json; source_record_id?: string | null; cost_entry_id?: string | null; created_at?: string }
-        Update: { id?: string; batch_id?: string; row_number?: number; raw_data?: Json; validation_errors?: Json; source_record_id?: string | null; cost_entry_id?: string | null; created_at?: string }
-        Relationships: []
-      }
-      cost_periods: {
-        Row: {
-          id: string
-          period: string
-          status: string
-          reason: string | null
-          closed_by: string | null
-          closed_at: string | null
-          reopened_by: string | null
-          reopened_at: string | null
-          created_at: string
-        }
-        Insert: { id?: string; period: string; status?: string; reason?: string | null; closed_by?: string | null; closed_at?: string | null; reopened_by?: string | null; reopened_at?: string | null; created_at?: string }
-        Update: { id?: string; period?: string; status?: string; reason?: string | null; closed_by?: string | null; closed_at?: string | null; reopened_by?: string | null; reopened_at?: string | null; created_at?: string }
-        Relationships: []
-      }
-      cost_period_status_events: {
-        Row: { id: string; period: string; from_status: string | null; to_status: string; reason: string; changed_by: string | null; changed_at: string }
-        Insert: { id?: string; period: string; from_status?: string | null; to_status: string; reason: string; changed_by?: string | null; changed_at?: string }
-        Update: { id?: string; period?: string; from_status?: string | null; to_status?: string; reason?: string; changed_by?: string | null; changed_at?: string }
-        Relationships: []
-      }
-      cost_entry_status_events: {
-        Row: { id: string; cost_entry_id: string; from_status: string | null; to_status: string; reason: string | null; changed_by: string | null; changed_at: string }
-        Insert: { id?: string; cost_entry_id: string; from_status?: string | null; to_status: string; reason?: string | null; changed_by?: string | null; changed_at?: string }
-        Update: { id?: string; cost_entry_id?: string; from_status?: string | null; to_status?: string; reason?: string | null; changed_by?: string | null; changed_at?: string }
-        Relationships: []
       }
       cost_entries: {
         Row: {
@@ -734,13 +786,7 @@ export type Database = {
           project: string | null
           project_id: string | null
           section: string | null
-          workflow_status: string
-          source_type: string
-          approved_by: string | null
-          approved_at: string | null
-          reversed_by: string | null
-          reversed_at: string | null
-          reversal_entry_id: string | null
+          tenant_id: string
         }
         Insert: {
           amount?: number | null
@@ -757,13 +803,7 @@ export type Database = {
           project?: string | null
           project_id?: string | null
           section?: string | null
-          workflow_status?: string
-          source_type?: string
-          approved_by?: string | null
-          approved_at?: string | null
-          reversed_by?: string | null
-          reversed_at?: string | null
-          reversal_entry_id?: string | null
+          tenant_id?: string
         }
         Update: {
           amount?: number | null
@@ -780,13 +820,7 @@ export type Database = {
           project?: string | null
           project_id?: string | null
           section?: string | null
-          workflow_status?: string
-          source_type?: string
-          approved_by?: string | null
-          approved_at?: string | null
-          reversed_by?: string | null
-          reversed_at?: string | null
-          reversal_entry_id?: string | null
+          tenant_id?: string
         }
         Relationships: [
           {
@@ -803,6 +837,13 @@ export type Database = {
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       currencies: {
@@ -815,6 +856,7 @@ export type Database = {
           name_ar: string
           name_en: string | null
           symbol: string | null
+          tenant_id: string
         }
         Insert: {
           code: string
@@ -825,6 +867,7 @@ export type Database = {
           name_ar: string
           name_en?: string | null
           symbol?: string | null
+          tenant_id?: string
         }
         Update: {
           code?: string
@@ -835,8 +878,17 @@ export type Database = {
           name_ar?: string
           name_en?: string | null
           symbol?: string | null
+          tenant_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
       }
       customer_balances: {
         Row: {
@@ -852,6 +904,7 @@ export type Database = {
           period: string
           period_credit: number | null
           period_debit: number | null
+          tenant_id: string
         }
         Insert: {
           account_code: string
@@ -866,6 +919,7 @@ export type Database = {
           period: string
           period_credit?: number | null
           period_debit?: number | null
+          tenant_id?: string
         }
         Update: {
           account_code?: string
@@ -880,8 +934,17 @@ export type Database = {
           period?: string
           period_credit?: number | null
           period_debit?: number | null
+          tenant_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
       }
       customer_contacts: {
         Row: {
@@ -892,6 +955,7 @@ export type Database = {
           job_title: string | null
           name: string
           phone: string | null
+          tenant_id: string
         }
         Insert: {
           created_at?: string
@@ -901,6 +965,7 @@ export type Database = {
           job_title?: string | null
           name: string
           phone?: string | null
+          tenant_id?: string
         }
         Update: {
           created_at?: string
@@ -910,6 +975,7 @@ export type Database = {
           job_title?: string | null
           name?: string
           phone?: string | null
+          tenant_id?: string
         }
         Relationships: [
           {
@@ -918,6 +984,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -948,6 +1021,7 @@ export type Database = {
           sector: Database["public"]["Enums"]["customer_sector"] | null
           size_category: Database["public"]["Enums"]["customer_size"] | null
           tax_number: string | null
+          tenant_id: string
           total_collected: number | null
           total_invoiced: number | null
           total_outstanding: number | null
@@ -980,6 +1054,7 @@ export type Database = {
           sector?: Database["public"]["Enums"]["customer_sector"] | null
           size_category?: Database["public"]["Enums"]["customer_size"] | null
           tax_number?: string | null
+          tenant_id?: string
           total_collected?: number | null
           total_invoiced?: number | null
           total_outstanding?: number | null
@@ -1012,13 +1087,22 @@ export type Database = {
           sector?: Database["public"]["Enums"]["customer_sector"] | null
           size_category?: Database["public"]["Enums"]["customer_size"] | null
           tax_number?: string | null
+          tenant_id?: string
           total_collected?: number | null
           total_invoiced?: number | null
           total_outstanding?: number | null
           updated_at?: string
           website?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
       }
       data_imports: {
         Row: {
@@ -1032,6 +1116,7 @@ export type Database = {
           replaced_at: string | null
           row_count: number | null
           status: string | null
+          tenant_id: string
         }
         Insert: {
           file_name?: string | null
@@ -1044,6 +1129,7 @@ export type Database = {
           replaced_at?: string | null
           row_count?: number | null
           status?: string | null
+          tenant_id?: string
         }
         Update: {
           file_name?: string | null
@@ -1056,8 +1142,17 @@ export type Database = {
           replaced_at?: string | null
           row_count?: number | null
           status?: string | null
+          tenant_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
       }
       data_templates: {
         Row: {
@@ -1071,6 +1166,7 @@ export type Database = {
           mapping: Json
           name: string
           table_key: string
+          tenant_id: string
           updated_at: string
           version: number
         }
@@ -1085,6 +1181,7 @@ export type Database = {
           mapping?: Json
           name: string
           table_key: string
+          tenant_id?: string
           updated_at?: string
           version?: number
         }
@@ -1099,10 +1196,19 @@ export type Database = {
           mapping?: Json
           name?: string
           table_key?: string
+          tenant_id?: string
           updated_at?: string
           version?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
       }
       departments: {
         Row: {
@@ -1114,6 +1220,7 @@ export type Database = {
           name_ar: string
           name_en: string | null
           parent_id: string | null
+          tenant_id: string
           updated_at: string
         }
         Insert: {
@@ -1125,6 +1232,7 @@ export type Database = {
           name_ar: string
           name_en?: string | null
           parent_id?: string | null
+          tenant_id?: string
           updated_at?: string
         }
         Update: {
@@ -1136,6 +1244,7 @@ export type Database = {
           name_ar?: string
           name_en?: string | null
           parent_id?: string | null
+          tenant_id?: string
           updated_at?: string
         }
         Relationships: [
@@ -1145,6 +1254,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "departments"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -1163,6 +1279,7 @@ export type Database = {
           national_id: string | null
           nationality: string | null
           phone: string | null
+          tenant_id: string
           termination_date: string | null
           updated_at: string
           user_id: string | null
@@ -1181,6 +1298,7 @@ export type Database = {
           national_id?: string | null
           nationality?: string | null
           phone?: string | null
+          tenant_id?: string
           termination_date?: string | null
           updated_at?: string
           user_id?: string | null
@@ -1199,6 +1317,7 @@ export type Database = {
           national_id?: string | null
           nationality?: string | null
           phone?: string | null
+          tenant_id?: string
           termination_date?: string | null
           updated_at?: string
           user_id?: string | null
@@ -1210,6 +1329,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "departments"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -1233,6 +1359,7 @@ export type Database = {
           project: string | null
           project_id: string | null
           purchase_cost: number | null
+          tenant_id: string
           total_cost: number | null
         }
         Insert: {
@@ -1254,6 +1381,7 @@ export type Database = {
           project?: string | null
           project_id?: string | null
           purchase_cost?: number | null
+          tenant_id?: string
           total_cost?: number | null
         }
         Update: {
@@ -1275,6 +1403,7 @@ export type Database = {
           project?: string | null
           project_id?: string | null
           purchase_cost?: number | null
+          tenant_id?: string
           total_cost?: number | null
         }
         Relationships: [
@@ -1292,6 +1421,13 @@ export type Database = {
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       exchange_rates: {
@@ -1302,6 +1438,7 @@ export type Database = {
           rate: number
           rate_date: string
           source: string | null
+          tenant_id: string
           to_currency: string
         }
         Insert: {
@@ -1311,6 +1448,7 @@ export type Database = {
           rate: number
           rate_date?: string
           source?: string | null
+          tenant_id?: string
           to_currency: string
         }
         Update: {
@@ -1320,6 +1458,7 @@ export type Database = {
           rate?: number
           rate_date?: string
           source?: string | null
+          tenant_id?: string
           to_currency?: string
         }
         Relationships: [
@@ -1336,6 +1475,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "currencies"
             referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -1357,6 +1503,7 @@ export type Database = {
           project_id: string | null
           purchase_date: string | null
           status: string | null
+          tenant_id: string
           useful_life_years: number | null
         }
         Insert: {
@@ -1376,6 +1523,7 @@ export type Database = {
           project_id?: string | null
           purchase_date?: string | null
           status?: string | null
+          tenant_id?: string
           useful_life_years?: number | null
         }
         Update: {
@@ -1395,6 +1543,7 @@ export type Database = {
           project_id?: string | null
           purchase_date?: string | null
           status?: string | null
+          tenant_id?: string
           useful_life_years?: number | null
         }
         Relationships: [
@@ -1411,6 +1560,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -1429,6 +1585,7 @@ export type Database = {
           notes: string | null
           phone: string | null
           status: string
+          tenant_id: string
           updated_at: string
         }
         Insert: {
@@ -1445,6 +1602,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           status?: string
+          tenant_id?: string
           updated_at?: string
         }
         Update: {
@@ -1461,6 +1619,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           status?: string
+          tenant_id?: string
           updated_at?: string
         }
         Relationships: [
@@ -1470,6 +1629,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "hr_employees"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -1486,6 +1652,7 @@ export type Database = {
           price_per_liter: number | null
           project_id: string | null
           station: string | null
+          tenant_id: string
           trip_id: string | null
           updated_at: string
           vehicle_id: string
@@ -1502,6 +1669,7 @@ export type Database = {
           price_per_liter?: number | null
           project_id?: string | null
           station?: string | null
+          tenant_id?: string
           trip_id?: string | null
           updated_at?: string
           vehicle_id: string
@@ -1518,6 +1686,7 @@ export type Database = {
           price_per_liter?: number | null
           project_id?: string | null
           station?: string | null
+          tenant_id?: string
           trip_id?: string | null
           updated_at?: string
           vehicle_id?: string
@@ -1544,6 +1713,13 @@ export type Database = {
             referencedRelation: "fleet_vehicles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       fleet_locations: {
@@ -1557,6 +1733,7 @@ export type Database = {
           recorded_at: string
           source: string | null
           speed_kmh: number | null
+          tenant_id: string
           trip_id: string | null
           vehicle_id: string
         }
@@ -1570,6 +1747,7 @@ export type Database = {
           recorded_at: string
           source?: string | null
           speed_kmh?: number | null
+          tenant_id?: string
           trip_id?: string | null
           vehicle_id: string
         }
@@ -1583,6 +1761,7 @@ export type Database = {
           recorded_at?: string
           source?: string | null
           speed_kmh?: number | null
+          tenant_id?: string
           trip_id?: string | null
           vehicle_id?: string
         }
@@ -1601,6 +1780,13 @@ export type Database = {
             referencedRelation: "fleet_vehicles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       fleet_maintenance: {
@@ -1616,6 +1802,7 @@ export type Database = {
           odometer_km: number | null
           project_id: string | null
           service_date: string
+          tenant_id: string
           updated_at: string
           vehicle_id: string
           vendor: string | null
@@ -1632,6 +1819,7 @@ export type Database = {
           odometer_km?: number | null
           project_id?: string | null
           service_date?: string
+          tenant_id?: string
           updated_at?: string
           vehicle_id: string
           vendor?: string | null
@@ -1648,6 +1836,7 @@ export type Database = {
           odometer_km?: number | null
           project_id?: string | null
           service_date?: string
+          tenant_id?: string
           updated_at?: string
           vehicle_id?: string
           vendor?: string | null
@@ -1666,6 +1855,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "fleet_vehicles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -1694,6 +1890,7 @@ export type Database = {
           revenue: number | null
           start_at: string | null
           status: Database["public"]["Enums"]["fleet_trip_status"]
+          tenant_id: string
           trip_no: string | null
           updated_at: string
           vehicle_id: string
@@ -1722,6 +1919,7 @@ export type Database = {
           revenue?: number | null
           start_at?: string | null
           status?: Database["public"]["Enums"]["fleet_trip_status"]
+          tenant_id?: string
           trip_no?: string | null
           updated_at?: string
           vehicle_id: string
@@ -1750,6 +1948,7 @@ export type Database = {
           revenue?: number | null
           start_at?: string | null
           status?: Database["public"]["Enums"]["fleet_trip_status"]
+          tenant_id?: string
           trip_no?: string | null
           updated_at?: string
           vehicle_id?: string
@@ -1790,6 +1989,13 @@ export type Database = {
             referencedRelation: "fleet_vehicles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       fleet_vehicles: {
@@ -1817,6 +2023,7 @@ export type Database = {
           plate_no: string
           registration_expiry: string | null
           status: Database["public"]["Enums"]["fleet_vehicle_status"]
+          tenant_id: string
           updated_at: string
           vehicle_type: Database["public"]["Enums"]["fleet_vehicle_type"]
           vin: string | null
@@ -1846,6 +2053,7 @@ export type Database = {
           plate_no: string
           registration_expiry?: string | null
           status?: Database["public"]["Enums"]["fleet_vehicle_status"]
+          tenant_id?: string
           updated_at?: string
           vehicle_type?: Database["public"]["Enums"]["fleet_vehicle_type"]
           vin?: string | null
@@ -1875,6 +2083,7 @@ export type Database = {
           plate_no?: string
           registration_expiry?: string | null
           status?: Database["public"]["Enums"]["fleet_vehicle_status"]
+          tenant_id?: string
           updated_at?: string
           vehicle_type?: Database["public"]["Enums"]["fleet_vehicle_type"]
           vin?: string | null
@@ -1895,6 +2104,13 @@ export type Database = {
             referencedRelation: "fixed_assets"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       hr_assets_assignment: {
@@ -1911,6 +2127,7 @@ export type Database = {
           is_returned: boolean
           return_date: string | null
           serial_no: string | null
+          tenant_id: string
           updated_at: string
           value: number | null
         }
@@ -1927,6 +2144,7 @@ export type Database = {
           is_returned?: boolean
           return_date?: string | null
           serial_no?: string | null
+          tenant_id?: string
           updated_at?: string
           value?: number | null
         }
@@ -1943,6 +2161,7 @@ export type Database = {
           is_returned?: boolean
           return_date?: string | null
           serial_no?: string | null
+          tenant_id?: string
           updated_at?: string
           value?: number | null
         }
@@ -1953,6 +2172,166 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "hr_employees"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
+      hr_attendance_events: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          device_id: string | null
+          distance_from_site_meters: number | null
+          employee_id: string
+          event_type: string
+          external_event_id: string | null
+          gps_accuracy_meters: number | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          metadata: Json
+          occurred_at: string
+          schedule_id: string | null
+          site_id: string | null
+          source: string
+          tenant_id: string
+          validation_status: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          device_id?: string | null
+          distance_from_site_meters?: number | null
+          employee_id: string
+          event_type: string
+          external_event_id?: string | null
+          gps_accuracy_meters?: number | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          metadata?: Json
+          occurred_at?: string
+          schedule_id?: string | null
+          site_id?: string | null
+          source: string
+          tenant_id?: string
+          validation_status?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          device_id?: string | null
+          distance_from_site_meters?: number | null
+          employee_id?: string
+          event_type?: string
+          external_event_id?: string | null
+          gps_accuracy_meters?: number | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          metadata?: Json
+          occurred_at?: string
+          schedule_id?: string | null
+          site_id?: string | null
+          source?: string
+          tenant_id?: string
+          validation_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_attendance_events_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "hr_biometric_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hr_attendance_events_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "hr_employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hr_attendance_events_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "hr_shift_schedules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hr_attendance_events_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "hr_work_sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
+      hr_biometric_devices: {
+        Row: {
+          created_at: string
+          device_code: string
+          id: string
+          is_active: boolean
+          last_seen_at: string | null
+          name_ar: string
+          site_id: string | null
+          tenant_id: string
+          updated_at: string
+          vendor: string | null
+        }
+        Insert: {
+          created_at?: string
+          device_code: string
+          id?: string
+          is_active?: boolean
+          last_seen_at?: string | null
+          name_ar: string
+          site_id?: string | null
+          tenant_id?: string
+          updated_at?: string
+          vendor?: string | null
+        }
+        Update: {
+          created_at?: string
+          device_code?: string
+          id?: string
+          is_active?: boolean
+          last_seen_at?: string | null
+          name_ar?: string
+          site_id?: string | null
+          tenant_id?: string
+          updated_at?: string
+          vendor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_biometric_devices_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "hr_work_sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -1969,6 +2348,7 @@ export type Database = {
           new_values: Json | null
           old_values: Json | null
           reason: string | null
+          tenant_id: string
         }
         Insert: {
           amendment_date?: string
@@ -1982,6 +2362,7 @@ export type Database = {
           new_values?: Json | null
           old_values?: Json | null
           reason?: string | null
+          tenant_id?: string
         }
         Update: {
           amendment_date?: string
@@ -1995,6 +2376,7 @@ export type Database = {
           new_values?: Json | null
           old_values?: Json | null
           reason?: string | null
+          tenant_id?: string
         }
         Relationships: [
           {
@@ -2003,6 +2385,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "hr_contracts"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -2026,6 +2415,7 @@ export type Database = {
           project_id: string | null
           start_date: string
           status: Database["public"]["Enums"]["hr_contract_status"]
+          tenant_id: string
           transport_allowance: number | null
           updated_at: string
           work_location: string | null
@@ -2050,6 +2440,7 @@ export type Database = {
           project_id?: string | null
           start_date: string
           status?: Database["public"]["Enums"]["hr_contract_status"]
+          tenant_id?: string
           transport_allowance?: number | null
           updated_at?: string
           work_location?: string | null
@@ -2074,6 +2465,7 @@ export type Database = {
           project_id?: string | null
           start_date?: string
           status?: Database["public"]["Enums"]["hr_contract_status"]
+          tenant_id?: string
           transport_allowance?: number | null
           updated_at?: string
           work_location?: string | null
@@ -2093,6 +2485,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -2118,6 +2517,7 @@ export type Database = {
           project: string | null
           project_id: string | null
           salary: number | null
+          tenant_id: string
           tickets: number | null
           total_cost: number | null
         }
@@ -2142,6 +2542,7 @@ export type Database = {
           project?: string | null
           project_id?: string | null
           salary?: number | null
+          tenant_id?: string
           tickets?: number | null
           total_cost?: number | null
         }
@@ -2166,6 +2567,7 @@ export type Database = {
           project?: string | null
           project_id?: string | null
           salary?: number | null
+          tenant_id?: string
           tickets?: number | null
           total_cost?: number | null
         }
@@ -2191,6 +2593,13 @@ export type Database = {
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       hr_employee_documents: {
@@ -2206,6 +2615,7 @@ export type Database = {
           id: string
           issue_date: string | null
           notes: string | null
+          tenant_id: string
           updated_at: string
         }
         Insert: {
@@ -2220,6 +2630,7 @@ export type Database = {
           id?: string
           issue_date?: string | null
           notes?: string | null
+          tenant_id?: string
           updated_at?: string
         }
         Update: {
@@ -2234,6 +2645,7 @@ export type Database = {
           id?: string
           issue_date?: string | null
           notes?: string | null
+          tenant_id?: string
           updated_at?: string
         }
         Relationships: [
@@ -2243,6 +2655,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "hr_employees"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -2291,6 +2710,7 @@ export type Database = {
           personal_phone: string | null
           photo_url: string | null
           status: Database["public"]["Enums"]["hr_employee_status"]
+          tenant_id: string
           transport_allowance: number | null
           updated_at: string
           user_id: string | null
@@ -2340,6 +2760,7 @@ export type Database = {
           personal_phone?: string | null
           photo_url?: string | null
           status?: Database["public"]["Enums"]["hr_employee_status"]
+          tenant_id?: string
           transport_allowance?: number | null
           updated_at?: string
           user_id?: string | null
@@ -2389,6 +2810,7 @@ export type Database = {
           personal_phone?: string | null
           photo_url?: string | null
           status?: Database["public"]["Enums"]["hr_employee_status"]
+          tenant_id?: string
           transport_allowance?: number | null
           updated_at?: string
           user_id?: string | null
@@ -2423,6 +2845,13 @@ export type Database = {
             referencedRelation: "hr_employees"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       hr_leave_adjustments: {
@@ -2434,6 +2863,7 @@ export type Database = {
           id: string
           leave_type: Database["public"]["Enums"]["hr_leave_type"]
           reason: string | null
+          tenant_id: string
           year: number
         }
         Insert: {
@@ -2444,6 +2874,7 @@ export type Database = {
           id?: string
           leave_type: Database["public"]["Enums"]["hr_leave_type"]
           reason?: string | null
+          tenant_id?: string
           year: number
         }
         Update: {
@@ -2454,6 +2885,7 @@ export type Database = {
           id?: string
           leave_type?: Database["public"]["Enums"]["hr_leave_type"]
           reason?: string | null
+          tenant_id?: string
           year?: number
         }
         Relationships: [
@@ -2464,6 +2896,13 @@ export type Database = {
             referencedRelation: "hr_employees"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       hr_leave_balances: {
@@ -2473,6 +2912,7 @@ export type Database = {
           entitled_days: number
           id: string
           leave_type: Database["public"]["Enums"]["hr_leave_type"]
+          tenant_id: string
           updated_at: string
           used_days: number
           year: number
@@ -2483,6 +2923,7 @@ export type Database = {
           entitled_days?: number
           id?: string
           leave_type: Database["public"]["Enums"]["hr_leave_type"]
+          tenant_id?: string
           updated_at?: string
           used_days?: number
           year: number
@@ -2493,6 +2934,7 @@ export type Database = {
           entitled_days?: number
           id?: string
           leave_type?: Database["public"]["Enums"]["hr_leave_type"]
+          tenant_id?: string
           updated_at?: string
           used_days?: number
           year?: number
@@ -2505,381 +2947,15 @@ export type Database = {
             referencedRelation: "hr_employees"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
-      hr_attendance_correction_requests: {
-        Row: {
-          attendance_day_id: string
-          created_at: string
-          decided_at: string | null
-          decided_by: string | null
-          decision_notes: string | null
-          employee_id: string
-          id: string
-          original_snapshot: Json
-          reason: string
-          requested_by: string
-          requested_check_in: string | null
-          requested_check_out: string | null
-          status: string
-        }
-        Insert: {
-          attendance_day_id: string
-          created_at?: string
-          decided_at?: string | null
-          decided_by?: string | null
-          decision_notes?: string | null
-          employee_id: string
-          id?: string
-          original_snapshot: Json
-          reason: string
-          requested_by: string
-          requested_check_in?: string | null
-          requested_check_out?: string | null
-          status?: string
-        }
-        Update: {
-          attendance_day_id?: string
-          created_at?: string
-          decided_at?: string | null
-          decided_by?: string | null
-          decision_notes?: string | null
-          employee_id?: string
-          id?: string
-          original_snapshot?: Json
-          reason?: string
-          requested_by?: string
-          requested_check_in?: string | null
-          requested_check_out?: string | null
-          status?: string
-        }
-        Relationships: []
-      }
-      hr_attendance_days: {
-        Row: {
-          actual_minutes: number
-          approval_status: string
-          approved_at: string | null
-          approved_by: string | null
-          assignment_id: string | null
-          calculated_at: string
-          calculation_details: Json
-          early_leave_minutes: number
-          employee_id: string
-          first_check_in: string | null
-          group_id: string | null
-          id: string
-          last_check_out: string | null
-          late_minutes: number
-          notes: string | null
-          overtime_minutes: number
-          schedule_id: string | null
-          scheduled_minutes: number
-          status: string
-          updated_at: string
-          work_date: string
-        }
-        Insert: { id?: string; employee_id: string; work_date: string; assignment_id?: string | null; group_id?: string | null; schedule_id?: string | null; first_check_in?: string | null; last_check_out?: string | null; scheduled_minutes?: number; actual_minutes?: number; late_minutes?: number; early_leave_minutes?: number; overtime_minutes?: number; status: string; approval_status?: string; approved_by?: string | null; approved_at?: string | null; notes?: string | null; calculation_details?: Json; calculated_at?: string; updated_at?: string }
-        Update: { id?: string; employee_id?: string; work_date?: string; assignment_id?: string | null; group_id?: string | null; schedule_id?: string | null; first_check_in?: string | null; last_check_out?: string | null; scheduled_minutes?: number; actual_minutes?: number; late_minutes?: number; early_leave_minutes?: number; overtime_minutes?: number; status?: string; approval_status?: string; approved_by?: string | null; approved_at?: string | null; notes?: string | null; calculation_details?: Json; calculated_at?: string; updated_at?: string }
-        Relationships: []
-      }
-      hr_attendance_holidays: {
-        Row: { id: string; name_ar: string; date_from: string; date_to: string; group_id: string | null; is_paid: boolean; notes: string | null; created_by: string | null; created_at: string; updated_at: string }
-        Insert: { id?: string; name_ar: string; date_from: string; date_to: string; group_id?: string | null; is_paid?: boolean; notes?: string | null; created_by?: string | null; created_at?: string; updated_at?: string }
-        Update: { id?: string; name_ar?: string; date_from?: string; date_to?: string; group_id?: string | null; is_paid?: boolean; notes?: string | null; created_by?: string | null; created_at?: string; updated_at?: string }
-        Relationships: []
-      }
-      hr_attendance_period_audit: {
-        Row: { id: string; period_id: string; action: string; actor_id: string; reason: string | null; snapshot: Json; created_at: string }
-        Insert: { id?: string; period_id: string; action: string; actor_id: string; reason?: string | null; snapshot: Json; created_at?: string }
-        Update: { id?: string; period_id?: string; action?: string; actor_id?: string; reason?: string | null; snapshot?: Json; created_at?: string }
-        Relationships: []
-      }
-      hr_attendance_periods: {
-        Row: { id: string; period_year: number; period_month: number; status: string; summary_snapshot: Json; closed_by: string | null; closed_at: string | null; reopened_by: string | null; reopened_at: string | null; reopen_reason: string | null; created_at: string; updated_at: string }
-        Insert: { id?: string; period_year: number; period_month: number; status?: string; summary_snapshot?: Json; closed_by?: string | null; closed_at?: string | null; reopened_by?: string | null; reopened_at?: string | null; reopen_reason?: string | null; created_at?: string; updated_at?: string }
-        Update: { id?: string; period_year?: number; period_month?: number; status?: string; summary_snapshot?: Json; closed_by?: string | null; closed_at?: string | null; reopened_by?: string | null; reopened_at?: string | null; reopen_reason?: string | null; created_at?: string; updated_at?: string }
-        Relationships: []
-      }
-      hr_attendance_policies: {
-        Row: { id: string; group_id: string; grace_minutes: number; minimum_overtime_minutes: number; deduct_absence: boolean; deduct_late_minutes: boolean; pay_overtime: boolean; overtime_multiplier: number; salary_day_divisor: number; require_daily_approval: boolean; created_at: string; updated_at: string }
-        Insert: { id?: string; group_id: string; grace_minutes?: number; minimum_overtime_minutes?: number; deduct_absence?: boolean; deduct_late_minutes?: boolean; pay_overtime?: boolean; overtime_multiplier?: number; salary_day_divisor?: number; require_daily_approval?: boolean; created_at?: string; updated_at?: string }
-        Update: { id?: string; group_id?: string; grace_minutes?: number; minimum_overtime_minutes?: number; deduct_absence?: boolean; deduct_late_minutes?: boolean; pay_overtime?: boolean; overtime_multiplier?: number; salary_day_divisor?: number; require_daily_approval?: boolean; created_at?: string; updated_at?: string }
-        Relationships: []
-      }
-      hr_attendance_events: {
-        Row: {
-          id: string;
-          employee_id: string;
-          event_type: string;
-          source: string;
-          occurred_at: string;
-          site_id: string | null;
-          device_id: string | null;
-          latitude: number | null;
-          longitude: number | null;
-          gps_accuracy_meters: number | null;
-          distance_from_site_meters: number | null;
-          schedule_id: string | null;
-          validation_status: string;
-          external_event_id: string | null;
-          metadata: Json;
-          created_by: string | null;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          employee_id: string;
-          event_type: string;
-          source: string;
-          occurred_at?: string;
-          site_id?: string | null;
-          device_id?: string | null;
-          latitude?: number | null;
-          longitude?: number | null;
-          gps_accuracy_meters?: number | null;
-          distance_from_site_meters?: number | null;
-          schedule_id?: string | null;
-          validation_status?: string;
-          external_event_id?: string | null;
-          metadata?: Json;
-          created_by?: string | null;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          employee_id?: string;
-          event_type?: string;
-          source?: string;
-          occurred_at?: string;
-          site_id?: string | null;
-          device_id?: string | null;
-          latitude?: number | null;
-          longitude?: number | null;
-          gps_accuracy_meters?: number | null;
-          distance_from_site_meters?: number | null;
-          schedule_id?: string | null;
-          validation_status?: string;
-          external_event_id?: string | null;
-          metadata?: Json;
-          created_by?: string | null;
-          created_at?: string;
-        };
-        Relationships: [];
-      };
-      hr_attendance_anomalies: {
-        Row: { id: string; anomaly_type: string; severity: string; employee_id: string | null; device_id: string | null; event_id: string | null; dedupe_key: string; details: Json; status: string; first_detected_at: string; last_detected_at: string; resolved_by: string | null; resolved_at: string | null; resolution_notes: string | null }
-        Insert: { id?: string; anomaly_type: string; severity: string; employee_id?: string | null; device_id?: string | null; event_id?: string | null; dedupe_key: string; details?: Json; status?: string; first_detected_at?: string; last_detected_at?: string; resolved_by?: string | null; resolved_at?: string | null; resolution_notes?: string | null }
-        Update: { id?: string; anomaly_type?: string; severity?: string; employee_id?: string | null; device_id?: string | null; event_id?: string | null; dedupe_key?: string; details?: Json; status?: string; first_detected_at?: string; last_detected_at?: string; resolved_by?: string | null; resolved_at?: string | null; resolution_notes?: string | null }
-        Relationships: []
-      }
-      hr_biometric_devices: {
-        Row: {
-          id: string;
-          device_code: string;
-          name_ar: string;
-          site_id: string | null;
-          vendor: string | null;
-          is_active: boolean;
-          last_seen_at: string | null;
-          token_hash: string | null;
-          token_last_four: string | null;
-          token_rotated_at: string | null;
-          auth_failures: number;
-          last_auth_failure_at: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          device_code: string;
-          name_ar: string;
-          site_id?: string | null;
-          vendor?: string | null;
-          is_active?: boolean;
-          last_seen_at?: string | null;
-          token_hash?: string | null;
-          token_last_four?: string | null;
-          token_rotated_at?: string | null;
-          auth_failures?: number;
-          last_auth_failure_at?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          device_code?: string;
-          name_ar?: string;
-          site_id?: string | null;
-          vendor?: string | null;
-          is_active?: boolean;
-          last_seen_at?: string | null;
-          token_hash?: string | null;
-          token_last_four?: string | null;
-          token_rotated_at?: string | null;
-          auth_failures?: number;
-          last_auth_failure_at?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
-      hr_shift_assignments: {
-        Row: {
-          id: string;
-          employee_id: string;
-          group_id: string;
-          effective_from: string;
-          effective_to: string | null;
-          created_by: string | null;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          employee_id: string;
-          group_id: string;
-          effective_from: string;
-          effective_to?: string | null;
-          created_by?: string | null;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          employee_id?: string;
-          group_id?: string;
-          effective_from?: string;
-          effective_to?: string | null;
-          created_by?: string | null;
-          created_at?: string;
-        };
-        Relationships: [];
-      };
-      hr_shift_group_sites: {
-        Row: { group_id: string; site_id: string };
-        Insert: { group_id: string; site_id: string };
-        Update: { group_id?: string; site_id?: string };
-        Relationships: [];
-      };
-      hr_shift_groups: {
-        Row: {
-          id: string;
-          code: string;
-          name_ar: string;
-          timezone: string;
-          work_minutes: number;
-          break_minutes: number;
-          break_is_paid: boolean;
-          is_flexible: boolean;
-          is_active: boolean;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          code: string;
-          name_ar: string;
-          timezone?: string;
-          work_minutes?: number;
-          break_minutes?: number;
-          break_is_paid?: boolean;
-          is_flexible?: boolean;
-          is_active?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          code?: string;
-          name_ar?: string;
-          timezone?: string;
-          work_minutes?: number;
-          break_minutes?: number;
-          break_is_paid?: boolean;
-          is_flexible?: boolean;
-          is_active?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
-      hr_shift_schedules: {
-        Row: {
-          id: string;
-          group_id: string;
-          day_of_week: number;
-          is_working_day: boolean;
-          start_time: string;
-          end_time: string;
-          checkin_open_before_minutes: number;
-          checkin_close_after_minutes: number;
-          checkout_open_before_minutes: number;
-          checkout_close_after_minutes: number;
-        };
-        Insert: {
-          id?: string;
-          group_id: string;
-          day_of_week: number;
-          is_working_day?: boolean;
-          start_time: string;
-          end_time: string;
-          checkin_open_before_minutes?: number;
-          checkin_close_after_minutes?: number;
-          checkout_open_before_minutes?: number;
-          checkout_close_after_minutes?: number;
-        };
-        Update: {
-          id?: string;
-          group_id?: string;
-          day_of_week?: number;
-          is_working_day?: boolean;
-          start_time?: string;
-          end_time?: string;
-          checkin_open_before_minutes?: number;
-          checkin_close_after_minutes?: number;
-          checkout_open_before_minutes?: number;
-          checkout_close_after_minutes?: number;
-        };
-        Relationships: [];
-      };
-      hr_work_sites: {
-        Row: {
-          id: string;
-          code: string;
-          name_ar: string;
-          latitude: number;
-          longitude: number;
-          radius_meters: number;
-          max_gps_accuracy_meters: number;
-          is_active: boolean;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          code: string;
-          name_ar: string;
-          latitude: number;
-          longitude: number;
-          radius_meters?: number;
-          max_gps_accuracy_meters?: number;
-          is_active?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          code?: string;
-          name_ar?: string;
-          latitude?: number;
-          longitude?: number;
-          radius_meters?: number;
-          max_gps_accuracy_meters?: number;
-          is_active?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
       hr_leave_rules: {
         Row: {
           balance_mode: string
@@ -2896,6 +2972,7 @@ export type Database = {
           minimum_service_days: number
           notes: string | null
           pay_schedule: Json
+          tenant_id: string
         }
         Insert: {
           balance_mode: string
@@ -2912,6 +2989,7 @@ export type Database = {
           minimum_service_days?: number
           notes?: string | null
           pay_schedule?: Json
+          tenant_id?: string
         }
         Update: {
           balance_mode?: string
@@ -2928,8 +3006,17 @@ export type Database = {
           minimum_service_days?: number
           notes?: string | null
           pay_schedule?: Json
+          tenant_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
       }
       hr_leaves: {
         Row: {
@@ -2947,6 +3034,7 @@ export type Database = {
           request_id: string | null
           sick_cycle_start: string | null
           status: Database["public"]["Enums"]["hr_leave_status"]
+          tenant_id: string
           to_date: string
           updated_at: string
         }
@@ -2965,6 +3053,7 @@ export type Database = {
           request_id?: string | null
           sick_cycle_start?: string | null
           status?: Database["public"]["Enums"]["hr_leave_status"]
+          tenant_id?: string
           to_date: string
           updated_at?: string
         }
@@ -2983,6 +3072,7 @@ export type Database = {
           request_id?: string | null
           sick_cycle_start?: string | null
           status?: Database["public"]["Enums"]["hr_leave_status"]
+          tenant_id?: string
           to_date?: string
           updated_at?: string
         }
@@ -3001,6 +3091,13 @@ export type Database = {
             referencedRelation: "hr_workflow_requests"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       hr_loan_installments: {
@@ -3013,6 +3110,7 @@ export type Database = {
           paid: boolean
           paid_at: string | null
           payroll_line_id: string | null
+          tenant_id: string
         }
         Insert: {
           amount: number
@@ -3023,6 +3121,7 @@ export type Database = {
           paid?: boolean
           paid_at?: string | null
           payroll_line_id?: string | null
+          tenant_id?: string
         }
         Update: {
           amount?: number
@@ -3033,6 +3132,7 @@ export type Database = {
           paid?: boolean
           paid_at?: string | null
           payroll_line_id?: string | null
+          tenant_id?: string
         }
         Relationships: [
           {
@@ -3041,6 +3141,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "hr_loans"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -3059,6 +3166,7 @@ export type Database = {
           reason: string | null
           remaining_amount: number | null
           status: string
+          tenant_id: string
           updated_at: string
         }
         Insert: {
@@ -3075,6 +3183,7 @@ export type Database = {
           reason?: string | null
           remaining_amount?: number | null
           status?: string
+          tenant_id?: string
           updated_at?: string
         }
         Update: {
@@ -3091,6 +3200,7 @@ export type Database = {
           reason?: string | null
           remaining_amount?: number | null
           status?: string
+          tenant_id?: string
           updated_at?: string
         }
         Relationships: [
@@ -3101,14 +3211,18 @@ export type Database = {
             referencedRelation: "hr_employees"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       hr_payroll_lines: {
         Row: {
           absence_deduction: number | null
-          attendance_absence_days: number
-          attendance_late_minutes: number
-          attendance_overtime_minutes: number
           basic_salary: number | null
           bonuses: number | null
           calculation_details: Json
@@ -3131,17 +3245,15 @@ export type Database = {
           run_id: string
           sick_leave_days: number
           sick_leave_deduction: number
+          tenant_id: string
           total_deductions: number | null
           transport_allowance: number | null
-          unpaid_leave_deduction: number | null
           unpaid_leave_days: number
+          unpaid_leave_deduction: number | null
           updated_at: string
         }
         Insert: {
           absence_deduction?: number | null
-          attendance_absence_days?: number
-          attendance_late_minutes?: number
-          attendance_overtime_minutes?: number
           basic_salary?: number | null
           bonuses?: number | null
           calculation_details?: Json
@@ -3164,17 +3276,15 @@ export type Database = {
           run_id: string
           sick_leave_days?: number
           sick_leave_deduction?: number
+          tenant_id?: string
           total_deductions?: number | null
           transport_allowance?: number | null
-          unpaid_leave_deduction?: number | null
           unpaid_leave_days?: number
+          unpaid_leave_deduction?: number | null
           updated_at?: string
         }
         Update: {
           absence_deduction?: number | null
-          attendance_absence_days?: number
-          attendance_late_minutes?: number
-          attendance_overtime_minutes?: number
           basic_salary?: number | null
           bonuses?: number | null
           calculation_details?: Json
@@ -3197,10 +3307,11 @@ export type Database = {
           run_id?: string
           sick_leave_days?: number
           sick_leave_deduction?: number
+          tenant_id?: string
           total_deductions?: number | null
           transport_allowance?: number | null
-          unpaid_leave_deduction?: number | null
           unpaid_leave_days?: number
+          unpaid_leave_deduction?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -3232,6 +3343,13 @@ export type Database = {
             referencedRelation: "hr_payroll_runs"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       hr_payroll_runs: {
@@ -3248,6 +3366,7 @@ export type Database = {
           period_year: number
           run_no: string
           status: Database["public"]["Enums"]["hr_payroll_status"]
+          tenant_id: string
           total_deductions: number | null
           total_gosi: number | null
           total_gross: number | null
@@ -3267,6 +3386,7 @@ export type Database = {
           period_year: number
           run_no: string
           status?: Database["public"]["Enums"]["hr_payroll_status"]
+          tenant_id?: string
           total_deductions?: number | null
           total_gosi?: number | null
           total_gross?: number | null
@@ -3286,61 +3406,225 @@ export type Database = {
           period_year?: number
           run_no?: string
           status?: Database["public"]["Enums"]["hr_payroll_status"]
+          tenant_id?: string
           total_deductions?: number | null
           total_gosi?: number | null
           total_gross?: number | null
           total_net?: number | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
       }
-      hr_service_interruptions: {
+      hr_shift_assignments: {
         Row: {
           created_at: string
           created_by: string | null
+          effective_from: string
+          effective_to: string | null
           employee_id: string
-          exclude_from_service: boolean
-          from_date: string
+          group_id: string
           id: string
-          legal_basis: string | null
-          notes: string | null
-          reason: string
-          to_date: string
-          updated_at: string
+          tenant_id: string
         }
         Insert: {
           created_at?: string
           created_by?: string | null
+          effective_from: string
+          effective_to?: string | null
           employee_id: string
-          exclude_from_service?: boolean
-          from_date: string
+          group_id: string
           id?: string
-          legal_basis?: string | null
-          notes?: string | null
-          reason: string
-          to_date: string
-          updated_at?: string
+          tenant_id?: string
         }
         Update: {
           created_at?: string
           created_by?: string | null
+          effective_from?: string
+          effective_to?: string | null
           employee_id?: string
-          exclude_from_service?: boolean
-          from_date?: string
+          group_id?: string
           id?: string
-          legal_basis?: string | null
-          notes?: string | null
-          reason?: string
-          to_date?: string
-          updated_at?: string
+          tenant_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "hr_service_interruptions_employee_id_fkey"
+            foreignKeyName: "hr_shift_assignments_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
             referencedRelation: "hr_employees"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hr_shift_assignments_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "hr_shift_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
+      hr_shift_group_sites: {
+        Row: {
+          group_id: string
+          site_id: string
+          tenant_id: string
+        }
+        Insert: {
+          group_id: string
+          site_id: string
+          tenant_id?: string
+        }
+        Update: {
+          group_id?: string
+          site_id?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_shift_group_sites_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "hr_shift_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hr_shift_group_sites_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "hr_work_sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
+      hr_shift_groups: {
+        Row: {
+          break_is_paid: boolean
+          break_minutes: number
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          is_flexible: boolean
+          name_ar: string
+          tenant_id: string
+          timezone: string
+          updated_at: string
+          work_minutes: number
+        }
+        Insert: {
+          break_is_paid?: boolean
+          break_minutes?: number
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_flexible?: boolean
+          name_ar: string
+          tenant_id?: string
+          timezone?: string
+          updated_at?: string
+          work_minutes?: number
+        }
+        Update: {
+          break_is_paid?: boolean
+          break_minutes?: number
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_flexible?: boolean
+          name_ar?: string
+          tenant_id?: string
+          timezone?: string
+          updated_at?: string
+          work_minutes?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
+      hr_shift_schedules: {
+        Row: {
+          checkin_close_after_minutes: number
+          checkin_open_before_minutes: number
+          checkout_close_after_minutes: number
+          checkout_open_before_minutes: number
+          day_of_week: number
+          end_time: string
+          group_id: string
+          id: string
+          is_working_day: boolean
+          start_time: string
+          tenant_id: string
+        }
+        Insert: {
+          checkin_close_after_minutes?: number
+          checkin_open_before_minutes?: number
+          checkout_close_after_minutes?: number
+          checkout_open_before_minutes?: number
+          day_of_week: number
+          end_time: string
+          group_id: string
+          id?: string
+          is_working_day?: boolean
+          start_time: string
+          tenant_id?: string
+        }
+        Update: {
+          checkin_close_after_minutes?: number
+          checkin_open_before_minutes?: number
+          checkout_close_after_minutes?: number
+          checkout_open_before_minutes?: number
+          day_of_week?: number
+          end_time?: string
+          group_id?: string
+          id?: string
+          is_working_day?: boolean
+          start_time?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_shift_schedules_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "hr_shift_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -3350,13 +3634,10 @@ export type Database = {
           approved_by: string | null
           clearance_status: Json | null
           contract_id: string | null
-          calendar_service_days: number | null
           created_at: string
           created_by: string | null
           employee_id: string
           eos_amount: number | null
-          effective_service_days: number | null
-          excluded_service_days: number
           id: string
           last_working_day: string
           leave_balance_amount: number | null
@@ -3373,6 +3654,7 @@ export type Database = {
           service_years: number | null
           settlement_details: Json | null
           status: string
+          tenant_id: string
           termination_no: string
           updated_at: string
         }
@@ -3381,13 +3663,10 @@ export type Database = {
           approved_by?: string | null
           clearance_status?: Json | null
           contract_id?: string | null
-          calendar_service_days?: number | null
           created_at?: string
           created_by?: string | null
           employee_id: string
           eos_amount?: number | null
-          effective_service_days?: number | null
-          excluded_service_days?: number
           id?: string
           last_working_day: string
           leave_balance_amount?: number | null
@@ -3404,6 +3683,7 @@ export type Database = {
           service_years?: number | null
           settlement_details?: Json | null
           status?: string
+          tenant_id?: string
           termination_no: string
           updated_at?: string
         }
@@ -3412,13 +3692,10 @@ export type Database = {
           approved_by?: string | null
           clearance_status?: Json | null
           contract_id?: string | null
-          calendar_service_days?: number | null
           created_at?: string
           created_by?: string | null
           employee_id?: string
           eos_amount?: number | null
-          effective_service_days?: number | null
-          excluded_service_days?: number
           id?: string
           last_working_day?: string
           leave_balance_amount?: number | null
@@ -3435,6 +3712,7 @@ export type Database = {
           service_years?: number | null
           settlement_details?: Json | null
           status?: string
+          tenant_id?: string
           termination_no?: string
           updated_at?: string
         }
@@ -3460,6 +3738,63 @@ export type Database = {
             referencedRelation: "hr_workflow_requests"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
+      hr_work_sites: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          latitude: number
+          longitude: number
+          max_gps_accuracy_meters: number
+          name_ar: string
+          radius_meters: number
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          latitude: number
+          longitude: number
+          max_gps_accuracy_meters?: number
+          name_ar: string
+          radius_meters?: number
+          tenant_id?: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          latitude?: number
+          longitude?: number
+          max_gps_accuracy_meters?: number
+          name_ar?: string
+          radius_meters?: number
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       hr_workflow_requests: {
@@ -3478,6 +3813,7 @@ export type Database = {
           status: Database["public"]["Enums"]["hr_request_status"]
           subject: string | null
           submitted_at: string | null
+          tenant_id: string
           updated_at: string
         }
         Insert: {
@@ -3495,6 +3831,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["hr_request_status"]
           subject?: string | null
           submitted_at?: string | null
+          tenant_id?: string
           updated_at?: string
         }
         Update: {
@@ -3512,6 +3849,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["hr_request_status"]
           subject?: string | null
           submitted_at?: string | null
+          tenant_id?: string
           updated_at?: string
         }
         Relationships: [
@@ -3521,6 +3859,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "hr_employees"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -3535,6 +3880,7 @@ export type Database = {
           id: string
           request_id: string
           step_order: number
+          tenant_id: string
         }
         Insert: {
           acted_at?: string | null
@@ -3546,6 +3892,7 @@ export type Database = {
           id?: string
           request_id: string
           step_order: number
+          tenant_id?: string
         }
         Update: {
           acted_at?: string | null
@@ -3557,6 +3904,7 @@ export type Database = {
           id?: string
           request_id?: string
           step_order?: number
+          tenant_id?: string
         }
         Relationships: [
           {
@@ -3565,6 +3913,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "hr_workflow_requests"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -3587,6 +3942,7 @@ export type Database = {
           started_at: string | null
           status: string
           template_id: string | null
+          tenant_id: string
           total_rows: number
           updated_at: string
           valid_rows: number
@@ -3609,6 +3965,7 @@ export type Database = {
           started_at?: string | null
           status?: string
           template_id?: string | null
+          tenant_id?: string
           total_rows?: number
           updated_at?: string
           valid_rows?: number
@@ -3631,6 +3988,7 @@ export type Database = {
           started_at?: string | null
           status?: string
           template_id?: string | null
+          tenant_id?: string
           total_rows?: number
           updated_at?: string
           valid_rows?: number
@@ -3642,6 +4000,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "import_templates"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -3656,6 +4021,7 @@ export type Database = {
           row_data: Json | null
           row_number: number | null
           severity: string
+          tenant_id: string
         }
         Insert: {
           batch_id: string
@@ -3667,6 +4033,7 @@ export type Database = {
           row_data?: Json | null
           row_number?: number | null
           severity?: string
+          tenant_id?: string
         }
         Update: {
           batch_id?: string
@@ -3678,6 +4045,7 @@ export type Database = {
           row_data?: Json | null
           row_number?: number | null
           severity?: string
+          tenant_id?: string
         }
         Relationships: [
           {
@@ -3686,6 +4054,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "import_batches"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -3700,6 +4075,7 @@ export type Database = {
           name: string
           options: Json
           source_type: string
+          tenant_id: string
           updated_at: string
         }
         Insert: {
@@ -3712,6 +4088,7 @@ export type Database = {
           name: string
           options?: Json
           source_type: string
+          tenant_id?: string
           updated_at?: string
         }
         Update: {
@@ -3724,9 +4101,18 @@ export type Database = {
           name?: string
           options?: Json
           source_type?: string
+          tenant_id?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
       }
       inventory_issue_consumptions: {
         Row: {
@@ -3734,6 +4120,7 @@ export type Database = {
           issue_line_id: string
           qty: number
           stock_layer_id: string
+          tenant_id: string
           unit_cost: number
         }
         Insert: {
@@ -3741,6 +4128,7 @@ export type Database = {
           issue_line_id: string
           qty: number
           stock_layer_id: string
+          tenant_id?: string
           unit_cost: number
         }
         Update: {
@@ -3748,6 +4136,7 @@ export type Database = {
           issue_line_id?: string
           qty?: number
           stock_layer_id?: string
+          tenant_id?: string
           unit_cost?: number
         }
         Relationships: [
@@ -3765,6 +4154,13 @@ export type Database = {
             referencedRelation: "inventory_stock_layers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       inventory_issue_lines: {
@@ -3774,6 +4170,7 @@ export type Database = {
           item_id: string
           line_total: number | null
           qty: number
+          tenant_id: string
           unit_cost: number
         }
         Insert: {
@@ -3782,6 +4179,7 @@ export type Database = {
           item_id: string
           line_total?: number | null
           qty: number
+          tenant_id?: string
           unit_cost?: number
         }
         Update: {
@@ -3790,6 +4188,7 @@ export type Database = {
           item_id?: string
           line_total?: number | null
           qty?: number
+          tenant_id?: string
           unit_cost?: number
         }
         Relationships: [
@@ -3807,6 +4206,13 @@ export type Database = {
             referencedRelation: "inventory_items"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       inventory_issues: {
@@ -3819,6 +4225,7 @@ export type Database = {
           issue_type: string
           notes: string | null
           project_id: string | null
+          tenant_id: string
           warehouse_id: string
         }
         Insert: {
@@ -3830,6 +4237,7 @@ export type Database = {
           issue_type?: string
           notes?: string | null
           project_id?: string | null
+          tenant_id?: string
           warehouse_id: string
         }
         Update: {
@@ -3841,6 +4249,7 @@ export type Database = {
           issue_type?: string
           notes?: string | null
           project_id?: string | null
+          tenant_id?: string
           warehouse_id?: string
         }
         Relationships: [
@@ -3858,6 +4267,13 @@ export type Database = {
             referencedRelation: "inventory_warehouses"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       inventory_items: {
@@ -3870,6 +4286,7 @@ export type Database = {
           name_en: string | null
           reorder_point: number
           sku: string
+          tenant_id: string
           unit: string
           updated_at: string
         }
@@ -3882,6 +4299,7 @@ export type Database = {
           name_en?: string | null
           reorder_point?: number
           sku: string
+          tenant_id?: string
           unit?: string
           updated_at?: string
         }
@@ -3894,10 +4312,19 @@ export type Database = {
           name_en?: string | null
           reorder_point?: number
           sku?: string
+          tenant_id?: string
           unit?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
       }
       inventory_receipt_lines: {
         Row: {
@@ -3906,6 +4333,7 @@ export type Database = {
           line_total: number | null
           qty: number
           receipt_id: string
+          tenant_id: string
           unit_cost: number
         }
         Insert: {
@@ -3914,6 +4342,7 @@ export type Database = {
           line_total?: number | null
           qty: number
           receipt_id: string
+          tenant_id?: string
           unit_cost: number
         }
         Update: {
@@ -3922,6 +4351,7 @@ export type Database = {
           line_total?: number | null
           qty?: number
           receipt_id?: string
+          tenant_id?: string
           unit_cost?: number
         }
         Relationships: [
@@ -3939,6 +4369,13 @@ export type Database = {
             referencedRelation: "inventory_receipts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       inventory_receipts: {
@@ -3951,6 +4388,7 @@ export type Database = {
           receipt_no: string
           reference: string | null
           source_type: string
+          tenant_id: string
           vendor_id: string | null
           warehouse_id: string
         }
@@ -3963,6 +4401,7 @@ export type Database = {
           receipt_no: string
           reference?: string | null
           source_type?: string
+          tenant_id?: string
           vendor_id?: string | null
           warehouse_id: string
         }
@@ -3975,6 +4414,7 @@ export type Database = {
           receipt_no?: string
           reference?: string | null
           source_type?: string
+          tenant_id?: string
           vendor_id?: string | null
           warehouse_id?: string
         }
@@ -3993,6 +4433,13 @@ export type Database = {
             referencedRelation: "inventory_warehouses"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       inventory_stock_layers: {
@@ -4004,6 +4451,7 @@ export type Database = {
           qty_remaining: number
           receipt_line_id: string | null
           received_at: string
+          tenant_id: string
           unit_cost: number
           warehouse_id: string
         }
@@ -4015,6 +4463,7 @@ export type Database = {
           qty_remaining: number
           receipt_line_id?: string | null
           received_at?: string
+          tenant_id?: string
           unit_cost: number
           warehouse_id: string
         }
@@ -4026,6 +4475,7 @@ export type Database = {
           qty_remaining?: number
           receipt_line_id?: string | null
           received_at?: string
+          tenant_id?: string
           unit_cost?: number
           warehouse_id?: string
         }
@@ -4051,6 +4501,13 @@ export type Database = {
             referencedRelation: "inventory_warehouses"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       inventory_warehouses: {
@@ -4065,6 +4522,7 @@ export type Database = {
           notes: string | null
           project_id: string | null
           site_location: string | null
+          tenant_id: string
           type: string
           updated_at: string
           vehicle_id: string | null
@@ -4080,6 +4538,7 @@ export type Database = {
           notes?: string | null
           project_id?: string | null
           site_location?: string | null
+          tenant_id?: string
           type?: string
           updated_at?: string
           vehicle_id?: string | null
@@ -4095,6 +4554,7 @@ export type Database = {
           notes?: string | null
           project_id?: string | null
           site_location?: string | null
+          tenant_id?: string
           type?: string
           updated_at?: string
           vehicle_id?: string | null
@@ -4114,6 +4574,13 @@ export type Database = {
             referencedRelation: "fleet_vehicles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       invoice_allocations: {
@@ -4124,6 +4591,7 @@ export type Database = {
           invoice_id: string | null
           payment_id: string
           purchase_invoice_id: string | null
+          tenant_id: string
         }
         Insert: {
           amount: number
@@ -4132,6 +4600,7 @@ export type Database = {
           invoice_id?: string | null
           payment_id: string
           purchase_invoice_id?: string | null
+          tenant_id?: string
         }
         Update: {
           amount?: number
@@ -4140,6 +4609,7 @@ export type Database = {
           invoice_id?: string | null
           payment_id?: string
           purchase_invoice_id?: string | null
+          tenant_id?: string
         }
         Relationships: [
           {
@@ -4163,6 +4633,13 @@ export type Database = {
             referencedRelation: "purchase_invoices"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       invoices: {
@@ -4179,9 +4656,9 @@ export type Database = {
           project_id: string | null
           retention_amount: number
           status: Database["public"]["Enums"]["invoice_status"] | null
+          tenant_id: string
           total_amount: number | null
           updated_at: string
-          tax_category: string | null
           vat_amount: number | null
         }
         Insert: {
@@ -4197,9 +4674,9 @@ export type Database = {
           project_id?: string | null
           retention_amount?: number
           status?: Database["public"]["Enums"]["invoice_status"] | null
+          tenant_id?: string
           total_amount?: number | null
           updated_at?: string
-          tax_category?: string | null
           vat_amount?: number | null
         }
         Update: {
@@ -4215,9 +4692,9 @@ export type Database = {
           project_id?: string | null
           retention_amount?: number
           status?: Database["public"]["Enums"]["invoice_status"] | null
+          tenant_id?: string
           total_amount?: number | null
           updated_at?: string
-          tax_category?: string | null
           vat_amount?: number | null
         }
         Relationships: [
@@ -4235,6 +4712,13 @@ export type Database = {
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       job_title_permissions: {
@@ -4244,6 +4728,7 @@ export type Database = {
           id: string
           job_title_id: string
           module_key: string
+          tenant_id: string
         }
         Insert: {
           action_key: string
@@ -4251,6 +4736,7 @@ export type Database = {
           id?: string
           job_title_id: string
           module_key: string
+          tenant_id?: string
         }
         Update: {
           action_key?: string
@@ -4258,6 +4744,7 @@ export type Database = {
           id?: string
           job_title_id?: string
           module_key?: string
+          tenant_id?: string
         }
         Relationships: [
           {
@@ -4281,6 +4768,13 @@ export type Database = {
             referencedRelation: "permission_modules"
             referencedColumns: ["key"]
           },
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       job_titles: {
@@ -4291,6 +4785,7 @@ export type Database = {
           is_active: boolean | null
           name_ar: string
           name_en: string | null
+          tenant_id: string
         }
         Insert: {
           code?: string | null
@@ -4299,6 +4794,7 @@ export type Database = {
           is_active?: boolean | null
           name_ar: string
           name_en?: string | null
+          tenant_id?: string
         }
         Update: {
           code?: string | null
@@ -4307,8 +4803,17 @@ export type Database = {
           is_active?: boolean | null
           name_ar?: string
           name_en?: string | null
+          tenant_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
       }
       notifications: {
         Row: {
@@ -4319,6 +4824,7 @@ export type Database = {
           message: string | null
           metadata: Json
           read_at: string | null
+          tenant_id: string
           title: string
           type: string | null
           user_id: string | null
@@ -4331,6 +4837,7 @@ export type Database = {
           message?: string | null
           metadata?: Json
           read_at?: string | null
+          tenant_id?: string
           title: string
           type?: string | null
           user_id?: string | null
@@ -4343,11 +4850,20 @@ export type Database = {
           message?: string | null
           metadata?: Json
           read_at?: string | null
+          tenant_id?: string
           title?: string
           type?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
       }
       onexa_account_role_mappings: {
         Row: {
@@ -4387,6 +4903,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "onexa_legal_entities"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_account_role_mappings_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_sales_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
           },
           {
             foreignKeyName: "onexa_account_role_mappings_tenant_id_fkey"
@@ -4449,11 +4972,369 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "onexa_branches_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_sales_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
             foreignKeyName: "onexa_branches_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "onexa_workspace"
             referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
+      onexa_business_document_events: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          document_id: string
+          event_data: Json
+          event_type: string
+          from_status: string | null
+          id: number
+          reason: string | null
+          tenant_id: string
+          to_status: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          document_id: string
+          event_data?: Json
+          event_type: string
+          from_status?: string | null
+          id?: never
+          reason?: string | null
+          tenant_id: string
+          to_status?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          document_id?: string
+          event_data?: Json
+          event_type?: string
+          from_status?: string | null
+          id?: never
+          reason?: string | null
+          tenant_id?: string
+          to_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_business_document_events_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_accounting_inbox"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_business_document_events_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_business_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_business_document_events_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_sales_inventory_reconciliation"
+            referencedColumns: ["document_id"]
+          },
+        ]
+      }
+      onexa_business_document_lines: {
+        Row: {
+          account_role: string | null
+          created_at: string
+          description: string
+          dimensions: Json
+          discount_amount: number
+          document_id: string
+          gross_amount: number
+          id: string
+          item_id: string | null
+          line_number: number
+          net_amount: number
+          quantity: number
+          tax_amount: number
+          tax_code: string | null
+          tax_rate: number
+          tenant_id: string
+          unit_of_measure: string | null
+          unit_price: number
+          warehouse_id: string | null
+        }
+        Insert: {
+          account_role?: string | null
+          created_at?: string
+          description: string
+          dimensions?: Json
+          discount_amount?: number
+          document_id: string
+          gross_amount?: number
+          id?: string
+          item_id?: string | null
+          line_number: number
+          net_amount?: number
+          quantity?: number
+          tax_amount?: number
+          tax_code?: string | null
+          tax_rate?: number
+          tenant_id: string
+          unit_of_measure?: string | null
+          unit_price?: number
+          warehouse_id?: string | null
+        }
+        Update: {
+          account_role?: string | null
+          created_at?: string
+          description?: string
+          dimensions?: Json
+          discount_amount?: number
+          document_id?: string
+          gross_amount?: number
+          id?: string
+          item_id?: string | null
+          line_number?: number
+          net_amount?: number
+          quantity?: number
+          tax_amount?: number
+          tax_code?: string | null
+          tax_rate?: number
+          tenant_id?: string
+          unit_of_measure?: string | null
+          unit_price?: number
+          warehouse_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_business_document_lines_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_accounting_inbox"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_business_document_lines_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_business_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_business_document_lines_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_sales_inventory_reconciliation"
+            referencedColumns: ["document_id"]
+          },
+        ]
+      }
+      onexa_business_documents: {
+        Row: {
+          accounting_date: string
+          approved_at: string | null
+          approved_by: string | null
+          branch_id: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          created_at: string
+          created_by: string
+          currency: string
+          dimensions: Json
+          discount_total: number
+          document_date: string
+          document_number: string
+          document_type: string
+          due_date: string | null
+          external_reference: string | null
+          gross_total: number
+          id: string
+          import_batch_id: string | null
+          legal_entity_id: string
+          memo: string | null
+          module_key: string
+          origin: string
+          party_id: string | null
+          party_name_snapshot: string | null
+          party_type: string | null
+          posted_at: string | null
+          posted_by: string | null
+          posted_journal_id: string | null
+          posting_error: string | null
+          rejected_at: string | null
+          rejected_by: string | null
+          revision: number
+          source_snapshot: Json
+          status: string
+          submitted_at: string | null
+          submitted_by: string | null
+          subtotal: number
+          tax_total: number
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          accounting_date: string
+          approved_at?: string | null
+          approved_by?: string | null
+          branch_id?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          created_by?: string
+          currency?: string
+          dimensions?: Json
+          discount_total?: number
+          document_date: string
+          document_number: string
+          document_type: string
+          due_date?: string | null
+          external_reference?: string | null
+          gross_total?: number
+          id?: string
+          import_batch_id?: string | null
+          legal_entity_id: string
+          memo?: string | null
+          module_key: string
+          origin?: string
+          party_id?: string | null
+          party_name_snapshot?: string | null
+          party_type?: string | null
+          posted_at?: string | null
+          posted_by?: string | null
+          posted_journal_id?: string | null
+          posting_error?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          revision?: number
+          source_snapshot?: Json
+          status?: string
+          submitted_at?: string | null
+          submitted_by?: string | null
+          subtotal?: number
+          tax_total?: number
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          accounting_date?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          branch_id?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          created_by?: string
+          currency?: string
+          dimensions?: Json
+          discount_total?: number
+          document_date?: string
+          document_number?: string
+          document_type?: string
+          due_date?: string | null
+          external_reference?: string | null
+          gross_total?: number
+          id?: string
+          import_batch_id?: string | null
+          legal_entity_id?: string
+          memo?: string | null
+          module_key?: string
+          origin?: string
+          party_id?: string | null
+          party_name_snapshot?: string | null
+          party_type?: string | null
+          posted_at?: string | null
+          posted_by?: string | null
+          posted_journal_id?: string | null
+          posting_error?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          revision?: number
+          source_snapshot?: Json
+          status?: string
+          submitted_at?: string | null
+          submitted_by?: string | null
+          subtotal?: number
+          tax_total?: number
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_business_documents_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_business_documents_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_legal_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_business_documents_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_sales_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+        ]
+      }
+      onexa_document_sequences: {
+        Row: {
+          document_type: string
+          fiscal_year: number
+          legal_entity_id: string
+          next_number: number
+          padding: number
+          prefix: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          document_type: string
+          fiscal_year: number
+          legal_entity_id: string
+          next_number?: number
+          padding?: number
+          prefix: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          document_type?: string
+          fiscal_year?: number
+          legal_entity_id?: string
+          next_number?: number
+          padding?: number
+          prefix?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_document_sequences_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_legal_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_document_sequences_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_sales_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
           },
         ]
       }
@@ -4503,11 +5384,192 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "onexa_fiscal_periods_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_sales_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
             foreignKeyName: "onexa_fiscal_periods_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "onexa_workspace"
             referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
+      onexa_inventory_balances: {
+        Row: {
+          average_unit_cost: number | null
+          branch_id: string
+          inventory_value: number
+          item_id: string
+          legal_entity_id: string
+          quantity_on_hand: number
+          tenant_id: string
+          updated_at: string
+          valuation_currency: string
+          warehouse_id: string
+        }
+        Insert: {
+          average_unit_cost?: number | null
+          branch_id: string
+          inventory_value?: number
+          item_id: string
+          legal_entity_id: string
+          quantity_on_hand?: number
+          tenant_id: string
+          updated_at?: string
+          valuation_currency: string
+          warehouse_id: string
+        }
+        Update: {
+          average_unit_cost?: number | null
+          branch_id?: string
+          inventory_value?: number
+          item_id?: string
+          legal_entity_id?: string
+          quantity_on_hand?: number
+          tenant_id?: string
+          updated_at?: string
+          valuation_currency?: string
+          warehouse_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_inventory_balances_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_inventory_balances_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_legal_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_inventory_balances_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_sales_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+        ]
+      }
+      onexa_inventory_movements: {
+        Row: {
+          branch_id: string
+          created_at: string
+          created_by: string
+          id: string
+          item_id: string
+          journal_id: string | null
+          legal_entity_id: string
+          movement_type: string
+          occurred_at: string
+          quantity_delta: number
+          source_document_id: string
+          source_document_line_id: string
+          source_revision: number
+          tenant_id: string
+          unit_cost: number
+          valuation_currency: string
+          value_delta: number
+          warehouse_id: string
+        }
+        Insert: {
+          branch_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          item_id: string
+          journal_id?: string | null
+          legal_entity_id: string
+          movement_type: string
+          occurred_at?: string
+          quantity_delta: number
+          source_document_id: string
+          source_document_line_id: string
+          source_revision: number
+          tenant_id: string
+          unit_cost: number
+          valuation_currency: string
+          value_delta: number
+          warehouse_id: string
+        }
+        Update: {
+          branch_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          item_id?: string
+          journal_id?: string | null
+          legal_entity_id?: string
+          movement_type?: string
+          occurred_at?: string
+          quantity_delta?: number
+          source_document_id?: string
+          source_document_line_id?: string
+          source_revision?: number
+          tenant_id?: string
+          unit_cost?: number
+          valuation_currency?: string
+          value_delta?: number
+          warehouse_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_inventory_movements_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_inventory_movements_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_legal_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_inventory_movements_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_sales_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_inventory_movements_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_accounting_inbox"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_inventory_movements_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_business_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_inventory_movements_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_sales_inventory_reconciliation"
+            referencedColumns: ["document_id"]
+          },
+          {
+            foreignKeyName: "onexa_inventory_movements_source_document_line_id_fkey"
+            columns: ["source_document_line_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_business_document_lines"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -4589,6 +5651,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "onexa_legal_entities"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_journal_headers_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_sales_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
           },
           {
             foreignKeyName: "onexa_journal_headers_reversal_journal_id_fkey"
@@ -4894,6 +5963,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "onexa_posting_registry_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_sales_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
             foreignKeyName: "onexa_posting_registry_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
@@ -4934,6 +6010,84 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "onexa_tenants"
             referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
+      onexa_sales_posting_runs: {
+        Row: {
+          document_id: string
+          inventory_cost: number
+          journal_id: string
+          legal_entity_id: string
+          posted_at: string
+          posted_by: string
+          receivable_amount: number
+          revenue_amount: number
+          source_revision: number
+          tax_amount: number
+          tenant_id: string
+        }
+        Insert: {
+          document_id: string
+          inventory_cost: number
+          journal_id: string
+          legal_entity_id: string
+          posted_at?: string
+          posted_by: string
+          receivable_amount: number
+          revenue_amount: number
+          source_revision: number
+          tax_amount: number
+          tenant_id: string
+        }
+        Update: {
+          document_id?: string
+          inventory_cost?: number
+          journal_id?: string
+          legal_entity_id?: string
+          posted_at?: string
+          posted_by?: string
+          receivable_amount?: number
+          revenue_amount?: number
+          source_revision?: number
+          tax_amount?: number
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_sales_posting_runs_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: true
+            referencedRelation: "onexa_accounting_inbox"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_sales_posting_runs_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: true
+            referencedRelation: "onexa_business_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_sales_posting_runs_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: true
+            referencedRelation: "onexa_sales_inventory_reconciliation"
+            referencedColumns: ["document_id"]
+          },
+          {
+            foreignKeyName: "onexa_sales_posting_runs_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_legal_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_sales_posting_runs_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_sales_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
           },
         ]
       }
@@ -5317,6 +6471,7 @@ export type Database = {
           payment_date: string
           purchase_invoice_id: string | null
           reference: string | null
+          tenant_id: string
           vendor_id: string | null
         }
         Insert: {
@@ -5331,6 +6486,7 @@ export type Database = {
           payment_date?: string
           purchase_invoice_id?: string | null
           reference?: string | null
+          tenant_id?: string
           vendor_id?: string | null
         }
         Update: {
@@ -5345,9 +6501,17 @@ export type Database = {
           payment_date?: string
           purchase_invoice_id?: string | null
           reference?: string | null
+          tenant_id?: string
           vendor_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
           {
             foreignKeyName: "payments_customer_id_fkey"
             columns: ["customer_id"]
@@ -5394,6 +6558,7 @@ export type Database = {
           overtime: number
           period: string
           project_id: string | null
+          tenant_id: string
           total_cost: number
         }
         Insert: {
@@ -5411,6 +6576,7 @@ export type Database = {
           overtime?: number
           period: string
           project_id?: string | null
+          tenant_id?: string
           total_cost?: number
         }
         Update: {
@@ -5428,9 +6594,17 @@ export type Database = {
           overtime?: number
           period?: string
           project_id?: string | null
+          tenant_id?: string
           total_cost?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
           {
             foreignKeyName: "payroll_imports_batch_id_fkey"
             columns: ["batch_id"]
@@ -5452,18 +6626,29 @@ export type Database = {
           key: string
           name_ar: string
           sort_order: number
+          tenant_id: string
         }
         Insert: {
           key: string
           name_ar: string
           sort_order?: number
+          tenant_id?: string
         }
         Update: {
           key?: string
           name_ar?: string
           sort_order?: number
+          tenant_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
       }
       permission_audit_log: {
         Row: {
@@ -5474,6 +6659,7 @@ export type Database = {
           module_key: string
           new_value: boolean | null
           old_value: boolean | null
+          tenant_id: string
           user_id: string
         }
         Insert: {
@@ -5484,6 +6670,7 @@ export type Database = {
           module_key: string
           new_value?: boolean | null
           old_value?: boolean | null
+          tenant_id?: string
           user_id: string
         }
         Update: {
@@ -5494,9 +6681,18 @@ export type Database = {
           module_key?: string
           new_value?: boolean | null
           old_value?: boolean | null
+          tenant_id?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
       }
       permission_modules: {
         Row: {
@@ -5507,6 +6703,7 @@ export type Database = {
           name_en: string | null
           parent_key: string | null
           sort_order: number
+          tenant_id: string
         }
         Insert: {
           category?: string | null
@@ -5516,6 +6713,7 @@ export type Database = {
           name_en?: string | null
           parent_key?: string | null
           sort_order?: number
+          tenant_id?: string
         }
         Update: {
           category?: string | null
@@ -5525,8 +6723,16 @@ export type Database = {
           name_en?: string | null
           parent_key?: string | null
           sort_order?: number
+          tenant_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
           {
             foreignKeyName: "permission_modules_parent_key_fkey"
             columns: ["parent_key"]
@@ -5547,6 +6753,7 @@ export type Database = {
           is_done: boolean
           order_index: number
           pinned: boolean
+          tenant_id: string
           title: string | null
           updated_at: string
           user_id: string
@@ -5561,6 +6768,7 @@ export type Database = {
           is_done?: boolean
           order_index?: number
           pinned?: boolean
+          tenant_id?: string
           title?: string | null
           updated_at?: string
           user_id: string
@@ -5575,11 +6783,20 @@ export type Database = {
           is_done?: boolean
           order_index?: number
           pinned?: boolean
+          tenant_id?: string
           title?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -5596,6 +6813,7 @@ export type Database = {
           manager_id: string | null
           phone: string | null
           status: string
+          tenant_id: string
           updated_at: string
         }
         Insert: {
@@ -5612,6 +6830,7 @@ export type Database = {
           manager_id?: string | null
           phone?: string | null
           status?: string
+          tenant_id?: string
           updated_at?: string
         }
         Update: {
@@ -5628,9 +6847,17 @@ export type Database = {
           manager_id?: string | null
           phone?: string | null
           status?: string
+          tenant_id?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
           {
             foreignKeyName: "profiles_department_id_fkey"
             columns: ["department_id"]
@@ -5656,6 +6883,7 @@ export type Database = {
           progress: number | null
           project_id: string
           start_date: string | null
+          tenant_id: string
           weight: number | null
         }
         Insert: {
@@ -5666,6 +6894,7 @@ export type Database = {
           progress?: number | null
           project_id: string
           start_date?: string | null
+          tenant_id?: string
           weight?: number | null
         }
         Update: {
@@ -5676,9 +6905,17 @@ export type Database = {
           progress?: number | null
           project_id?: string
           start_date?: string | null
+          tenant_id?: string
           weight?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
           {
             foreignKeyName: "project_milestones_project_id_fkey"
             columns: ["project_id"]
@@ -5710,6 +6947,7 @@ export type Database = {
           retention_pct: number | null
           start_date: string | null
           status: Database["public"]["Enums"]["project_status"] | null
+          tenant_id: string
           unbilled_amount: number | null
           updated_at: string
         }
@@ -5734,6 +6972,7 @@ export type Database = {
           retention_pct?: number | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["project_status"] | null
+          tenant_id?: string
           unbilled_amount?: number | null
           updated_at?: string
         }
@@ -5758,10 +6997,18 @@ export type Database = {
           retention_pct?: number | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["project_status"] | null
+          tenant_id?: string
           unbilled_amount?: number | null
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
           {
             foreignKeyName: "projects_customer_id_fkey"
             columns: ["customer_id"]
@@ -5785,9 +7032,9 @@ export type Database = {
           project_id: string | null
           purchase_order_id: string | null
           status: Database["public"]["Enums"]["purchase_invoice_status"] | null
+          tenant_id: string
           total_amount: number | null
           updated_at: string
-          tax_category: string | null
           vat_amount: number | null
           vendor_id: string | null
         }
@@ -5804,9 +7051,9 @@ export type Database = {
           project_id?: string | null
           purchase_order_id?: string | null
           status?: Database["public"]["Enums"]["purchase_invoice_status"] | null
+          tenant_id?: string
           total_amount?: number | null
           updated_at?: string
-          tax_category?: string | null
           vat_amount?: number | null
           vendor_id?: string | null
         }
@@ -5823,13 +7070,20 @@ export type Database = {
           project_id?: string | null
           purchase_order_id?: string | null
           status?: Database["public"]["Enums"]["purchase_invoice_status"] | null
+          tenant_id?: string
           total_amount?: number | null
           updated_at?: string
-          tax_category?: string | null
           vat_amount?: number | null
           vendor_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
           {
             foreignKeyName: "purchase_invoices_project_id_fkey"
             columns: ["project_id"]
@@ -5866,6 +7120,7 @@ export type Database = {
           po_number: string
           project_id: string | null
           status: Database["public"]["Enums"]["po_status"] | null
+          tenant_id: string
           total_amount: number | null
           updated_at: string
           vat_amount: number | null
@@ -5883,6 +7138,7 @@ export type Database = {
           po_number: string
           project_id?: string | null
           status?: Database["public"]["Enums"]["po_status"] | null
+          tenant_id?: string
           total_amount?: number | null
           updated_at?: string
           vat_amount?: number | null
@@ -5900,12 +7156,20 @@ export type Database = {
           po_number?: string
           project_id?: string | null
           status?: Database["public"]["Enums"]["po_status"] | null
+          tenant_id?: string
           total_amount?: number | null
           updated_at?: string
           vat_amount?: number | null
           vendor_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
           {
             foreignKeyName: "purchase_orders_project_id_fkey"
             columns: ["project_id"]
@@ -5930,6 +7194,7 @@ export type Database = {
           id: string
           name: string
           report_type: string
+          tenant_id: string
         }
         Insert: {
           created_at?: string
@@ -5938,6 +7203,7 @@ export type Database = {
           id?: string
           name: string
           report_type: string
+          tenant_id?: string
         }
         Update: {
           created_at?: string
@@ -5946,8 +7212,17 @@ export type Database = {
           id?: string
           name?: string
           report_type?: string
+          tenant_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
       }
       retention_guarantees: {
         Row: {
@@ -5960,6 +7235,7 @@ export type Database = {
           project_id: string | null
           released_amount: number
           status: string
+          tenant_id: string
           total_retention: number
           updated_at: string
         }
@@ -5973,6 +7249,7 @@ export type Database = {
           project_id?: string | null
           released_amount?: number
           status?: string
+          tenant_id?: string
           total_retention?: number
           updated_at?: string
         }
@@ -5986,10 +7263,18 @@ export type Database = {
           project_id?: string | null
           released_amount?: number
           status?: string
+          tenant_id?: string
           total_retention?: number
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
           {
             foreignKeyName: "retention_guarantees_contract_id_fkey"
             columns: ["contract_id"]
@@ -6021,6 +7306,7 @@ export type Database = {
           id: string
           module_key: string
           role: Database["public"]["Enums"]["app_role"]
+          tenant_id: string
         }
         Insert: {
           action_key: string
@@ -6029,6 +7315,7 @@ export type Database = {
           id?: string
           module_key: string
           role: Database["public"]["Enums"]["app_role"]
+          tenant_id?: string
         }
         Update: {
           action_key?: string
@@ -6037,8 +7324,17 @@ export type Database = {
           id?: string
           module_key?: string
           role?: Database["public"]["Enums"]["app_role"]
+          tenant_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
       }
       supplier_balances: {
         Row: {
@@ -6054,6 +7350,7 @@ export type Database = {
           period: string
           period_credit: number | null
           period_debit: number | null
+          tenant_id: string
         }
         Insert: {
           account_code: string
@@ -6068,6 +7365,7 @@ export type Database = {
           period: string
           period_credit?: number | null
           period_debit?: number | null
+          tenant_id?: string
         }
         Update: {
           account_code?: string
@@ -6082,29 +7380,48 @@ export type Database = {
           period?: string
           period_credit?: number | null
           period_debit?: number | null
+          tenant_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
       }
       task_assignees: {
         Row: {
           created_at: string
           id: string
           task_id: string
+          tenant_id: string
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
           task_id: string
+          tenant_id?: string
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
           task_id?: string
+          tenant_id?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
           {
             foreignKeyName: "task_assignees_task_id_fkey"
             columns: ["task_id"]
@@ -6124,6 +7441,7 @@ export type Database = {
           size_bytes: number | null
           storage_path: string
           task_id: string
+          tenant_id: string
           uploaded_by: string
         }
         Insert: {
@@ -6135,6 +7453,7 @@ export type Database = {
           size_bytes?: number | null
           storage_path: string
           task_id: string
+          tenant_id?: string
           uploaded_by: string
         }
         Update: {
@@ -6146,9 +7465,17 @@ export type Database = {
           size_bytes?: number | null
           storage_path?: string
           task_id?: string
+          tenant_id?: string
           uploaded_by?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
           {
             foreignKeyName: "task_attachments_comment_id_fkey"
             columns: ["comment_id"]
@@ -6174,6 +7501,7 @@ export type Database = {
           is_done: boolean
           order_index: number
           task_id: string
+          tenant_id: string
           title: string
           updated_at: string
           weight: number
@@ -6186,6 +7514,7 @@ export type Database = {
           is_done?: boolean
           order_index?: number
           task_id: string
+          tenant_id?: string
           title: string
           updated_at?: string
           weight?: number
@@ -6198,11 +7527,19 @@ export type Database = {
           is_done?: boolean
           order_index?: number
           task_id?: string
+          tenant_id?: string
           title?: string
           updated_at?: string
           weight?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
           {
             foreignKeyName: "task_checklist_items_task_id_fkey"
             columns: ["task_id"]
@@ -6218,6 +7555,7 @@ export type Database = {
           created_at: string
           id: string
           task_id: string
+          tenant_id: string
           user_id: string
         }
         Insert: {
@@ -6225,6 +7563,7 @@ export type Database = {
           created_at?: string
           id?: string
           task_id: string
+          tenant_id?: string
           user_id: string
         }
         Update: {
@@ -6232,9 +7571,17 @@ export type Database = {
           created_at?: string
           id?: string
           task_id?: string
+          tenant_id?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
           {
             foreignKeyName: "task_comments_task_id_fkey"
             columns: ["task_id"]
@@ -6258,6 +7605,7 @@ export type Database = {
           requested_by: string
           status: string
           task_id: string
+          tenant_id: string
           updated_at: string
         }
         Insert: {
@@ -6273,6 +7621,7 @@ export type Database = {
           requested_by: string
           status?: string
           task_id: string
+          tenant_id?: string
           updated_at?: string
         }
         Update: {
@@ -6288,9 +7637,17 @@ export type Database = {
           requested_by?: string
           status?: string
           task_id?: string
+          tenant_id?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
           {
             foreignKeyName: "task_requests_task_id_fkey"
             columns: ["task_id"]
@@ -6331,6 +7688,7 @@ export type Database = {
           return_reason: string | null
           started_at: string | null
           status: Database["public"]["Enums"]["task_status"] | null
+          tenant_id: string
           title: string
           type: Database["public"]["Enums"]["task_type"] | null
           updated_at: string
@@ -6367,6 +7725,7 @@ export type Database = {
           return_reason?: string | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["task_status"] | null
+          tenant_id?: string
           title: string
           type?: Database["public"]["Enums"]["task_type"] | null
           updated_at?: string
@@ -6403,6 +7762,7 @@ export type Database = {
           return_reason?: string | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["task_status"] | null
+          tenant_id?: string
           title?: string
           type?: Database["public"]["Enums"]["task_type"] | null
           updated_at?: string
@@ -6410,6 +7770,13 @@ export type Database = {
           visible_to_user_ids?: string[]
         }
         Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
           {
             foreignKeyName: "tasks_customer_id_fkey"
             columns: ["customer_id"]
@@ -6433,12 +7800,6 @@ export type Database = {
           },
         ]
       }
-      tax_rate_rules: {
-        Row: { id: string; tax_type: string; rate: number; effective_from: string; effective_to: string | null; source_note: string; created_by: string | null; created_at: string }
-        Insert: { id?: string; tax_type: string; rate: number; effective_from: string; effective_to?: string | null; source_note: string; created_by?: string | null; created_at?: string }
-        Update: { id?: string; tax_type?: string; rate?: number; effective_from?: string; effective_to?: string | null; source_note?: string; created_by?: string | null; created_at?: string }
-        Relationships: []
-      }
       trial_balance_entries: {
         Row: {
           account_code: string
@@ -6452,6 +7813,7 @@ export type Database = {
           imported_at: string
           imported_by: string | null
           period: string
+          tenant_id: string
         }
         Insert: {
           account_code: string
@@ -6465,6 +7827,7 @@ export type Database = {
           imported_at?: string
           imported_by?: string | null
           period: string
+          tenant_id?: string
         }
         Update: {
           account_code?: string
@@ -6478,8 +7841,16 @@ export type Database = {
           imported_at?: string
           imported_by?: string | null
           period?: string
+          tenant_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
           {
             foreignKeyName: "trial_balance_entries_account_id_fkey"
             columns: ["account_id"]
@@ -6498,6 +7869,7 @@ export type Database = {
           id: string
           module_key: string
           source: string
+          tenant_id: string
           user_id: string
         }
         Insert: {
@@ -6508,6 +7880,7 @@ export type Database = {
           id?: string
           module_key: string
           source?: string
+          tenant_id?: string
           user_id: string
         }
         Update: {
@@ -6518,9 +7891,17 @@ export type Database = {
           id?: string
           module_key?: string
           source?: string
+          tenant_id?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
           {
             foreignKeyName: "user_permissions_action_key_fkey"
             columns: ["action_key"]
@@ -6542,21 +7923,82 @@ export type Database = {
           created_at: string
           id: string
           role: Database["public"]["Enums"]["app_role"]
+          tenant_id: string
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
           role: Database["public"]["Enums"]["app_role"]
+          tenant_id?: string
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          tenant_id?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
+      vat_returns: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          data: Json
+          final_vat: number | null
+          id: string
+          net_vat: number | null
+          period_from: string
+          period_to: string
+          tenant_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          data?: Json
+          final_vat?: number | null
+          id?: string
+          net_vat?: number | null
+          period_from: string
+          period_to: string
+          tenant_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          data?: Json
+          final_vat?: number | null
+          id?: string
+          net_vat?: number | null
+          period_from?: string
+          period_to?: string
+          tenant_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
       }
       vendor_contacts: {
         Row: {
@@ -6566,6 +8008,7 @@ export type Database = {
           job_title: string | null
           name: string
           phone: string | null
+          tenant_id: string
           vendor_id: string
         }
         Insert: {
@@ -6575,6 +8018,7 @@ export type Database = {
           job_title?: string | null
           name: string
           phone?: string | null
+          tenant_id?: string
           vendor_id: string
         }
         Update: {
@@ -6584,9 +8028,17 @@ export type Database = {
           job_title?: string | null
           name?: string
           phone?: string | null
+          tenant_id?: string
           vendor_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
           {
             foreignKeyName: "vendor_contacts_vendor_id_fkey"
             columns: ["vendor_id"]
@@ -6619,6 +8071,7 @@ export type Database = {
           phone: string | null
           region: string | null
           tax_number: string | null
+          tenant_id: string
           total_outstanding: number | null
           total_paid: number | null
           total_purchased: number | null
@@ -6646,6 +8099,7 @@ export type Database = {
           phone?: string | null
           region?: string | null
           tax_number?: string | null
+          tenant_id?: string
           total_outstanding?: number | null
           total_paid?: number | null
           total_purchased?: number | null
@@ -6673,126 +8127,21 @@ export type Database = {
           phone?: string | null
           region?: string | null
           tax_number?: string | null
+          tenant_id?: string
           total_outstanding?: number | null
           total_paid?: number | null
           total_purchased?: number | null
           updated_at?: string
         }
-        Relationships: []
-      }
-      vat_return_status_events: {
-        Row: { id: string; return_id: string; from_status: string | null; to_status: string; reason: string | null; changed_by: string | null; changed_at: string }
-        Insert: { id?: string; return_id: string; from_status?: string | null; to_status: string; reason?: string | null; changed_by?: string | null; changed_at?: string }
-        Update: { id?: string; return_id?: string; from_status?: string | null; to_status?: string; reason?: string | null; changed_by?: string | null; changed_at?: string }
-        Relationships: []
-      }
-      vat_return_adjustments: {
-        Row: { id: string; return_id: string; direction: string; tax_category: string; net_amount: number; vat_amount: number; reason: string; created_by: string; created_at: string }
-        Insert: { id?: string; return_id: string; direction: string; tax_category: string; net_amount: number; vat_amount: number; reason: string; created_by: string; created_at?: string }
-        Update: { id?: string; return_id?: string; direction?: string; tax_category?: string; net_amount?: number; vat_amount?: number; reason?: string; created_by?: string; created_at?: string }
-        Relationships: []
-      }
-      vat_return_sources: {
-        Row: { id: string; return_id: string; source_type: string; source_id: string; tax_category: string; net_amount: number; vat_amount: number; source_snapshot: Json; created_at: string }
-        Insert: { id?: string; return_id: string; source_type: string; source_id: string; tax_category: string; net_amount: number; vat_amount: number; source_snapshot: Json; created_at?: string }
-        Update: { id?: string; return_id?: string; source_type?: string; source_id?: string; tax_category?: string; net_amount?: number; vat_amount?: number; source_snapshot?: Json; created_at?: string }
-        Relationships: []
-      }
-      vat_returns: {
-        Row: {
-          approved_at: string | null
-          approved_by: string | null
-          calculated_at: string | null
-          calculated_by: string | null
-          filed_at: string | null
-          filed_by: string | null
-          filing_reference: string | null
-          source_fingerprint: string | null
-          status: string
-          created_at: string
-          created_by: string | null
-          data: Json
-          final_vat: number | null
-          id: string
-          net_vat: number | null
-          period_from: string
-          period_to: string
-          updated_at: string
-          updated_by: string | null
-        }
-        Insert: {
-          approved_at?: string | null
-          approved_by?: string | null
-          calculated_at?: string | null
-          calculated_by?: string | null
-          filed_at?: string | null
-          filed_by?: string | null
-          filing_reference?: string | null
-          source_fingerprint?: string | null
-          status?: string
-          created_at?: string
-          created_by?: string | null
-          data?: Json
-          final_vat?: number | null
-          id?: string
-          net_vat?: number | null
-          period_from: string
-          period_to: string
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Update: {
-          approved_at?: string | null
-          approved_by?: string | null
-          calculated_at?: string | null
-          calculated_by?: string | null
-          filed_at?: string | null
-          filed_by?: string | null
-          filing_reference?: string | null
-          source_fingerprint?: string | null
-          status?: string
-          created_at?: string
-          created_by?: string | null
-          data?: Json
-          final_vat?: number | null
-          id?: string
-          net_vat?: number | null
-          period_from?: string
-          period_to?: string
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Relationships: []
-      }
-      zakat_account_mappings: {
-        Row: { id: string; account_code: string; target_key: string; multiplier: number; is_active: boolean; created_by: string; updated_by: string; created_at: string; updated_at: string }
-        Insert: { id?: string; account_code: string; target_key: string; multiplier?: number; is_active?: boolean; version?: number; created_by: string; updated_by: string; created_at?: string; updated_at?: string }
-        Update: { id?: string; account_code?: string; target_key?: string; multiplier?: number; is_active?: boolean; created_by?: string; updated_by?: string; created_at?: string; updated_at?: string }
-        Relationships: []
-      }
-      zakat_account_mapping_events: {
-        Row: { id: string; mapping_id: string | null; account_code: string; operation: string; before_data: Json | null; after_data: Json | null; changed_by: string | null; changed_at: string }
-        Insert: { id?: string; mapping_id?: string | null; account_code: string; operation: string; before_data?: Json | null; after_data?: Json | null; changed_by?: string | null; changed_at?: string }
-        Update: { id?: string; mapping_id?: string | null; account_code?: string; operation?: string; before_data?: Json | null; after_data?: Json | null; changed_by?: string | null; changed_at?: string }
-        Relationships: []
-      }
-      zakat_return_status_events: {
-        Row: { id: string; return_id: string; from_status: string | null; to_status: string; reason: string | null; changed_by: string | null; changed_at: string }
-        Insert: { id?: string; return_id: string; from_status?: string | null; to_status: string; reason?: string | null; changed_by?: string | null; changed_at?: string }
-        Update: { id?: string; return_id?: string; from_status?: string | null; to_status?: string; reason?: string | null; changed_by?: string | null; changed_at?: string }
-        Relationships: []
-      }
-      zakat_return_adjustments: {
-        Row: { id: string; return_id: string; field_key: string; amount: number; reason: string; created_by: string; created_at: string }
-        Insert: { id?: string; return_id: string; field_key: string; amount: number; reason: string; created_by: string; created_at?: string }
-        Update: { id?: string; return_id?: string; field_key?: string; amount?: number; reason?: string; created_by?: string; created_at?: string }
-        Relationships: []
-      }
-      zakat_return_sources: {
-        Row: { id: string; return_id: string; trial_balance_entry_id: string; target_key: string; multiplier: number; source_snapshot: Json; created_at: string }
-        Insert: { id?: string; return_id: string; trial_balance_entry_id: string; target_key: string; multiplier?: number; source_snapshot: Json; created_at?: string }
-        Update: { id?: string; return_id?: string; trial_balance_entry_id?: string; target_key?: string; multiplier?: number; source_snapshot?: Json; created_at?: string }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
       }
       zakat_returns: {
         Row: {
@@ -6801,20 +8150,12 @@ export type Database = {
           data: Json
           id: string
           tax_due: number | null
+          tenant_id: string
           updated_at: string
           updated_by: string | null
           year_from: string
           year_to: string
           zakat_due: number | null
-          status: string
-          source_fingerprint: string | null
-          calculated_by: string | null
-          calculated_at: string | null
-          approved_by: string | null
-          approved_at: string | null
-          submitted_by: string | null
-          submitted_at: string | null
-          submission_reference: string | null
         }
         Insert: {
           created_at?: string
@@ -6822,20 +8163,12 @@ export type Database = {
           data?: Json
           id?: string
           tax_due?: number | null
+          tenant_id?: string
           updated_at?: string
           updated_by?: string | null
           year_from: string
           year_to: string
           zakat_due?: number | null
-          status?: string
-          source_fingerprint?: string | null
-          calculated_by?: string | null
-          calculated_at?: string | null
-          approved_by?: string | null
-          approved_at?: string | null
-          submitted_by?: string | null
-          submitted_at?: string | null
-          submission_reference?: string | null
         }
         Update: {
           created_at?: string
@@ -6843,22 +8176,22 @@ export type Database = {
           data?: Json
           id?: string
           tax_due?: number | null
+          tenant_id?: string
           updated_at?: string
           updated_by?: string | null
           year_from?: string
           year_to?: string
           zakat_due?: number | null
-          status?: string
-          source_fingerprint?: string | null
-          calculated_by?: string | null
-          calculated_at?: string | null
-          approved_by?: string | null
-          approved_at?: string | null
-          submitted_by?: string | null
-          submitted_at?: string | null
-          submission_reference?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "onexa_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
       }
     }
     Views: {
@@ -6884,6 +8217,253 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "inventory_warehouses"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      onexa_accounting_inbox: {
+        Row: {
+          accounting_date: string | null
+          approved_at: string | null
+          approved_by: string | null
+          branch_id: string | null
+          currency: string | null
+          dimensions: Json | null
+          document_date: string | null
+          document_number: string | null
+          document_type: string | null
+          gross_total: number | null
+          id: string | null
+          legal_entity_id: string | null
+          module_key: string | null
+          party_id: string | null
+          party_name_snapshot: string | null
+          party_type: string | null
+          revision: number | null
+          tenant_id: string | null
+        }
+        Insert: {
+          accounting_date?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          branch_id?: string | null
+          currency?: string | null
+          dimensions?: Json | null
+          document_date?: string | null
+          document_number?: string | null
+          document_type?: string | null
+          gross_total?: number | null
+          id?: string | null
+          legal_entity_id?: string | null
+          module_key?: string | null
+          party_id?: string | null
+          party_name_snapshot?: string | null
+          party_type?: string | null
+          revision?: number | null
+          tenant_id?: string | null
+        }
+        Update: {
+          accounting_date?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          branch_id?: string | null
+          currency?: string | null
+          dimensions?: Json | null
+          document_date?: string | null
+          document_number?: string | null
+          document_type?: string | null
+          gross_total?: number | null
+          id?: string | null
+          legal_entity_id?: string | null
+          module_key?: string | null
+          party_id?: string | null
+          party_name_snapshot?: string | null
+          party_type?: string | null
+          revision?: number | null
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_business_documents_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_business_documents_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_legal_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_business_documents_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_sales_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+        ]
+      }
+      onexa_inventory_stock_valuation: {
+        Row: {
+          average_unit_cost: number | null
+          branch_id: string | null
+          inventory_value: number | null
+          item_id: string | null
+          legal_entity_id: string | null
+          quantity_on_hand: number | null
+          tenant_id: string | null
+          updated_at: string | null
+          valuation_currency: string | null
+          warehouse_id: string | null
+        }
+        Insert: {
+          average_unit_cost?: number | null
+          branch_id?: string | null
+          inventory_value?: number | null
+          item_id?: string | null
+          legal_entity_id?: string | null
+          quantity_on_hand?: number | null
+          tenant_id?: string | null
+          updated_at?: string | null
+          valuation_currency?: string | null
+          warehouse_id?: string | null
+        }
+        Update: {
+          average_unit_cost?: number | null
+          branch_id?: string | null
+          inventory_value?: number | null
+          item_id?: string | null
+          legal_entity_id?: string | null
+          quantity_on_hand?: number | null
+          tenant_id?: string | null
+          updated_at?: string | null
+          valuation_currency?: string | null
+          warehouse_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_inventory_balances_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_inventory_balances_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_legal_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_inventory_balances_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_sales_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+        ]
+      }
+      onexa_module_document_summary: {
+        Row: {
+          branch_id: string | null
+          currency: string | null
+          document_count: number | null
+          document_type: string | null
+          first_document_date: string | null
+          gross_total: number | null
+          last_document_date: string | null
+          legal_entity_id: string | null
+          module_key: string | null
+          status: string | null
+          subtotal: number | null
+          tax_total: number | null
+          tenant_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_business_documents_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_business_documents_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_legal_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_business_documents_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_sales_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+        ]
+      }
+      onexa_sales_inventory_reconciliation: {
+        Row: {
+          actual_movement_count: number | null
+          branch_id: string | null
+          currency: string | null
+          document_date: string | null
+          document_id: string | null
+          document_number: string | null
+          expected_movement_count: number | null
+          legal_entity_id: string | null
+          movement_inventory_cost: number | null
+          posted_inventory_cost: number | null
+          posted_journal_id: string | null
+          receivable_amount: number | null
+          reconciliation_status: string | null
+          revenue_amount: number | null
+          status: string | null
+          tax_amount: number | null
+          tenant_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_business_documents_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_business_documents_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_legal_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_business_documents_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_sales_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+        ]
+      }
+      onexa_sales_posting_configuration_gaps: {
+        Row: {
+          account_role: string | null
+          legal_entity_code: string | null
+          legal_entity_id: string | null
+          tenant_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_legal_entities_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -6913,6 +8493,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "onexa_journal_headers_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_sales_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
             foreignKeyName: "onexa_journal_headers_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
@@ -6923,71 +8510,6 @@ export type Database = {
       }
     }
     Functions: {
-      hr_attendance_create_site: { Args: { _name_ar: string; _latitude: number; _longitude: number; _radius_meters?: number }; Returns: Database["public"]["Tables"]["hr_work_sites"]["Row"] }
-      hr_attendance_create_shift_group: { Args: { _name_ar: string; _start_time: string; _end_time: string; _break_minutes: number; _site_id: string | null; _working_days: Json; _checkin_before?: number; _checkin_after?: number; _checkout_before?: number; _checkout_after?: number }; Returns: Database["public"]["Tables"]["hr_shift_groups"]["Row"] }
-      cost_budget_save: { Args: { _period: string; _category: string; _amount: number; _project_id?: string | null; _department_id?: string | null; _notes?: string | null; _revision_reason?: string | null }; Returns: Database["public"]["Tables"]["cost_budgets"]["Row"] }
-      cost_budget_approve: { Args: { _budget_id: string }; Returns: Database["public"]["Tables"]["cost_budgets"]["Row"] }
-      cost_entry_create_manual: { Args: { _category: string; _amount: number; _period: string; _description?: string | null; _project_id?: string | null; _department_id?: string | null }; Returns: Database["public"]["Tables"]["cost_entries"]["Row"] }
-      cost_aux_import_post: { Args: { _source_type: string; _import_key: string; _file_name: string; _rows: Json }; Returns: Json }
-      cost_entry_approve: { Args: { _entry_id: string }; Returns: Database["public"]["Tables"]["cost_entries"]["Row"] }
-      cost_entry_reverse: { Args: { _entry_id: string; _reason: string }; Returns: Database["public"]["Tables"]["cost_entries"]["Row"] }
-      cost_period_set_status: { Args: { _period: string; _closed: boolean; _reason: string }; Returns: Database["public"]["Tables"]["cost_periods"]["Row"] }
-      cost_import_post: { Args: { _import_key: string; _file_name: string; _rows: Json }; Returns: Json }
-      vat_file_return: { Args: { _return_id: string; _reference: string }; Returns: Database["public"]["Tables"]["vat_returns"]["Row"] }
-      vat_reopen_return: { Args: { _return_id: string; _reason: string }; Returns: Database["public"]["Tables"]["vat_returns"]["Row"] }
-      zakat_reopen_return: { Args: { _return_id: string; _reason: string }; Returns: Database["public"]["Tables"]["zakat_returns"]["Row"] }
-      zakat_save_account_mappings: { Args: { _mappings: Json }; Returns: number }
-      zakat_submit_return: { Args: { _return_id: string; _reference: string }; Returns: Database["public"]["Tables"]["zakat_returns"]["Row"] }
-      zakat_source_fingerprint: { Args: { _return_id: string }; Returns: string }
-      zakat_calculate_return_mapped: { Args: { _year_from: string; _year_to: string; _sources?: Json; _manual_adjustments?: Json; _form_data?: Json; _zakat_rate?: number; _income_tax_rate?: number }; Returns: Database["public"]["Tables"]["zakat_returns"]["Row"] }
-      zakat_approve_return: { Args: { _return_id: string }; Returns: Database["public"]["Tables"]["zakat_returns"]["Row"] }
-      zakat_calculate_return_flexible: { Args: { _year_from: string; _year_to: string; _sources?: Json; _manual_data?: Json; _zakat_rate?: number; _income_tax_rate?: number }; Returns: Database["public"]["Tables"]["zakat_returns"]["Row"] }
-      vat_return_stored_fingerprint: { Args: { _return_id: string }; Returns: string }
-      vat_calculate_return_flexible: { Args: { _period_from: string; _period_to: string; _sales_ids: string[]; _purchase_ids: string[]; _manual_adjustments?: Json; _carried_forward?: number; _header?: Json }; Returns: Database["public"]["Tables"]["vat_returns"]["Row"] }
-      vat_source_fingerprint: { Args: { _from: string; _to: string }; Returns: string }
-      vat_calculate_return: { Args: { _period_from: string; _period_to: string; _carried_forward?: number; _header?: Json }; Returns: Database["public"]["Tables"]["vat_returns"]["Row"] }
-      vat_approve_return: { Args: { _return_id: string }; Returns: Database["public"]["Tables"]["vat_returns"]["Row"] }
-      hr_attendance_register_device: { Args: { _device_code: string; _name_ar: string; _site_id: string | null; _vendor?: string | null }; Returns: Json }
-      hr_attendance_rotate_device_token: { Args: { _device_id: string }; Returns: Json }
-      hr_attendance_authenticate_device: { Args: { _device_code: string; _token: string }; Returns: boolean }
-      hr_attendance_log_ingest_rejection: { Args: { _reason: string; _fingerprint: string; _device_code?: string | null; _employee_no?: string | null; _external_event_id?: string | null; _occurred_at?: string | null; _source_ip?: string | null; _user_agent?: string | null; _device_id?: string | null }; Returns: undefined }
-      hr_attendance_claim_biometric_request: { Args: { _device_code: string; _token: string; _request_timestamp: string; _nonce: string; _body_hash: string; _source_ip?: string | null; _user_agent?: string | null }; Returns: Json }
-      hr_attendance_biometric_ingest_secure: { Args: { _request_id: string; _device_code: string; _employee_no: string; _event_type: string; _occurred_at: string; _external_event_id: string; _payload_hash: string }; Returns: Json }
-      hr_attendance_scan_anomalies: { Args: { _from?: string; _to?: string }; Returns: number }
-      hr_attendance_resolve_anomaly: { Args: { _anomaly_id: string; _dismiss: boolean; _notes: string }; Returns: Database["public"]["Tables"]["hr_attendance_anomalies"]["Row"] }
-      hr_attendance_run_maintenance: { Args: { _work_date?: string }; Returns: Json }
-      hr_attendance_period_is_closed: { Args: { _work_date: string }; Returns: boolean }
-      hr_attendance_close_period: { Args: { _year: number; _month: number }; Returns: Database["public"]["Tables"]["hr_attendance_periods"]["Row"] }
-      hr_attendance_reopen_period: { Args: { _period_id: string; _reason: string }; Returns: Database["public"]["Tables"]["hr_attendance_periods"]["Row"] }
-      hr_attendance_request_correction: { Args: { _attendance_day_id: string; _requested_check_in: string | null; _requested_check_out: string | null; _reason: string }; Returns: Database["public"]["Tables"]["hr_attendance_correction_requests"]["Row"] }
-      hr_attendance_decide_correction: { Args: { _request_id: string; _approved: boolean; _decision_notes?: string }; Returns: Database["public"]["Tables"]["hr_attendance_correction_requests"]["Row"] }
-      hr_attendance_refresh_days: { Args: { _date_from: string; _date_to: string; _employee_id?: string }; Returns: number }
-      hr_attendance_decide_day: { Args: { _day_id: string; _approved: boolean; _notes?: string }; Returns: Database["public"]["Tables"]["hr_attendance_days"]["Row"] }
-      hr_apply_attendance_to_payroll: { Args: { _run_id: string }; Returns: number }
-      hr_attendance_mobile_punch: {
-        Args: {
-          _event_type: string;
-          _site_id: string;
-          _latitude: number;
-          _longitude: number;
-          _accuracy_meters?: number;
-        };
-        Returns: Database["public"]["Tables"]["hr_attendance_events"]["Row"];
-      };
-      hr_attendance_biometric_ingest: {
-        Args: {
-          _device_code: string;
-          _employee_no: string;
-          _event_type: string;
-          _occurred_at: string;
-          _external_event_id: string;
-        };
-        Returns: Database["public"]["Tables"]["hr_attendance_events"]["Row"];
-      };
-      hr_distance_meters: {
-        Args: { _lat1: number; _lng1: number; _lat2: number; _lng2: number };
-        Returns: number;
-      };
       calc_customer_balance: { Args: { _customer_id: string }; Returns: number }
       calc_vendor_balance: { Args: { _vendor_id: string }; Returns: number }
       can_delete_master: { Args: { _user_id: string }; Returns: boolean }
@@ -7041,6 +8563,76 @@ export type Database = {
         }
         Returns: boolean
       }
+      hr_attendance_biometric_ingest: {
+        Args: {
+          _device_code: string
+          _employee_no: string
+          _event_type: string
+          _external_event_id: string
+          _occurred_at: string
+        }
+        Returns: {
+          created_at: string
+          created_by: string | null
+          device_id: string | null
+          distance_from_site_meters: number | null
+          employee_id: string
+          event_type: string
+          external_event_id: string | null
+          gps_accuracy_meters: number | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          metadata: Json
+          occurred_at: string
+          schedule_id: string | null
+          site_id: string | null
+          source: string
+          tenant_id: string
+          validation_status: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "hr_attendance_events"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      hr_attendance_mobile_punch: {
+        Args: {
+          _accuracy_meters?: number
+          _event_type: string
+          _latitude: number
+          _longitude: number
+          _site_id: string
+        }
+        Returns: {
+          created_at: string
+          created_by: string | null
+          device_id: string | null
+          distance_from_site_meters: number | null
+          employee_id: string
+          event_type: string
+          external_event_id: string | null
+          gps_accuracy_meters: number | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          metadata: Json
+          occurred_at: string
+          schedule_id: string | null
+          site_id: string | null
+          source: string
+          tenant_id: string
+          validation_status: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "hr_attendance_events"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       hr_calc_end_of_service: {
         Args: { _monthly_wage: number; _reason: string; _service_years: number }
         Returns: number
@@ -7056,34 +8648,9 @@ export type Database = {
         Args: { _employee_id: string; _leave_type: string; _year?: number }
         Returns: number
       }
-      hr_calculate_service_period: {
-        Args: { _as_of?: string; _employee_id: string }
-        Returns: Json
-      }
-      hr_leave_decide: {
-        Args: { _approved: boolean; _leave_id: string }
-        Returns: Database["public"]["Tables"]["hr_leaves"]["Row"]
-      }
-      hr_leave_rule: {
-        Args: { _as_of?: string; _leave_type: string }
-        Returns: Database["public"]["Tables"]["hr_leave_rules"]["Row"]
-      }
-      hr_payroll_create_run: {
-        Args: { _period_month: number; _period_year: number }
-        Returns: Database["public"]["Tables"]["hr_payroll_runs"]["Row"]
-      }
-      hr_sick_leave_pay_breakdown: {
-        Args: {
-          _daily_wage: number
-          _employee_id: string
-          _period_from: string
-          _period_to: string
-        }
-        Returns: Json
-      }
-      hr_termination_create_draft: {
-        Args: { _input: Json }
-        Returns: Database["public"]["Tables"]["hr_terminations"]["Row"]
+      hr_distance_meters: {
+        Args: { _lat1: number; _lat2: number; _lng1: number; _lng2: number }
+        Returns: number
       }
       hr_get_leave_summary: {
         Args: { _employee_id: string; _year?: number }
@@ -7112,6 +8679,89 @@ export type Database = {
           used: number
         }[]
       }
+      hr_leave_decide: {
+        Args: { _approved: boolean; _leave_id: string }
+        Returns: {
+          approved_at: string | null
+          approved_by: string | null
+          attachment_url: string | null
+          created_at: string
+          created_by: string | null
+          days_count: number
+          employee_id: string
+          from_date: string
+          id: string
+          leave_type: Database["public"]["Enums"]["hr_leave_type"]
+          reason: string | null
+          request_id: string | null
+          sick_cycle_start: string | null
+          status: Database["public"]["Enums"]["hr_leave_status"]
+          tenant_id: string
+          to_date: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "hr_leaves"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      hr_leave_rule: {
+        Args: { _as_of?: string; _leave_type: string }
+        Returns: {
+          balance_mode: string
+          created_at: string
+          effective_from: string
+          effective_to: string | null
+          entitlement_days: number | null
+          gender_restriction: string | null
+          id: string
+          label_ar: string
+          leave_type: string
+          legal_reference: string | null
+          max_request_days: number | null
+          minimum_service_days: number
+          notes: string | null
+          pay_schedule: Json
+          tenant_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "hr_leave_rules"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      hr_payroll_create_run: {
+        Args: { _period_month: number; _period_year: number }
+        Returns: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          created_by: string | null
+          employees_count: number | null
+          id: string
+          notes: string | null
+          paid_at: string | null
+          period_month: number
+          period_year: number
+          run_no: string
+          status: Database["public"]["Enums"]["hr_payroll_status"]
+          tenant_id: string
+          total_deductions: number | null
+          total_gosi: number | null
+          total_gross: number | null
+          total_net: number | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "hr_payroll_runs"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       hr_payroll_mark_paid: {
         Args: { _run_id: string }
         Returns: {
@@ -7127,6 +8777,7 @@ export type Database = {
           period_year: number
           run_no: string
           status: Database["public"]["Enums"]["hr_payroll_status"]
+          tenant_id: string
           total_deductions: number | null
           total_gosi: number | null
           total_gross: number | null
@@ -7139,6 +8790,19 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      hr_sick_leave_pay_breakdown: {
+        Args: {
+          _daily_wage: number
+          _employee_id: string
+          _period_from: string
+          _period_to: string
+        }
+        Returns: Json
+      }
+      hr_sync_payroll_cost_entries: {
+        Args: { _run_id: string }
+        Returns: number
       }
       hr_termination_approve: {
         Args: { _termination_id: string }
@@ -7167,6 +8831,7 @@ export type Database = {
           service_years: number | null
           settlement_details: Json | null
           status: string
+          tenant_id: string
           termination_no: string
           updated_at: string
         }
@@ -7204,6 +8869,7 @@ export type Database = {
           service_years: number | null
           settlement_details: Json | null
           status: string
+          tenant_id: string
           termination_no: string
           updated_at: string
         }
@@ -7245,6 +8911,7 @@ export type Database = {
           service_years: number | null
           settlement_details: Json | null
           status: string
+          tenant_id: string
           termination_no: string
           updated_at: string
         }
@@ -7282,6 +8949,7 @@ export type Database = {
           service_years: number | null
           settlement_details: Json | null
           status: string
+          tenant_id: string
           termination_no: string
           updated_at: string
         }
@@ -7319,6 +8987,7 @@ export type Database = {
           service_years: number | null
           settlement_details: Json | null
           status: string
+          tenant_id: string
           termination_no: string
           updated_at: string
         }
@@ -7356,6 +9025,7 @@ export type Database = {
           service_years: number | null
           settlement_details: Json | null
           status: string
+          tenant_id: string
           termination_no: string
           updated_at: string
         }
@@ -7393,6 +9063,7 @@ export type Database = {
           service_years: number | null
           settlement_details: Json | null
           status: string
+          tenant_id: string
           termination_no: string
           updated_at: string
         }
@@ -7430,6 +9101,7 @@ export type Database = {
           service_years: number | null
           settlement_details: Json | null
           status: string
+          tenant_id: string
           termination_no: string
           updated_at: string
         }
@@ -7467,6 +9139,7 @@ export type Database = {
           service_years: number | null
           settlement_details: Json | null
           status: string
+          tenant_id: string
           termination_no: string
           updated_at: string
         }
@@ -7485,6 +9158,7 @@ export type Database = {
           item_id: string
           line_total: number | null
           qty: number
+          tenant_id: string
           unit_cost: number
         }
         SetofOptions: {
@@ -7500,6 +9174,60 @@ export type Database = {
         Returns: boolean
       }
       mark_overdue_tasks: { Args: never; Returns: number }
+      onexa_create_business_document: {
+        Args: {
+          _accounting_date: string
+          _branch_id: string
+          _currency: string
+          _dimensions: Json
+          _discount_total: number
+          _document_date: string
+          _document_type: string
+          _due_date: string
+          _external_reference: string
+          _gross_total: number
+          _import_batch_id: string
+          _legal_entity_id: string
+          _lines: Json
+          _memo: string
+          _module_key: string
+          _origin: string
+          _party_id: string
+          _party_name_snapshot: string
+          _party_type: string
+          _source_snapshot: Json
+          _subtotal: number
+          _tax_total: number
+        }
+        Returns: string
+      }
+      onexa_create_business_document_unchecked: {
+        Args: {
+          _accounting_date: string
+          _branch_id: string
+          _currency: string
+          _dimensions: Json
+          _discount_total: number
+          _document_date: string
+          _document_type: string
+          _due_date: string
+          _external_reference: string
+          _gross_total: number
+          _import_batch_id: string
+          _legal_entity_id: string
+          _lines: Json
+          _memo: string
+          _module_key: string
+          _origin: string
+          _party_id: string
+          _party_name_snapshot: string
+          _party_type: string
+          _source_snapshot: Json
+          _subtotal: number
+          _tax_total: number
+        }
+        Returns: string
+      }
       onexa_post_journal: {
         Args: {
           _accounting_date: string
@@ -7516,6 +9244,26 @@ export type Database = {
         }
         Returns: string
       }
+      onexa_post_journal_unchecked: {
+        Args: {
+          _accounting_date: string
+          _currency: string
+          _legal_entity_id: string
+          _lines: Json
+          _memo: string
+          _period_code: string
+          _source_document_id: string
+          _source_document_type: string
+          _source_revision: number
+          _source_snapshot: Json
+          _source_status: string
+        }
+        Returns: string
+      }
+      onexa_post_sales_invoice: {
+        Args: { _document_id: string; _period_code: string }
+        Returns: string
+      }
       onexa_reserve_invitation: {
         Args: { _email: string; _role_key: string }
         Returns: string
@@ -7527,6 +9275,23 @@ export type Database = {
           _period_code: string
           _reason: string
         }
+        Returns: string
+      }
+      onexa_reverse_journal_unchecked: {
+        Args: {
+          _accounting_date: string
+          _journal_id: string
+          _period_code: string
+          _reason: string
+        }
+        Returns: string
+      }
+      onexa_transition_business_document: {
+        Args: { _document_id: string; _reason?: string; _to_status: string }
+        Returns: string
+      }
+      onexa_transition_business_document_unchecked: {
+        Args: { _document_id: string; _reason?: string; _to_status: string }
         Returns: string
       }
       user_has_any_role: {
@@ -7737,12 +9502,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -7766,11 +9531,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -7791,11 +9556,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -7816,11 +9581,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -7833,11 +9598,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
