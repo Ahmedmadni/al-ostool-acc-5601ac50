@@ -1,4 +1,4 @@
-# تشغيل Gate 34 وGate 35 يدويًا
+# تشغيل Gate 34 وGate 35 وGate 36 يدويًا
 
 ## قبل البدء
 
@@ -6,6 +6,7 @@
 2. خذ نسخة احتياطية أو Export حديثًا قبل أي تعديل.
 3. افتح **SQL Editor** وأنشئ Query جديدة لكل ملف؛ لا تجمع الملفات كلها في تشغيل واحد.
 4. اترك مفاتيح التشغيل `VITE_ENABLE_ONEXA_POSTING` و`VITE_ENABLE_ONEXA_SALES_POSTING` مغلقة.
+5. اترك `VITE_ENABLE_ONEXA_PROCUREMENT_POSTING` مغلقًا حتى اكتمال فحص Gate 36.
 
 ## الترتيب الإلزامي
 
@@ -60,3 +61,19 @@
 4. قائمة `onexa_sales_posting_configuration_gaps`.
 
 بعدها يتم تجهيز كود ربط أرقام الحسابات الحقيقية، ثم B3، ثم اختبار فاتورة بيع تجريبية وترحيلها وعكسها.
+
+## Gate 36 — المشتريات والموردون
+
+بعد نجاح Gate 35 وربط حسابات المبيعات، نفّذ بالترتيب في Queries منفصلة:
+
+1. `gate36_procurement_inventory_posting.sql`
+2. `gate36_postcheck.sql`
+3. `gate36_aoa_account_mapping.sql`
+4. أعد تنفيذ `gate36_postcheck.sql` وتأكد من عدم وجود فجوات حسابية.
+5. `gate36_purchase_posting_smoke_test_rollback.sql`
+
+النتيجة النهائية المتوقعة من اختبار الدخان:
+
+`gate36_purchase_posting_smoke_test | passed`
+
+الاختبار ينشئ فاتورة مورد مؤقتة تشمل مخزونًا ومصروفًا وأصلًا ثابتًا، ويتحقق من القيد والاستلام والتصنيف ثم ينفذ `ROLLBACK`؛ لا تبقى أي بيانات تجريبية. لا تفعّل `VITE_ENABLE_ONEXA_PROCUREMENT_POSTING=true` قبل نجاحه.

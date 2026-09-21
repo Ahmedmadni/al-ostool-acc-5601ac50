@@ -106,11 +106,13 @@ export const POSTING_CONTRACTS: readonly PostingContract[] = [
     documentType: "purchase_invoice", module: "procurement", labelAr: "فاتورة مشتريات", labelEn: "Purchase invoice", triggerStatus: "approved",
     requiredDimensions: [...core, "vendor"], optionalDimensions: ["costCenter", "project", "contract", "warehouse", "asset"],
     lines: [
-      { side: "debit", accountRole: "expense_inventory_or_asset", amountSource: "net_total" },
+      { side: "debit", accountRole: "inventory", amountSource: "net_inventory_lines", note: "Stocked lines only; item and warehouse required" },
+      { side: "debit", accountRole: "purchase_expense", amountSource: "net_expense_lines", note: "Expense-classified lines only" },
+      { side: "debit", accountRole: "fixed_asset_cost", amountSource: "net_asset_lines", note: "Capitalized-asset lines only" },
       { side: "debit", accountRole: "input_vat", amountSource: "recoverable_tax" },
       { side: "credit", accountRole: "accounts_payable", amountSource: "gross_total" },
     ],
-    reports: ["general_ledger", "trial_balance", "income_statement", "ap_aging", "vat_return"], reversible: true,
+    reports: ["general_ledger", "trial_balance", "income_statement", "ap_aging", "vat_return", "purchase_reconciliation", "purchase_classification", "inventory_valuation"], reversible: true,
   },
   {
     documentType: "supplier_payment", module: "procurement", labelAr: "دفعة مورد", labelEn: "Supplier payment", triggerStatus: "approved",
