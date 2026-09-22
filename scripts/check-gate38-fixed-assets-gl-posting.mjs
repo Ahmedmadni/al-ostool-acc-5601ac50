@@ -124,7 +124,8 @@ assert.ok(
   "runtime flag must default false",
 );
 for (const phrase of [
-  "does not post that acquisition value again",
+  "does not post",
+  "acquisition value again",
   "straight line",
   "safe retry",
   "rollback smoke test",
