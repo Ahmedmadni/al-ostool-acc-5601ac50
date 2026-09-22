@@ -74,7 +74,7 @@ const pendingSchema = new Map([
 for (const [key, migration] of pendingSchema) {
   const column = key.split(".")[1];
   const sql = readFileSync(join(ROOT, "supabase/migrations", migration), "utf8");
-  if (!new RegExp(`\\\\bADD COLUMN(?: IF NOT EXISTS)? \\\\b${column}\\\\b`, "i").test(sql)) {
+  if (!new RegExp(`\\bADD COLUMN(?: IF NOT EXISTS)? \\b${column}\\b`, "i").test(sql)) {
     throw new Error(`Pending schema declaration missing: ${key} in ${migration}`);
   }
 }
