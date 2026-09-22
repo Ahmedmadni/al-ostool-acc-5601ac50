@@ -130,3 +130,17 @@ Gate 36 يرحّل تكلفة اقتناء الأصل المصنّفة داخل 
 5. أنشئ سند تحصيل ONEXA معتمدًا مرتبطًا بفاتورة مرحلة، ثم شغّل `gate39_receipt_smoke_test_rollback.sql`. المتوقع `gate39_customer_receipt_smoke_test | passed` ويُنفذ ROLLBACK.
 
 اترك `VITE_ENABLE_ONEXA_CUSTOMER_RECEIPT_POSTING` مغلقًا حتى نجاح كل الفحوص. لا تطبّق SQL تلقائيًا على الإنتاج.
+
+## Gate 40 — مدفوعات موردي ONEXA
+
+تستخدم هذه المرحلة مستند `supplier_payment` المرتبط بفواتير مشتريات ONEXA المرحلة. سجلات `payments` القديمة مستقلة ولا تُرحّل ثانية. لا تفعّل `VITE_ENABLE_ONEXA_SUPPLIER_PAYMENT_POSTING` حتى اكتمال الحزمة.
+
+بعد موعد السماح بتغييرات قاعدة الإنتاج، وفحص الوضع الفعلي وأخذ نسخة احتياطية، نفّذ في Queries منفصلة:
+
+1. `gate40_supplier_payments.sql`.
+2. `gate40_postcheck.sql`.
+3. `gate40_aoa_account_mapping.sql` للتحقق فقط من حساب الذمم الدائنة 2110 وحساب النقد أو البنك المؤكد في Gate 39؛ لا يغير التعيين.
+4. أعد `gate40_postcheck.sql` وتأكد من خلو فجوات الحسابات والأرصدة السالبة.
+5. جهز سند دفع معتمدًا لفاتورة مشتريات ONEXA مرحلة، ثم نفّذ `gate40_payment_smoke_test_rollback.sql`. المتوقع `gate40_supplier_payment_smoke_test | passed` ثم ROLLBACK.
+
+تضمن الحزمة المدينة لحساب الذمم الدائنة والدائنة لحساب النقد أو البنك عبر B4. لا تُطبّق SQL تلقائيًا على الإنتاج.
