@@ -2290,6 +2290,10 @@ export type Database = {
           last_seen_at: string | null
           name_ar: string
           site_id: string | null
+          auth_failures: number
+          last_auth_failure_at: string | null
+          token_last_four: string | null
+          token_rotated_at: string | null
           tenant_id: string
           updated_at: string
           vendor: string | null
@@ -2302,6 +2306,10 @@ export type Database = {
           last_seen_at?: string | null
           name_ar: string
           site_id?: string | null
+          auth_failures?: number
+          last_auth_failure_at?: string | null
+          token_last_four?: string | null
+          token_rotated_at?: string | null
           tenant_id?: string
           updated_at?: string
           vendor?: string | null
@@ -2314,6 +2322,10 @@ export type Database = {
           last_seen_at?: string | null
           name_ar?: string
           site_id?: string | null
+          auth_failures?: number
+          last_auth_failure_at?: string | null
+          token_last_four?: string | null
+          token_rotated_at?: string | null
           tenant_id?: string
           updated_at?: string
           vendor?: string | null
@@ -4656,6 +4668,7 @@ export type Database = {
           project_id: string | null
           retention_amount: number
           status: Database["public"]["Enums"]["invoice_status"] | null
+          tax_category: string | null
           tenant_id: string
           total_amount: number | null
           updated_at: string
@@ -4674,6 +4687,7 @@ export type Database = {
           project_id?: string | null
           retention_amount?: number
           status?: Database["public"]["Enums"]["invoice_status"] | null
+          tax_category?: string | null
           tenant_id?: string
           total_amount?: number | null
           updated_at?: string
@@ -4692,6 +4706,7 @@ export type Database = {
           project_id?: string | null
           retention_amount?: number
           status?: Database["public"]["Enums"]["invoice_status"] | null
+          tax_category?: string | null
           tenant_id?: string
           total_amount?: number | null
           updated_at?: string
@@ -7032,6 +7047,7 @@ export type Database = {
           project_id: string | null
           purchase_order_id: string | null
           status: Database["public"]["Enums"]["purchase_invoice_status"] | null
+          tax_category: string | null
           tenant_id: string
           total_amount: number | null
           updated_at: string
@@ -7051,6 +7067,7 @@ export type Database = {
           project_id?: string | null
           purchase_order_id?: string | null
           status?: Database["public"]["Enums"]["purchase_invoice_status"] | null
+          tax_category?: string | null
           tenant_id?: string
           total_amount?: number | null
           updated_at?: string
@@ -7070,6 +7087,7 @@ export type Database = {
           project_id?: string | null
           purchase_order_id?: string | null
           status?: Database["public"]["Enums"]["purchase_invoice_status"] | null
+          tax_category?: string | null
           tenant_id?: string
           total_amount?: number | null
           updated_at?: string

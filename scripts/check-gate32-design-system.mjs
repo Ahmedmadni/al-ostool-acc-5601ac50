@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 
 const read = (path) => readFileSync(path, "utf8");
 const component = read("src/components/brand/onexa-brand.tsx");
@@ -11,13 +11,18 @@ const manifest = read("public/manifest.webmanifest");
 const root = read("src/routes/__root.tsx");
 const guide = read("docs/design/onexa-design-system.md");
 
-for (const path of ["public/onexa-approved-logo.png", "public/onexa-mark-192.png", "public/onexa-mark-512.png", "public/onexa-og.png"]) {
+for (const path of ["public/onexa-approved-logo.png", "public/onexa-logo-transparent.png", "public/onexa-mark-192.png", "public/onexa-mark-512.png", "public/onexa-og.png"]) {
   assert.ok(existsSync(path), `missing generated brand asset: ${path}`);
 }
 
-for (const token of ["OnexaBrandMark", "OnexaBrandLockup", "/onexa-approved-logo.png"]) {
+for (const token of ["OnexaBrandMark", "OnexaBrandLockup", "/onexa-logo-transparent.png"]) {
   assert.ok(component.includes(token), `canonical brand component missing: ${token}`);
 }
+assert.equal(
+  statSync("public/onexa-logo-transparent.png").size,
+  1082265,
+  "canonical transparent ONEXA logo asset size changed",
+);
 assert.ok(publicLogo.includes("OnexaBrandLockup"), "public header is not using the canonical ONEXA lockup");
 assert.ok(shell.includes("OnexaBrandLockup"), "authenticated shell is not using the canonical ONEXA lockup");
 assert.ok(!shell.includes('viewBox="0 0 40 40"'), "legacy inline shell logo is still present");

@@ -147,9 +147,10 @@ export const POSTING_CONTRACTS: readonly PostingContract[] = [
     lines: [
       { side: "debit", accountRole: "payroll_expense_or_project_cost", amountSource: "employer_cost" },
       { side: "credit", accountRole: "employee_payables", amountSource: "net_pay" },
-      { side: "credit", accountRole: "payroll_liabilities", amountSource: "deductions_and_contributions" },
+      { side: "credit", accountRole: "gosi_payable", amountSource: "employee_and_employer_gosi" },
+      { side: "credit", accountRole: "employee_loans_receivable", amountSource: "loan_deductions" },
     ],
-    reports: ["general_ledger", "trial_balance", "income_statement", "payroll_cost"], reversible: true,
+    reports: ["general_ledger", "trial_balance", "income_statement", "payroll_cost", "payroll_accounting_reconciliation"], reversible: true,
   },
   {
     documentType: "fixed_asset_acquisition", module: "assets", labelAr: "اقتناء أصل ثابت", labelEn: "Fixed asset acquisition", triggerStatus: "approved",
