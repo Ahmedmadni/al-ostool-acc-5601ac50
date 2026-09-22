@@ -464,8 +464,7 @@ grant select on table public.onexa_asset_posting_configuration_gaps
 
 revoke all on function public.onexa_guard_posted_asset_financials()
   from public, anon, authenticated;
-revoke all on function public.onexa_post_asset_depreciation(uuid, text, date)
-  from public, anon;
+revoke all on function public.onexa_post_asset_depreciation(uuid, text, date) from public, anon;
 grant execute on function public.onexa_post_asset_depreciation(uuid, text, date)
   to authenticated;
 
