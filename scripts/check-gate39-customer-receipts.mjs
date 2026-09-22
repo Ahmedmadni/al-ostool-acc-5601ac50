@@ -20,6 +20,8 @@ for (const marker of [
   "for update", "security_invoker = true", "enable row level security",
   "onexa_private.claim_tenant_id()", "onexa.transition_authorized",
 ]) assert.ok(sql.includes(marker), `Missing receipt control: ${marker}`);
+assert.ok(sql.includes("_invoice.branch_id is distinct from _receipt.branch_id"));
+assert.ok(sql.includes("_invoice.party_type is distinct from 'customer'"));
 assert.ok(!/grant\s+(insert|update|delete)/i.test(sql), "Direct ledger writes exposed");
 assert.ok(postcheck.includes("authenticated_direct_writes_denied"));
 assert.ok(postcheck.includes("security_invoker"));

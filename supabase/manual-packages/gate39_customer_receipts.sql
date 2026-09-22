@@ -160,10 +160,11 @@ begin
       where id = _allocation.invoice_id and tenant_id = _tenant for update;
     if not found or _invoice.document_type <> 'sales_invoice' or _invoice.status <> 'posted'
       or _invoice.posted_journal_id is null
-      or _invoice.legal_entity_id <> _receipt.legal_entity_id
-      or _invoice.branch_id <> _receipt.branch_id
-      or _invoice.party_id <> _receipt.party_id
-      or _invoice.currency <> _receipt.currency then
+      or _invoice.party_type is distinct from 'customer'
+      or _invoice.legal_entity_id is distinct from _receipt.legal_entity_id
+      or _invoice.branch_id is distinct from _receipt.branch_id
+      or _invoice.party_id is distinct from _receipt.party_id
+      or _invoice.currency is distinct from _receipt.currency then
       raise exception 'ONEXA_RECEIPT_INVOICE_MISMATCH';
     end if;
     perform 1 from public.onexa_sales_posting_runs

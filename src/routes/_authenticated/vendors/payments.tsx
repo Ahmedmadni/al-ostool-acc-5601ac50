@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { fmtSAR } from "@/lib/format";
 import { exportToExcel } from "@/lib/export";
 import { Wallet, FileSpreadsheet, Search, TrendingDown } from "lucide-react";
+import { OnexaPaymentsPanel } from "@/components/procurement/onexa-vendor-payments-panel";
 
 export const Route = createFileRoute("/_authenticated/vendors/payments")({ component: Page });
 
@@ -43,6 +44,7 @@ function Page() {
 
   return (
     <div>
+      <OnexaPaymentsPanel />
       <PageHeader
         title="مدفوعات الموردين"
         description="Vendor Payments — مدفوعات الموردين الصادرة"
