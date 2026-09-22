@@ -1,4 +1,4 @@
-# تشغيل Gate 34 إلى Gate 37 يدويًا
+# تشغيل Gate 34 إلى Gate 38 يدويًا
 
 ## قبل البدء
 
@@ -7,6 +7,7 @@
 3. افتح **SQL Editor** وأنشئ Query جديدة لكل ملف؛ لا تجمع الملفات كلها في تشغيل واحد.
 4. اترك مفاتيح التشغيل `VITE_ENABLE_ONEXA_POSTING` و`VITE_ENABLE_ONEXA_SALES_POSTING` مغلقة.
 5. اترك `VITE_ENABLE_ONEXA_PROCUREMENT_POSTING` مغلقًا حتى اكتمال فحص Gate 36.
+6. اترك `VITE_ENABLE_ONEXA_PAYROLL_POSTING` و`VITE_ENABLE_ONEXA_ASSET_POSTING` مغلقين حتى نجاح فحوص Gate 37 وGate 38.
 
 ## الترتيب الإلزامي
 
@@ -91,3 +92,27 @@
 
 النتيجة المتوقعة: `gate37_payroll_posting_smoke_test | passed` ثم `ROLLBACK`.
 لا تفعّل `VITE_ENABLE_ONEXA_PAYROLL_POSTING=true` قبل نجاح الفحص والاختبار.
+
+
+## Gate 38 — الأصول الثابتة والإهلاك
+
+Gate 36 يرحّل تكلفة اقتناء الأصل المصنّفة داخل فاتورة المورد، لذلك لا تعِد ترحيل
+تكلفة الاقتناء في Gate 38. هذه الحزمة تضبط سجل الأصل وترحّل الإهلاك اللاحق فقط.
+
+نفّذ كل ملف في Query مستقلة وبالترتيب:
+
+1. `gate38_fixed_assets_gl_posting.sql`
+2. `gate38_postcheck.sql`
+3. حدّد `legal_entity_id` و`branch_id` لكل أصل، وأكمل `salvage_value` و`useful_life_years` و`depreciation_start_date`.
+4. راجع نتائج المطابقة؛ يجب ألا توجد حالات `register_mismatch`.
+5. `gate38_aoa_account_mapping.sql`
+6. أعد تنفيذ `gate38_postcheck.sql` وتأكد من عدم وجود فجوات حسابية.
+7. تأكد من وجود أصل واحد على الأقل بحالة `ready` ومستخدم مالي مختلف عن مستورد الأصل.
+8. `gate38_asset_depreciation_smoke_test_rollback.sql`
+
+النتيجة المتوقعة:
+
+`gate38_asset_depreciation_smoke_test | passed`
+
+ثم ينفذ الاختبار `ROLLBACK` ولا يترك قيدًا أو إهلاكًا تجريبيًا. لا تفعّل
+`VITE_ENABLE_ONEXA_ASSET_POSTING=true` قبل نجاح الفحص والاختبار.
