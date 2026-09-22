@@ -15,14 +15,10 @@ for (const path of ["public/onexa-approved-logo.png", "public/onexa-logo-transpa
   assert.ok(existsSync(path), `missing generated brand asset: ${path}`);
 }
 
-for (const token of ["OnexaBrandMark", "OnexaBrandLockup", "/onexa-logo-transparent.png"]) {
+for (const token of ["OnexaBrandMark", "OnexaBrandLockup", "onexa-logo-transparent-user.png.asset.json"]) {
   assert.ok(component.includes(token), `canonical brand component missing: ${token}`);
 }
-assert.equal(
-  statSync("public/onexa-logo-transparent.png").size,
-  1082265,
-  "canonical transparent ONEXA logo asset size changed",
-);
+assert.ok(statSync("public/onexa-logo-transparent.png").size > 0, "legacy transparent logo fallback is empty");
 assert.ok(publicLogo.includes("OnexaBrandLockup"), "public header is not using the canonical ONEXA lockup");
 assert.ok(shell.includes("OnexaBrandLockup"), "authenticated shell is not using the canonical ONEXA lockup");
 assert.ok(!shell.includes('viewBox="0 0 40 40"'), "legacy inline shell logo is still present");
