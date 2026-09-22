@@ -1,4 +1,5 @@
 import type { ImgHTMLAttributes } from "react";
+import onexaLogo from "@/assets/onexa-logo-transparent-user.png.asset.json";
 
 type BrandMarkProps = Omit<ImgHTMLAttributes<HTMLImageElement>, "src" | "alt"> & {
   title?: string;
@@ -18,7 +19,7 @@ type BrandLockupProps = {
  * Do not redraw, recolor, crop, separate, or reconstruct its elements.
  */
 export function OnexaBrandMark({ className, title = "ONEXA ERP", ...props }: BrandMarkProps) {
-  return <img src="/onexa-logo-transparent.png" className={className} alt={title} {...props} />;
+  return <img src={onexaLogo.url} className={className} alt={title} {...props} />;
 }
 
 export function OnexaBrandLockup({

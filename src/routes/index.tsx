@@ -30,6 +30,7 @@ import { ONEXA, onexaModules } from "@/lib/onexa-product";
 import { formatPlanLimit, ONEXA_PLANS } from "@/lib/onexa-plans";
 import { publicSeo } from "@/lib/public-seo";
 import footerAnimation from "@/assets/onexa-footer-animation.mp4.asset.json";
+import onexaLogo from "@/assets/onexa-logo-transparent-user.png.asset.json";
 
 const moduleIcons: Record<(typeof onexaModules)[number]["key"], LucideIcon> = {
   finance: Landmark,
@@ -286,17 +287,17 @@ function OnexaHomePage() {
               loop
               playsInline
               preload="metadata"
-              poster="/onexa-logo-transparent.png"
+              poster={onexaLogo.url}
               aria-label={language === "ar" ? "فيديو هوية ONEXA المتحرك" : "Animated ONEXA brand film"}
             >
               <source src={footerAnimation.url} type="video/mp4" />
             </video>
             <div className="hidden aspect-video place-items-center motion-reduce:grid">
-              <img src="/onexa-logo-transparent.png" alt="ONEXA ERP SYSTEM" className="h-4/5 w-4/5 object-contain" />
+              <img src={onexaLogo.url} alt="ONEXA ERP SYSTEM" className="h-4/5 w-4/5 object-contain" />
             </div>
           </div>
           <div className="flex flex-col gap-4 lg:items-end lg:text-end">
-            <img src="/onexa-logo-transparent.png" alt="ONEXA ERP SYSTEM" className="h-24 w-24 object-contain" />
+            <img src={onexaLogo.url} alt="ONEXA ERP SYSTEM" className="h-24 w-24 object-contain" />
             <span className="text-base font-black text-white">© {new Date().getFullYear()} ONEXA ERP</span>
             <span>{c.footer}</span>
             <span>Finance • Operations • People • Insight</span>
