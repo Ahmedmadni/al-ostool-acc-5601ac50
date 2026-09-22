@@ -25,6 +25,7 @@ assert.ok(postcheck.includes("authenticated_direct_writes_denied"));
 assert.ok(postcheck.includes("security_invoker"));
 assert.ok(mapping.includes("ONEXA_GATE39_CASH_ACCOUNT_SELECTION_REQUIRED"));
 assert.ok(smoke.includes("ONEXA_SMOKE_RECEIPT_RETRY_FAILED"));
+assert.ok(smoke.includes("ONEXA_SMOKE_CROSS_TENANT_ALLOWED"));
 assert.match(smoke.trim(), /rollback;$/);
 assert.ok(!smoke.includes("commit;"));
 assert.ok(service.includes("createBusinessDocument") && service.includes("onexa_post_customer_receipt"));

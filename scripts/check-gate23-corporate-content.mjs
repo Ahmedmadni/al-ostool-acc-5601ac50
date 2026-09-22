@@ -9,7 +9,7 @@ requireText(styles, "--primary: #1d4ed8", "ONEXA blue is missing from the light 
 requireText(styles, "--primary: #60a5fa", "ONEXA blue is missing from the dark identity");
 
 const brand = read("src/components/brand/onexa-brand.tsx");
-for (const marker of ["OnexaBrandMark", "OnexaBrandLockup", "/onexa-logo-transparent.png", "ONEXA ERP SYSTEM"]) {
+for (const marker of ["OnexaBrandMark", "OnexaBrandLockup", "onexaLogo.url", "ONEXA ERP SYSTEM"]) {
   requireText(brand, marker, `ONEXA shared brand marker is missing: ${marker}`);
 }
 

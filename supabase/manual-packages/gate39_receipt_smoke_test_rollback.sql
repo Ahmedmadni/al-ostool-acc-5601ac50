@@ -40,6 +40,18 @@ begin
   _retry := public.onexa_post_customer_receipt(_document.id,
     to_char(_document.accounting_date, 'YYYY-MM'));
   if _retry is distinct from _journal then raise exception 'ONEXA_SMOKE_RECEIPT_RETRY_FAILED'; end if;
+  perform set_config('request.jwt.claims', jsonb_build_object(
+    'sub', _poster, 'role', 'authenticated',
+    'app_metadata', jsonb_build_object('onexa_tenant_id', 'tenant-smoke-other'))::text, true);
+  begin
+    perform public.onexa_post_customer_receipt(_document.id,
+      to_char(_document.accounting_date, 'YYYY-MM'));
+    raise exception 'ONEXA_SMOKE_CROSS_TENANT_ALLOWED';
+  exception when others then
+    if sqlerrm not in ('ONEXA_RECEIPT_POST_NOT_AUTHORIZED', 'ONEXA_DOCUMENT_NOT_FOUND') then
+      raise;
+    end if;
+  end;
   raise notice 'gate39_customer_receipt_smoke_test | passed | rollback follows';
 end;
 $smoke$;
