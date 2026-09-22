@@ -11,6 +11,7 @@ import { exportToExcel, exportToPdf } from "@/lib/export";
 import { fmtSAR } from "@/lib/format";
 import { Upload, FileSpreadsheet, FileText, Printer, Building2, TrendingDown, Wallet, Hash } from "lucide-react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { AssetAccountingPanel } from "@/components/assets/asset-accounting-panel";
 
 export const Route = createFileRoute("/_authenticated/fixed-assets/")({ component: Page });
 
@@ -24,6 +25,11 @@ const FIELDS: FieldSpec[] = [
   { key: "net_book_value", label: "صافي القيمة", type: "number" },
   { key: "annual_depreciation", label: "الإهلاك السنوي", type: "number" },
   { key: "useful_life_years", label: "العمر الإنتاجي (سنة)", type: "number" },
+  { key: "salvage_value", label: "قيمة التخريد", type: "number" },
+  { key: "depreciation_start_date", label: "تاريخ بدء الإهلاك", type: "date" },
+  { key: "depreciation_method", label: "طريقة الإهلاك" },
+  { key: "legal_entity_id", label: "معرف الكيان القانوني" },
+  { key: "branch_id", label: "معرف الفرع" },
   { key: "project", label: "المشروع" },
   { key: "department", label: "الإدارة" },
   { key: "status", label: "الحالة" },
@@ -77,6 +83,8 @@ function Page() {
         <KpiCard title="مجمع الإهلاك" value={fmtSAR(totalDep)} icon={TrendingDown} color="warning" />
         <KpiCard title="صافي القيمة الدفترية" value={fmtSAR(totalNBV)} icon={Building2} color="success" />
       </div>
+
+      <AssetAccountingPanel />
 
       <Card className="p-5 mb-4">
         <h3 className="font-semibold mb-3">صافي القيمة حسب الفئة</h3>
