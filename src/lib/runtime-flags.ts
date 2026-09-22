@@ -3,14 +3,22 @@
  * been executed and verified. Blank values in .env.example intentionally mean
  * false.
  */
-export const ONEXA_PROVISIONING_ENABLED = import.meta.env.VITE_ENABLE_ONEXA_PROVISIONING === "true";
-export const ONEXA_POSTING_ENABLED = import.meta.env.VITE_ENABLE_ONEXA_POSTING === "true";
-export const ONEXA_SALES_POSTING_ENABLED = ONEXA_POSTING_ENABLED
-  && import.meta.env.VITE_ENABLE_ONEXA_SALES_POSTING === "true";
-export const ONEXA_PROCUREMENT_POSTING_ENABLED = ONEXA_POSTING_ENABLED
-  && import.meta.env.VITE_ENABLE_ONEXA_PROCUREMENT_POSTING === "true";
-export const ONEXA_PAYROLL_POSTING_ENABLED = ONEXA_POSTING_ENABLED
-  && import.meta.env.VITE_ENABLE_ONEXA_PAYROLL_POSTING === "true";
+export const ONEXA_PROVISIONING_ENABLED =
+  import.meta.env.VITE_ENABLE_ONEXA_PROVISIONING === "true";
+export const ONEXA_POSTING_ENABLED =
+  import.meta.env.VITE_ENABLE_ONEXA_POSTING === "true";
+export const ONEXA_SALES_POSTING_ENABLED =
+  ONEXA_POSTING_ENABLED &&
+  import.meta.env.VITE_ENABLE_ONEXA_SALES_POSTING === "true";
+export const ONEXA_PROCUREMENT_POSTING_ENABLED =
+  ONEXA_POSTING_ENABLED &&
+  import.meta.env.VITE_ENABLE_ONEXA_PROCUREMENT_POSTING === "true";
+export const ONEXA_PAYROLL_POSTING_ENABLED =
+  ONEXA_POSTING_ENABLED &&
+  import.meta.env.VITE_ENABLE_ONEXA_PAYROLL_POSTING === "true";
+export const ONEXA_ASSET_POSTING_ENABLED =
+  ONEXA_POSTING_ENABLED &&
+  import.meta.env.VITE_ENABLE_ONEXA_ASSET_POSTING === "true";
 
 export const ONEXA_RUNTIME_READINESS = {
   provisioning: ONEXA_PROVISIONING_ENABLED,
@@ -18,4 +26,5 @@ export const ONEXA_RUNTIME_READINESS = {
   salesPosting: ONEXA_SALES_POSTING_ENABLED,
   procurementPosting: ONEXA_PROCUREMENT_POSTING_ENABLED,
   payrollPosting: ONEXA_PAYROLL_POSTING_ENABLED,
+  assetPosting: ONEXA_ASSET_POSTING_ENABLED,
 } as const;
