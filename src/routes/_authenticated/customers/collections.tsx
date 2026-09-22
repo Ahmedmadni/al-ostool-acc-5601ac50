@@ -11,6 +11,7 @@ import { fmtSAR } from "@/lib/format";
 import { exportToExcel } from "@/lib/export";
 import { Wallet, Plus, FileSpreadsheet, Search, TrendingUp } from "lucide-react";
 import { CollectionWizard } from "@/components/collections/collection-wizard";
+import { OnexaReceiptsPanel } from "@/components/collections/onexa-receipts-panel";
 
 export const Route = createFileRoute("/_authenticated/customers/collections")({ component: Page });
 
@@ -47,6 +48,7 @@ function Page() {
 
   return (
     <div>
+      <OnexaReceiptsPanel />
       <PageHeader
         title="التحصيلات"
         description="Collections — مدفوعات العملاء الواردة"

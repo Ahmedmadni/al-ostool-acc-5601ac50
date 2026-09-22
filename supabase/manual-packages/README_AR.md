@@ -116,3 +116,17 @@ Gate 36 يرحّل تكلفة اقتناء الأصل المصنّفة داخل 
 
 ثم ينفذ الاختبار `ROLLBACK` ولا يترك قيدًا أو إهلاكًا تجريبيًا. لا تفعّل
 `VITE_ENABLE_ONEXA_ASSET_POSTING=true` قبل نجاح الفحص والاختبار.
+
+## Gate 39 — تحصيلات ONEXA والذمم المدينة
+
+لا تُرحّل سجلات التحصيلات القديمة من جدول `payments` مرة ثانية. أنشئ مستند `customer_receipt` من شاشة ONEXA بعد ترحيل فاتورة المبيعات واعتمده بمستخدم مختلف.
+
+بعد السماح بتغييرات قاعدة الإنتاج والفحص التمهيدي والنسخة الاحتياطية، شغّل الملفات كلًا على حدة:
+
+1. `gate39_customer_receipts.sql`
+2. `gate39_postcheck.sql`
+3. افتح `gate39_aoa_account_mapping.sql`، راجع كشف حسابات الأصول، واختر حساب النقد أو البنك التفصيلي الحقيقي بدل القيمة `REPLACE_WITH_CONFIRMED_CASH_OR_BANK_DETAIL_CODE` ثم شغّل الملف.
+4. أعد `gate39_postcheck.sql` وتأكد من خلو فجوات الحسابات وعدم وجود أرصدة سالبة.
+5. أنشئ سند تحصيل ONEXA معتمدًا مرتبطًا بفاتورة مرحلة، ثم شغّل `gate39_receipt_smoke_test_rollback.sql`. المتوقع `gate39_customer_receipt_smoke_test | passed` ويُنفذ ROLLBACK.
+
+اترك `VITE_ENABLE_ONEXA_CUSTOMER_RECEIPT_POSTING` مغلقًا حتى نجاح كل الفحوص. لا تطبّق SQL تلقائيًا على الإنتاج.
