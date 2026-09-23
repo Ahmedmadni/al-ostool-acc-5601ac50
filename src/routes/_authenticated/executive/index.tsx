@@ -20,6 +20,7 @@ import { DataTruncationBanner } from "@/components/shared/data-truncation-banner
 import {
   Sparkles, Loader2, Copy, RefreshCw, AlertTriangle, TrendingUp, TrendingDown, ArrowLeft,
   Activity, Wallet, FolderKanban, Users, Layers, ShieldCheck, Receipt, CreditCard, Briefcase, FileText,
+  Database, CheckCircle2, CircleAlert, BarChart3,
 } from "lucide-react";
 import { Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart } from "recharts";
 
@@ -85,6 +86,25 @@ async function loadDashboard(period: Period) {
   const payables = (suppliers.data ?? [])
     .filter((r) => r.period === lsp)
     .reduce((a, r) => a + Math.max(0, Number(r.closing_credit ?? 0) - Number(r.closing_debit ?? 0)), 0);
+
+  const latestText = (values: Array<string | null | undefined>) => values.filter(Boolean).sort().at(-1) ?? null;
+  const source = (key: string, label: string, rows: unknown[] | null, error: unknown, asOf: string | null) => ({
+    key,
+    label,
+    rows: rows?.length ?? 0,
+    asOf,
+    status: error ? "error" as const : rows?.length ? "ready" as const : "empty" as const,
+  });
+  const sources = [
+    source("invoices", "فواتير المبيعات", inv.data, inv.error, latestText((inv.data ?? []).map((row) => row.issue_date))),
+    source("payments", "التحصيلات والمدفوعات", pay.data, pay.error, latestText((pay.data ?? []).map((row) => row.payment_date))),
+    source("projects", "المشاريع", projects.data, projects.error, null),
+    source("banks", "الأرصدة البنكية", banks.data, banks.error, latestText((banks.data ?? []).map((row) => row.txn_date))),
+    source("aging", "أعمار الذمم", aging.data, aging.error, lap || null),
+    source("suppliers", "أرصدة الموردين", suppliers.data, suppliers.error, lsp || null),
+    source("costs", "تكاليف التشغيل", costs.data, costs.error, latestText((costs.data ?? []).map((row) => row.period))),
+    source("hr", "تكاليف الموارد البشرية", hr.data, hr.error, latestText((hr.data ?? []).map((row) => row.period))),
+  ];
 
   const inRange = (d: string | null | undefined, s: Date, e: Date) => !!d && new Date(d) >= s && new Date(d) <= e;
   const revCurr = invoices.filter((i) => inRange(i.issue_date, start, end)).reduce((a, i) => a + Number(i.amount ?? i.total_amount ?? 0), 0);
@@ -179,7 +199,7 @@ async function loadDashboard(period: Period) {
 
   return {
     snapshot: { revCurr, revChange, netProfit, netMargin, cashPosition, receivables, payables, activeCount, activeValue },
-    trend12, cashFlow6, health, risks, obligations,
+    trend12, cashFlow6, health, risks, obligations, sources,
   };
 }
 
@@ -284,6 +304,19 @@ function InsightsCard() {
   );
 }
 
+function ChartEmptyState({ title, description, to, action }: { title: string; description: string; to: string; action: string }) {
+  return (
+    <div className="grid h-[280px] place-items-center rounded-2xl border border-dashed border-border bg-muted/20 px-6 text-center">
+      <div>
+        <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary"><BarChart3 className="h-5 w-5" /></span>
+        <div className="mt-4 text-sm font-bold">{title}</div>
+        <p className="mx-auto mt-2 max-w-sm text-xs leading-6 text-muted-foreground">{description}</p>
+        <Button asChild variant="outline" size="sm" className="mt-4"><Link to={to}>{action}</Link></Button>
+      </div>
+    </div>
+  );
+}
+
 function HealthBadge({ score }: { score: number }) {
   if (score >= 75) return <Badge className="bg-success/15 text-success border-success/30">{score}%</Badge>;
   if (score >= 50) return <Badge className="bg-warning/15 text-warning border-warning/30">{score}%</Badge>;
@@ -297,7 +330,7 @@ function HealthBadge({ score }: { score: number }) {
 function ExecutivePage() {
   const { lang } = useI18n();
   const [period, setPeriod] = useState<Period>("month");
-  const { data, refetch, isFetching } = useQuery({
+  const { data, refetch, isFetching, error } = useQuery({
     queryKey: ["exec-dashboard", period],
     queryFn: () => loadDashboard(period),
   });
@@ -314,6 +347,9 @@ function ExecutivePage() {
   };
   const priorityLabel: Record<string, string> = { critical: "حرج", high: "عالي", medium: "متوسط", low: "منخفض" };
   const truncated = Array.from(new Set([...(health?.dataQuality?.truncated ?? []), ...(alerts?.dataQuality?.truncated ?? [])]));
+  const readySources = data?.sources.filter((item) => item.status === "ready").length ?? 0;
+  const sourceErrors = data?.sources.filter((item) => item.status === "error").length ?? 0;
+  const metricAvailable = (...keys: string[]) => !!data && keys.every((key) => data.sources.find((item) => item.key === key)?.status !== "error");
 
   return (
     <div className="space-y-7" dir="rtl">
@@ -341,18 +377,51 @@ function ExecutivePage() {
         }
       />
 
+      {error && (
+        <Card className="border-destructive/30 bg-destructive/[0.04]">
+          <CardContent className="flex items-start gap-3 p-4">
+            <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
+            <div><div className="text-sm font-bold text-destructive">تعذر تحميل لوحة القرار</div><p className="mt-1 text-xs text-muted-foreground">لم يتم عرض أرقام بديلة. أعد المحاولة أو راجع اتصال مصادر البيانات.</p></div>
+          </CardContent>
+        </Card>
+      )}
+
+      <Card className="overflow-hidden">
+        <CardHeader className="border-b border-border/70 pb-4">
+          <CardTitle className="flex flex-wrap items-center justify-between gap-3 text-sm">
+            <span className="flex items-center gap-2"><Database className="h-4 w-4 text-primary" />جاهزية مصادر القرار</span>
+            <span className={`rounded-full border px-3 py-1 text-[11px] font-bold ${sourceErrors ? "border-destructive/20 bg-destructive/5 text-destructive" : "border-success/20 bg-success/5 text-success"}`}>
+              {data ? `${readySources} من ${data.sources.length} مصادر تحتوي بيانات${sourceErrors ? ` • ${sourceErrors} متعذر` : ""}` : "جارٍ التحقق من المصادر"}
+            </span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-2 p-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
+          {(data?.sources ?? []).map((item) => (
+            <div key={item.key} className="rounded-xl border border-border bg-muted/20 px-3 py-3">
+              <div className="flex items-center justify-between gap-2">
+                <span className="truncate text-[11px] font-bold">{item.label}</span>
+                {item.status === "error" ? <CircleAlert className="h-3.5 w-3.5 shrink-0 text-destructive" /> : <CheckCircle2 className={`h-3.5 w-3.5 shrink-0 ${item.status === "ready" ? "text-success" : "text-muted-foreground/40"}`} />}
+              </div>
+              <div className="mt-2 text-lg font-black">{item.status === "error" ? "—" : fmtNumber(item.rows)}</div>
+              <div className="mt-0.5 truncate text-[10px] text-muted-foreground">{item.asOf ? `حتى ${item.asOf}` : item.status === "empty" ? "لا توجد سجلات" : item.status === "error" ? "تعذر الاتصال" : "متاح"}</div>
+            </div>
+          ))}
+          {!data && Array.from({ length: 8 }).map((_, index) => <div key={index} className="h-[78px] animate-pulse rounded-xl bg-muted/45" />)}
+        </CardContent>
+      </Card>
+
       {/* Snapshot KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6 gap-4">
-        <KpiCard title="إجمالي الإيرادات" value={fmtSAR(data?.snapshot.revCurr ?? 0)} icon={TrendingUp} color="success"
+        <KpiCard title="إجمالي الإيرادات" value={metricAvailable("invoices") ? fmtSAR(data!.snapshot.revCurr) : "—"} icon={TrendingUp} color="success"
           hint={data ? `${data.snapshot.revChange >= 0 ? "▲" : "▼"} ${fmtPercent(Math.abs(data.snapshot.revChange))} مقارنة بالفترة السابقة` : "—"} />
-        <KpiCard title="صافي الربح" value={fmtSAR(data?.snapshot.netProfit ?? 0)}
+        <KpiCard title="صافي الربح" value={metricAvailable("invoices", "costs", "hr") ? fmtSAR(data!.snapshot.netProfit) : "—"}
           icon={(data?.snapshot.netProfit ?? 0) >= 0 ? TrendingUp : TrendingDown}
           color={(data?.snapshot.netProfit ?? 0) >= 0 ? "success" : "destructive"}
           hint={`هامش صافٍ ${fmtPercent(data?.snapshot.netMargin ?? 0)}`} />
-        <KpiCard title="المركز النقدي" value={fmtSAR(data?.snapshot.cashPosition ?? 0)} icon={Wallet} color="info" hint="إجمالي أرصدة البنوك" />
-        <KpiCard title="إجمالي الذمم المدينة" value={fmtSAR(data?.snapshot.receivables ?? 0)} icon={Receipt} color="warning" hint="مستحقات على العملاء" />
-        <KpiCard title="إجمالي الذمم الدائنة" value={fmtSAR(data?.snapshot.payables ?? 0)} icon={CreditCard} color="destructive" hint="مستحقات للموردين" />
-        <KpiCard title="المشاريع النشطة" value={fmtNumber(data?.snapshot.activeCount ?? 0)} icon={Briefcase} color="primary"
+        <KpiCard title="المركز النقدي" value={metricAvailable("banks") ? fmtSAR(data!.snapshot.cashPosition) : "—"} icon={Wallet} color="info" hint="إجمالي أرصدة البنوك" />
+        <KpiCard title="إجمالي الذمم المدينة" value={metricAvailable("aging") ? fmtSAR(data!.snapshot.receivables) : "—"} icon={Receipt} color="warning" hint="مستحقات على العملاء" />
+        <KpiCard title="إجمالي الذمم الدائنة" value={metricAvailable("suppliers") ? fmtSAR(data!.snapshot.payables) : "—"} icon={CreditCard} color="destructive" hint="مستحقات للموردين" />
+        <KpiCard title="المشاريع النشطة" value={metricAvailable("projects") ? fmtNumber(data!.snapshot.activeCount) : "—"} icon={Briefcase} color="primary"
           hint={`قيمة العقود: ${fmtSAR(data?.snapshot.activeValue ?? 0)}`} />
       </div>
 
@@ -369,32 +438,36 @@ function ExecutivePage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
              <Card className="p-5">
                <div className="text-sm font-semibold mb-5">الإيرادات وصافي الربح — آخر 12 شهراً</div>
-              <ResponsiveContainer width="100%" height={280}>
-                <ComposedChart data={data?.trend12 ?? []}>
-                   <CartesianGrid stroke="var(--border)" vertical={false} />
-                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} />
-                  <Tooltip formatter={(v: number) => fmtSAR(v)} />
-                  <Legend />
-                   <Line type="monotone" dataKey="revenue" stroke="var(--chart-3)" strokeWidth={2.5} name="الإيرادات" dot={false} />
-                   <Line type="monotone" dataKey="profit" stroke="var(--chart-1)" strokeWidth={2.5} name="صافي الربح" dot={false} />
-                </ComposedChart>
-              </ResponsiveContainer>
+              {data?.trend12.some((point) => point.revenue !== 0 || point.profit !== 0) ? (
+  <ResponsiveContainer width="100%" height={280}>
+                  <ComposedChart data={data.trend12}>
+                     <CartesianGrid stroke="var(--border)" vertical={false} />
+                    <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                    <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} />
+                    <Tooltip formatter={(v: number) => fmtSAR(v)} />
+                    <Legend />
+                     <Line type="monotone" dataKey="revenue" stroke="var(--chart-3)" strokeWidth={2.5} name="الإيرادات" dot={false} />
+                     <Line type="monotone" dataKey="profit" stroke="var(--chart-1)" strokeWidth={2.5} name="صافي الربح" dot={false} />
+                  </ComposedChart>
+                </ResponsiveContainer>
+) : <ChartEmptyState title="لا توجد حركة مالية للرسم" description="أضف أو استورد فواتير المبيعات والتكاليف لإظهار اتجاه الإيرادات والربحية." to="/imports" action="فتح مركز الاستيراد" />}
             </Card>
              <Card className="p-5">
                <div className="text-sm font-semibold mb-5">التدفق النقدي — آخر 6 أشهر</div>
-              <ResponsiveContainer width="100%" height={280}>
-                <ComposedChart data={data?.cashFlow6 ?? []}>
-                   <CartesianGrid stroke="var(--border)" vertical={false} />
-                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} />
-                  <Tooltip formatter={(v: number) => fmtSAR(v)} />
-                  <Legend />
-                   <Bar dataKey="collections" fill="var(--chart-1)" radius={[4, 4, 0, 0]} name="التحصيلات" />
-                   <Bar dataKey="payments" fill="var(--chart-4)" radius={[4, 4, 0, 0]} name="المدفوعات" />
-                   <Line type="monotone" dataKey="net" stroke="var(--chart-3)" strokeWidth={2.5} name="صافي النقد التراكمي" dot={false} />
-                </ComposedChart>
-              </ResponsiveContainer>
+              {data?.cashFlow6.some((point) => point.collections !== 0 || point.payments !== 0) ? (
+  <ResponsiveContainer width="100%" height={280}>
+                  <ComposedChart data={data.cashFlow6}>
+                     <CartesianGrid stroke="var(--border)" vertical={false} />
+                    <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                    <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} />
+                    <Tooltip formatter={(v: number) => fmtSAR(v)} />
+                    <Legend />
+                     <Bar dataKey="collections" fill="var(--chart-1)" radius={[4, 4, 0, 0]} name="التحصيلات" />
+                     <Bar dataKey="payments" fill="var(--chart-4)" radius={[4, 4, 0, 0]} name="المدفوعات" />
+                     <Line type="monotone" dataKey="net" stroke="var(--chart-3)" strokeWidth={2.5} name="صافي النقد التراكمي" dot={false} />
+                  </ComposedChart>
+                </ResponsiveContainer>
+) : <ChartEmptyState title="لا توجد حركة نقدية للرسم" description="سجّل التحصيلات والمدفوعات لإظهار التدفق النقدي وصافي الحركة التراكمية." to="/treasury" action="فتح الخزينة" />}
             </Card>
           </div>
 
