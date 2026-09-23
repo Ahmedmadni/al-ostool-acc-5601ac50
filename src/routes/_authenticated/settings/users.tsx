@@ -38,6 +38,16 @@ const emptyUser: NewUser = {
   phone: "", department_id: "", job_title_id: "",
 };
 
+const createErrorMessages: Record<string, string> = {
+  "Database error creating new user": "تعذر إنشاء ملف المستخدم. تحقق من عدم تكرار الرقم الوظيفي وصحة الإدارة والوظيفة",
+};
+
+function createErrorMessage(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  const matched = Object.entries(createErrorMessages).find(([code]) => message.includes(code));
+  return matched?.[1] ?? (message || "تعذر إنشاء المستخدم");
+}
+
 type EditDraft = {
   full_name: string;
   email: string;
@@ -148,8 +158,8 @@ function Page() {
       toast.success("تم إنشاء المستخدم");
       setOpen(false); setForm(emptyUser);
       qc.invalidateQueries({ queryKey: ["profiles-admin"] });
-    } catch (e: any) {
-      toast.error(e?.message ?? "تعذر إنشاء المستخدم");
+    } catch (error) {
+      toast.error(createErrorMessage(error));
     } finally { setSaving(false); }
   };
 
@@ -382,7 +392,7 @@ function Page() {
             </div>
             <div className="space-y-1 col-span-2">
               <Label>كلمة المرور المبدئية *</Label>
-              <Input dir="ltr" type="text" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="6 أحرف على الأقل" />
+              <Input dir="ltr" type="password" minLength={8} autoComplete="new-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="8 أحرف على الأقل" />
             </div>
           </div>
           <p className="text-xs text-muted-foreground">
