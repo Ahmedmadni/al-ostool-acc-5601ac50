@@ -5,7 +5,7 @@ import {
   Calculator, Sparkles, Settings, LogOut,
   Moon, Sun, Search, ChevronLeft, ChevronsUpDown,
   Truck, Building2, Vault, Scale, ClipboardList, UserCog,
-  Warehouse, LayoutGrid,
+  Warehouse, LayoutGrid, Menu,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/components/theme-provider";
@@ -19,6 +19,14 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { roleLabel } from "@/lib/labels";
 import { useI18n, LANGS, type Lang } from "@/lib/i18n";
 import {
@@ -188,6 +196,7 @@ const GROUPS: NavGroup[] = [
 ];
 export function AppShell({ children }: { children: ReactNode }) {
   const [commandOpen, setCommandOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const { theme, toggle } = useTheme();
   const { lang, setLang, t, dir } = useI18n();
   const { user, roles, isAdmin } = useAuth();
@@ -240,6 +249,8 @@ export function AppShell({ children }: { children: ReactNode }) {
     return () => document.removeEventListener("keydown", handleShortcut);
   }, []);
 
+  useEffect(() => setMobileNavOpen(false), [path]);
+
   const navigateFromCommand = (to: string) => {
     setCommandOpen(false);
     router.navigate({ to });
@@ -253,6 +264,76 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen bg-background">
+      <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+        <SheetContent
+          side={dir === "rtl" ? "right" : "left"}
+          className="w-[min(90vw,22rem)] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground sm:max-w-sm md:hidden"
+          dir={dir}
+        >
+          <SheetHeader className="min-h-24 border-b border-sidebar-border px-5 py-4 text-start">
+            <SheetTitle className="sr-only">{lang === "en" ? "Application navigation" : "التنقل بين التطبيقات"}</SheetTitle>
+            <OnexaBrandLockup language={lang === "ar" ? "ar" : "en"} compact showDescriptor={false} />
+            <div className="truncate ps-[52px] text-[10px] font-medium text-sidebar-foreground/50">{tenant.label.name} • {tenant.label.plan}</div>
+          </SheetHeader>
+
+          <ScrollArea className="h-[calc(100dvh-10.5rem)]">
+            <nav className="space-y-5 px-3 py-4">
+              <SheetClose asChild>
+                <Link
+                  to="/apps"
+                  className={`flex items-center gap-3 rounded-xl border px-3 py-3 text-sm font-semibold transition ${path === "/apps" ? "border-sidebar-primary/15 bg-sidebar-accent text-sidebar-primary" : "border-sidebar-border bg-sidebar text-sidebar-foreground"}`}
+                >
+                  <span className="grid h-9 w-9 place-items-center rounded-lg bg-sidebar-accent text-sidebar-primary"><LayoutGrid className="h-4.5 w-4.5" strokeWidth={1.8} /></span>
+                  <span className="flex-1 text-start">{lang === "en" ? "App launcher" : "مشغّل التطبيقات"}</span>
+                  <ChevronLeft className={`h-3.5 w-3.5 ${dir === "ltr" ? "rotate-180" : ""}`} />
+                </Link>
+              </SheetClose>
+
+              {allGroups.map((group) => {
+                const Icon = group.icon;
+                return (
+                  <section key={group.key} aria-labelledby={`mobile-group-${group.key}`}>
+                    <div id={`mobile-group-${group.key}`} className="mb-1.5 flex items-center gap-2 px-2 text-[11px] font-bold text-sidebar-foreground/55">
+                      <Icon className="h-3.5 w-3.5 text-sidebar-primary" />
+                      <span>{lang === "en" ? group.label_en : group.label}</span>
+                    </div>
+                    <div className="space-y-1">
+                      {group.links.map((link) => {
+                        const active = path === link.to || (path.startsWith(`${link.to}/`) && path.split("/").length === link.to.split("/").length);
+                        return (
+                          <SheetClose asChild key={link.to}>
+                            <Link
+                              to={link.to}
+                              className={`flex min-h-11 items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] transition ${active ? "bg-sidebar-accent font-semibold text-sidebar-primary" : "text-sidebar-foreground/70 hover:bg-sidebar-accent/65 hover:text-sidebar-foreground"}`}
+                            >
+                              <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${active ? "bg-sidebar-primary" : "bg-sidebar-foreground/20"}`} />
+                              <span className="flex-1 text-start">{lang === "en" ? link.label_en : link.label}</span>
+                            </Link>
+                          </SheetClose>
+                        );
+                      })}
+                    </div>
+                  </section>
+                );
+              })}
+            </nav>
+          </ScrollArea>
+
+          <div className="absolute inset-x-0 bottom-0 border-t border-sidebar-border bg-sidebar p-3">
+            <div className="flex items-center gap-3 rounded-xl border border-sidebar-border p-2.5">
+              <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-sidebar-accent text-sm font-bold text-sidebar-primary">{user?.email?.slice(0, 1).toUpperCase() ?? "A"}</div>
+              <div className="min-w-0 flex-1 text-start">
+                <div className="truncate text-xs">{user?.email}</div>
+                <div className="truncate text-[10px] text-sidebar-foreground/50">{roles.map((r) => roleLabel[r] ?? r).join(" • ") || "—"}</div>
+              </div>
+              <Button variant="ghost" size="icon" onClick={logout} title={t("logout")} aria-label={t("logout")}>
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
       <aside className="fixed inset-y-0 end-0 z-30 hidden w-[17rem] flex-col border-s border-sidebar-border bg-sidebar text-sidebar-foreground md:flex no-print">
         <div className="min-h-24 shrink-0 border-b border-sidebar-border px-5 py-4">
           <OnexaBrandLockup language={lang === "ar" ? "ar" : "en"} compact showDescriptor={false} />
@@ -337,6 +418,16 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <div className="flex min-w-0 flex-1 flex-col md:me-[17rem]">
         <header className="sticky top-0 z-20 flex h-[4.5rem] items-center gap-2 border-b border-border/80 bg-card/95 px-4 backdrop-blur md:px-6 no-print">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setMobileNavOpen(true)}
+            className="shrink-0 md:hidden"
+            title={lang === "en" ? "Open navigation" : "فتح قائمة التنقل"}
+            aria-label={lang === "en" ? "Open navigation" : "فتح قائمة التنقل"}
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
           <div className="hidden min-w-0 items-center gap-3 lg:flex">
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/8 text-primary">
               <ActiveGroupIcon className="h-[18px] w-[18px]" strokeWidth={1.8} />
@@ -361,10 +452,20 @@ export function AppShell({ children }: { children: ReactNode }) {
             <span className="truncate">{lang === "en" ? "Search pages and applications..." : "ابحث في الصفحات والتطبيقات..."}</span>
             <span className="onexa-kbd absolute start-2.5 top-1/2 -translate-y-1/2">Ctrl K</span>
           </button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setCommandOpen(true)}
+            className="shrink-0 sm:hidden"
+            title={lang === "en" ? "Search" : "البحث"}
+            aria-label={lang === "en" ? "Open global search" : "فتح البحث الشامل"}
+          >
+            <Search className="h-4 w-4" />
+          </Button>
           <div className="ms-auto flex items-center gap-1" />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" title="Language" className="font-semibold gap-1 text-muted-foreground">
+              <Button variant="ghost" size="sm" title="Language" className="hidden font-semibold gap-1 text-muted-foreground sm:inline-flex">
                 {LANGS.find((l) => l.code === lang)?.native ?? lang}
               </Button>
             </DropdownMenuTrigger>
@@ -379,6 +480,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </DropdownMenu>
           <Button
             variant="outline" size="icon"
+            className="hidden shrink-0 sm:inline-flex"
             title={lang === "en" ? "Calculator" : "الآلة الحاسبة"}
             aria-label={lang === "en" ? "Calculator" : "الآلة الحاسبة"}
             onClick={() => window.dispatchEvent(new CustomEvent("toggle-floating-calculator"))}
@@ -387,6 +489,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Button>
           <Button
             variant="outline" size="icon"
+            className="hidden shrink-0 sm:inline-flex"
             title={t("copilot")}
             aria-label={t("copilot")}
             onClick={() => window.dispatchEvent(new CustomEvent("toggle-floating-copilot"))}
@@ -394,13 +497,13 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Sparkles className="w-5 h-5" />
           </Button>
           <NotificationsBell />
-          <Button variant="ghost" size="icon" asChild title={lang === "en" ? "My Notes" : "ملاحظاتي الشخصية"}>
+          <Button variant="ghost" size="icon" asChild className="hidden sm:inline-flex" title={lang === "en" ? "My Notes" : "ملاحظاتي الشخصية"}>
             <Link to="/notes"><FileText className="w-5 h-5" /></Link>
           </Button>
-          <Button variant="ghost" size="icon" asChild title={lang === "en" ? "My Account" : "حسابي"}>
+          <Button variant="ghost" size="icon" asChild className="hidden sm:inline-flex" title={lang === "en" ? "My Account" : "حسابي"}>
             <Link to="/account"><Users className="w-5 h-5" /></Link>
           </Button>
-          <Button variant="ghost" size="icon" onClick={toggle} title={t("toggleTheme")}>
+          <Button variant="ghost" size="icon" onClick={toggle} className="hidden sm:inline-flex" title={t("toggleTheme")}>
             {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </Button>
 
