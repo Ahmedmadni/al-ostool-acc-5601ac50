@@ -1,5 +1,5 @@
 import { Link, useRouter, useRouterState } from "@tanstack/react-router";
-import { type ReactNode, useMemo } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import {
   LayoutDashboard, Users, FolderKanban, Receipt, FileText,
   Calculator, Sparkles, Settings, LogOut,
@@ -11,7 +11,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/components/theme-provider";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { roleLabel } from "@/lib/labels";
 import { useI18n, LANGS, type Lang } from "@/lib/i18n";
 import {
@@ -180,6 +187,7 @@ const GROUPS: NavGroup[] = [
   },
 ];
 export function AppShell({ children }: { children: ReactNode }) {
+  const [commandOpen, setCommandOpen] = useState(false);
   const { theme, toggle } = useTheme();
   const { lang, setLang, t, dir } = useI18n();
   const { user, roles, isAdmin } = useAuth();
@@ -219,6 +227,23 @@ export function AppShell({ children }: { children: ReactNode }) {
   );
   const activeGroupLabel = activeGroup ? (lang === "en" ? activeGroup.label_en : activeGroup.label) : (lang === "en" ? "Choose an application" : "اختر تطبيقًا");
   const ActiveGroupIcon = activeGroup?.icon ?? LayoutGrid;
+
+  useEffect(() => {
+    const handleShortcut = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setCommandOpen((open) => !open);
+      }
+    };
+
+    document.addEventListener("keydown", handleShortcut);
+    return () => document.removeEventListener("keydown", handleShortcut);
+  }, []);
+
+  const navigateFromCommand = (to: string) => {
+    setCommandOpen(false);
+    router.navigate({ to });
+  };
 
   const logout = async () => {
     await supabase.auth.signOut();
@@ -326,11 +351,16 @@ export function AppShell({ children }: { children: ReactNode }) {
               </div>
             </div>
           </div>
-          <div className="relative hidden w-full max-w-lg sm:block lg:ms-4">
-            <Search className="w-4 h-4 absolute end-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder={t("search")} className="h-10 rounded-xl border-border bg-muted/55 pe-10 ps-14 shadow-none focus-visible:bg-card" />
+          <button
+            type="button"
+            onClick={() => setCommandOpen(true)}
+            className="relative hidden h-10 w-full max-w-lg items-center rounded-xl border border-border bg-muted/55 pe-10 ps-14 text-start text-sm text-muted-foreground transition hover:border-primary/20 hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:flex lg:ms-4"
+            aria-label={lang === "en" ? "Open global search" : "فتح البحث الشامل"}
+          >
+            <Search className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+            <span className="truncate">{lang === "en" ? "Search pages and applications..." : "ابحث في الصفحات والتطبيقات..."}</span>
             <span className="onexa-kbd absolute start-2.5 top-1/2 -translate-y-1/2">Ctrl K</span>
-          </div>
+          </button>
           <div className="ms-auto flex items-center gap-1" />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -375,6 +405,42 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Button>
 
         </header>
+
+        <CommandDialog open={commandOpen} onOpenChange={setCommandOpen}>
+          <CommandInput
+            autoFocus
+            placeholder={lang === "en" ? "Search by page, application, or path..." : "ابحث باسم الصفحة أو التطبيق أو المسار..."}
+            dir={dir}
+          />
+          <CommandList className="max-h-[min(60vh,34rem)] p-2" dir={dir}>
+            <CommandEmpty className="py-12 text-muted-foreground">
+              {lang === "en" ? "No accessible page matches your search." : "لا توجد صفحة متاحة تطابق بحثك."}
+            </CommandEmpty>
+            {allGroups.map((group) => {
+              const Icon = group.icon;
+              return (
+                <CommandGroup key={group.key} heading={lang === "en" ? group.label_en : group.label}>
+                  {group.links.map((link) => (
+                    <CommandItem
+                      key={link.to}
+                      value={`${link.label} ${link.label_en} ${group.label} ${group.label_en} ${link.to}`}
+                      onSelect={() => navigateFromCommand(link.to)}
+                      className="min-h-12 cursor-pointer rounded-lg px-3"
+                    >
+                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/8 text-primary">
+                        <Icon className="h-4 w-4" strokeWidth={1.8} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-medium">{lang === "en" ? link.label_en : link.label}</span>
+                        <span className="block truncate text-[11px] text-muted-foreground" dir="ltr">{link.to}</span>
+                      </span>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              );
+            })}
+          </CommandList>
+        </CommandDialog>
 
         <div className="onexa-shell-pattern pointer-events-none absolute inset-x-0 top-[4.5rem] h-20 opacity-60" />
         <main className="relative flex-1 overflow-x-hidden p-4 md:p-6 lg:p-8 xl:p-9">{children}</main>
