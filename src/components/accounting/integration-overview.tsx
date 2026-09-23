@@ -11,18 +11,18 @@ const steps = [
 
 export function AccountingIntegrationOverview() {
   return (
-    <section className="overflow-hidden rounded-[28px] border border-primary/15 bg-gradient-to-l from-primary/[0.08] via-card to-card p-6 shadow-sm md:p-8">
-      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+    <section className="overflow-hidden rounded-2xl border border-border bg-card p-5 app-surface md:p-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-xs font-black tracking-[0.18em] text-primary">ONEXA CONNECTED LEDGER</p>
-          <h2 className="mt-2 text-xl font-black md:text-2xl">كل عملية تنتهي في الحسابات والتقارير</h2>
+          <p className="text-[11px] font-bold tracking-[0.14em] text-primary">ONEXA CONNECTED LEDGER</p>
+          <h2 className="mt-2 text-lg font-bold md:text-xl">كل عملية تنتهي في الحسابات والتقارير</h2>
           <p className="mt-2 max-w-3xl text-sm leading-7 text-muted-foreground">
-            دورة موحدة للمستندات تربط الموديولات بالحسابات العامة مع تتبع المصدر، منع التكرار، وتصحيح القيود بالعكس المحاسبي.
+            دورة موحدة تربط المستندات التشغيلية بالحسابات العامة مع تتبع المصدر ومنع الترحيل المكرر والتصحيح بالعكس المحاسبي.
           </p>
         </div>
-        <div className="flex shrink-0 gap-2 text-xs font-bold">
-          <span className="rounded-full border border-border bg-background/80 px-3 py-2">{POSTING_CONTRACTS.length} نوع مستند</span>
-          <span className="rounded-full border border-border bg-background/80 px-3 py-2">{ONEXA_REPORTS.length} تقرير مترابط</span>
+        <div className="flex shrink-0 gap-2 text-xs font-semibold">
+          <span className="rounded-lg border border-border bg-muted/35 px-3 py-2">{POSTING_CONTRACTS.length} نوع مستند</span>
+          <span className="rounded-lg border border-border bg-muted/35 px-3 py-2">{ONEXA_REPORTS.length} تقرير مترابط</span>
         </div>
       </div>
 
@@ -30,10 +30,15 @@ export function AccountingIntegrationOverview() {
         {steps.map((step, index) => {
           const Icon = step.icon;
           return (
-            <div key={step.label} className="relative rounded-2xl border border-border/80 bg-background/80 p-4 backdrop-blur">
+            <div key={step.label} className="relative rounded-xl border border-border bg-muted/25 p-4">
               <div className="flex items-start gap-3">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><Icon className="h-5 w-5" /></span>
-                <div><div className="font-black">{step.label}</div><div className="mt-1 text-xs leading-5 text-muted-foreground">{step.caption}</div></div>
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-accent text-primary">
+                  <Icon className="h-5 w-5" strokeWidth={1.8} />
+                </span>
+                <div>
+                  <div className="font-bold">{step.label}</div>
+                  <div className="mt-1 text-xs leading-5 text-muted-foreground">{step.caption}</div>
+                </div>
               </div>
               {index < steps.length - 1 && <ArrowLeft className="absolute -left-5 top-1/2 z-10 hidden h-4 w-4 -translate-y-1/2 text-primary xl:block" />}
             </div>
