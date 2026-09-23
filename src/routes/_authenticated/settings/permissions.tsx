@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { SettingsWorkspaceShell } from "@/components/settings/settings-workspace";
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,7 +23,7 @@ import {
 type PermSearch = { user?: string; job?: string; mode?: "user" | "job" };
 
 export const Route = createFileRoute("/_authenticated/settings/permissions")({
-  component: Page,
+  component: SettingsPermissionsRoute,
   validateSearch: (s: Record<string, unknown>): PermSearch => ({
     user: typeof s.user === "string" ? s.user : undefined,
     job: typeof s.job === "string" ? s.job : undefined,
@@ -524,4 +525,9 @@ function Page() {
       )}
     </div>
   );
+}
+
+
+function SettingsPermissionsRoute() {
+  return <SettingsWorkspaceShell><Page /></SettingsWorkspaceShell>;
 }

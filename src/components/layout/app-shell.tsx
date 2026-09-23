@@ -191,7 +191,6 @@ export function AppShell({ children }: { children: ReactNode }) {
   const settingsGroup: NavGroup = useMemo(() => ({
     key: "settings", label: "الإعدادات", label_en: "Settings", icon: Settings,
     links: [
-      { to: "/settings", label: "نظرة عامة على الإعدادات", label_en: "Settings Overview" },
       { to: "/settings/regional", label: "الإعدادات الإقليمية", label_en: "Regional Settings" },
       { to: "/settings/approvals", label: "اعتماد المستخدمين الجدد", label_en: "Approve New Users" },
       { to: "/settings/users", label: "إدارة المستخدمين", label_en: "User Management" },

@@ -1,7 +1,7 @@
-import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
+import { type ReactNode } from "react";
 import {
   ChevronLeft,
-  Gauge,
   Globe2,
   ShieldCheck,
   SlidersHorizontal,
@@ -10,12 +10,7 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
-export const Route = createFileRoute("/_authenticated/settings")({
-  component: SettingsWorkspace,
-});
-
 const SETTINGS_LINKS = [
-  { to: "/settings", label: "نظرة عامة", caption: "تهيئة النظام والشركة", icon: Gauge },
   { to: "/settings/regional", label: "الإعدادات الإقليمية", caption: "اللغة والعملات والتواريخ", icon: Globe2 },
   { to: "/settings/users", label: "إدارة المستخدمين", caption: "الحسابات والبيانات الوظيفية", icon: Users },
   { to: "/settings/approvals", label: "اعتماد المستخدمين", caption: "مراجعة طلبات الوصول", icon: UserCheck },
@@ -23,7 +18,7 @@ const SETTINGS_LINKS = [
   { to: "/settings/permissions-dashboard", label: "جاهزية الصلاحيات", caption: "التغطية والاستثناءات", icon: SlidersHorizontal },
 ] as const;
 
-function SettingsWorkspace() {
+export function SettingsWorkspaceShell({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (state) => state.location.pathname });
 
   return (
@@ -58,10 +53,7 @@ function SettingsWorkspace() {
           </nav>
         </Card>
       </aside>
-
-      <section className="min-w-0">
-        <Outlet />
-      </section>
+      <section className="min-w-0">{children}</section>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { SettingsWorkspaceShell } from "@/components/settings/settings-workspace";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -14,7 +15,7 @@ import { toast } from "sonner";
 import { useState } from "react";
 import { fmtDate } from "@/lib/format";
 
-export const Route = createFileRoute("/_authenticated/settings/approvals")({ component: Page });
+export const Route = createFileRoute("/_authenticated/settings/approvals")({ component: SettingsApprovalsRoute });
 
 function Page() {
   const { user, isAdmin } = useAuth();
@@ -113,4 +114,9 @@ function Page() {
       </Card>
     </div>
   );
+}
+
+
+function SettingsApprovalsRoute() {
+  return <SettingsWorkspaceShell><Page /></SettingsWorkspaceShell>;
 }

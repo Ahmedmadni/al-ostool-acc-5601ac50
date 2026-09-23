@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { SettingsWorkspaceShell } from "@/components/settings/settings-workspace";
 import { useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,7 +15,7 @@ import { ShieldCheck, ShieldAlert, Users, Layers, Key, AlertTriangle, CheckCircl
 import { toast } from "sonner";
 
 
-export const Route = createFileRoute("/_authenticated/settings/permissions-dashboard")({ component: Page });
+export const Route = createFileRoute("/_authenticated/settings/permissions-dashboard")({ component: SettingsPermissionsDashboardRoute });
 
 function StatCard({ icon: Icon, label, value, tone = "default" }: { icon: any; label: string; value: number | string; tone?: "default" | "warn" | "good" | "danger" }) {
   const toneCls = tone === "warn" ? "text-amber-600" : tone === "good" ? "text-emerald-600" : tone === "danger" ? "text-destructive" : "text-primary";
@@ -330,4 +331,9 @@ function Page() {
       </Card>
     </div>
   );
+}
+
+
+function SettingsPermissionsDashboardRoute() {
+  return <SettingsWorkspaceShell><Page /></SettingsWorkspaceShell>;
 }

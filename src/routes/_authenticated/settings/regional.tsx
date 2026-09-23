@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { SettingsWorkspaceShell } from "@/components/settings/settings-workspace";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,7 @@ import { toast } from "sonner";
 import { Globe, DollarSign, Calendar, Hash, Clock, RotateCcw } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/settings/regional")({
-  component: RegionalSettings,
+  component: SettingsRegionalRoute,
 });
 
 function RegionalSettings() {
@@ -133,4 +134,9 @@ function RegionalSettings() {
       </div>
     </div>
   );
+}
+
+
+function SettingsRegionalRoute() {
+  return <SettingsWorkspaceShell><RegionalSettings /></SettingsWorkspaceShell>;
 }
