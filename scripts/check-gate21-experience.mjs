@@ -9,9 +9,9 @@ const read = (path) => readFileSync(join(ROOT, path), "utf8");
 const styles = read("src/styles.css");
 for (const marker of [
   '"Manrope"',
-  '"Noto Kufi Arabic"',
+  '"IBM Plex Sans Arabic"',
   "--primary: #1d4ed8",
-  "--background: #f4f7fb",
+  "--background: #f7f8fc",
   "--background: #0d1422",
   ".public-site",
   ".public-panel",
@@ -19,7 +19,7 @@ for (const marker of [
 ]) assert.ok(styles.includes(marker), "ONEXA design-system marker missing: " + marker);
 
 const root = read("src/routes/__root.tsx");
-for (const marker of ['lang="en"', 'dir="ltr"', 'data-surface="public"', "family=Manrope", "family=Noto+Kufi+Arabic"]) {
+for (const marker of ['lang="en"', 'dir="ltr"', 'data-surface="public"', "family=Manrope", "family=IBM+Plex+Sans+Arabic"]) {
   assert.ok(root.includes(marker), "root experience marker missing: " + marker);
 }
 
@@ -34,7 +34,7 @@ for (const marker of ["PublicPreferences", "setLang(nextLanguage)", "useTheme", 
 }
 
 const shell = read("src/components/layout/app-shell.tsx");
-for (const marker of ["OnexaBrandLockup", "tenant.label.name", "end-0", "border-s", "md:me-72", "text-start", "pe-10"]) {
+for (const marker of ["OnexaBrandLockup", "tenant.label.name", "end-0", "border-s", "md:me-[17rem]", "text-start", "pe-10"]) {
   assert.ok(shell.includes(marker), "logical ERP layout marker missing: " + marker);
 }
 for (const oldBrand of ["Al-Ostool Al-Ali", "مجموعة الأسطول الآلي", "/images/brand/al-ostool-mark.png"]) {
