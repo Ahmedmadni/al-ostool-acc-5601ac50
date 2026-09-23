@@ -428,7 +428,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                       className="min-h-12 cursor-pointer rounded-lg px-3"
                     >
                       <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/8 text-primary">
-                        <Icon className="h-4 w-4" strokeWidth={1.8} />
+                        <Icon className="h-4 w-4" />
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate font-medium">{lang === "en" ? link.label_en : link.label}</span>
