@@ -9,7 +9,7 @@ const card = read("src/components/ui/card.tsx");
 const requirements = [
   [styles.includes("IBM Plex Sans Arabic"), "Arabic interface font token"],
   [styles.includes("--sidebar: #ffffff"), "light desktop sidebar"],
-  [styles.includes("--primary: #5755d9"), "calm indigo action color"],
+  [styles.includes("--sidebar-primary: #5755d9"), "calm indigo navigation accent"],
   [styles.includes(".onexa-shell-pattern"), "subtle branded shell pattern"],
   [shell.includes("onexa-kbd"), "search keyboard hint"],
   [shell.includes('md:me-[17rem]'), "RTL-aware desktop content offset"],
