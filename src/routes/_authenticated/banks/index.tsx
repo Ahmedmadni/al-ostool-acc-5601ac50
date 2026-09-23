@@ -11,6 +11,7 @@ import { exportToExcel, exportToPdf } from "@/lib/export";
 import { fmtSAR, fmtDate } from "@/lib/format";
 import { Upload, FileSpreadsheet, FileText, Printer, Landmark, ArrowDownCircle, ArrowUpCircle, Wallet } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { OnexaBankTransfersPanel } from "@/components/finance/onexa-bank-transfers-panel";
 
 export const Route = createFileRoute("/_authenticated/banks/")({ component: Page });
 
@@ -70,6 +71,7 @@ function Page() {
 
   return (
     <div>
+      <OnexaBankTransfersPanel />
       <PageHeader title="البنوك والنقدية" description="كشوف البنوك ومركز السيولة"
         actions={<>
           <Button onClick={() => setOpenImp(true)} className="gap-2"><Upload className="w-4 h-4" />استيراد كشف بنك</Button>
