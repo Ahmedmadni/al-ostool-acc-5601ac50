@@ -264,7 +264,7 @@ function getInitialLanguage(surface: InterfaceSurface): Lang {
 export function I18nProvider({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const surface = getInterfaceSurface(pathname);
-  const [lang, setLangState] = useState<Lang>(() => getInitialLanguage(surface));
+  const [lang, setLangState] = useState<Lang>(surface === "public" ? "en" : "ar");
   const dir = LANGS.find((l) => l.code === lang)?.dir ?? "ltr";
 
   useEffect(() => {
