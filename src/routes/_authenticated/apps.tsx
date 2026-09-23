@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Sparkles, Star } from "lucide-react";
+import { Layers3, Search, Sparkles, Star } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -51,6 +51,13 @@ function AppsLauncherPage() {
     featured: "Core",
     addFavorite: "Add to favorites",
     removeFavorite: "Remove from favorites",
+    all: "All applications",
+    available: "Available",
+    categories: "Categories",
+    pinned: "Pinned",
+    browse: "Browse by business area",
+    governance: "Workspace governance & accounting integration",
+    clear: "Clear filters",
   } : {
     title: "تطبيقات الأعمال",
     description: `الموديولات المتاحة لمساحة عمل ${tenant.label.name} وفق الباقة وصلاحيات المستخدم. ترتبط كل العمليات بمصدر محاسبي موحد ومحكوم.`,
@@ -63,8 +70,16 @@ function AppsLauncherPage() {
     featured: "رئيسي",
     addFavorite: "إضافة إلى المفضلة",
     removeFavorite: "إزالة من المفضلة",
+    all: "كل التطبيقات",
+    available: "المتاح",
+    categories: "التصنيفات",
+    pinned: "المثبتة",
+    browse: "استعراض حسب مجال العمل",
+    governance: "حوكمة مساحة العمل والتكامل المحاسبي",
+    clear: "مسح عوامل التصفية",
   };
   const [search, setSearch] = useState("");
+  const [activeCategory, setActiveCategory] = useState<"all" | ErpApp["category"]>("all");
   const [favorites, setFavorites] = useState<string[]>(() => {
     if (typeof window === "undefined") return [];
     try { return JSON.parse(window.localStorage.getItem("onexa:erp-app-favorites") || "[]") as string[]; } catch { return []; }
@@ -83,11 +98,19 @@ function AppsLauncherPage() {
     return app.permissionModule ? can(app.permissionModule, "view") : true;
   }), [isAdmin, can, legacyAccess, tenant.mode, tenant.claims]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const availableCategories = useMemo(
+    () => ERP_APP_CATEGORIES.filter((category) => allowed.some((app) => app.category === category.key)),
+    [allowed],
+  );
+
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
-    if (!query) return allowed;
-    return allowed.filter((app) => `${app.title} ${app.titleEn} ${app.subtitle} ${app.subtitleEn} ${app.key}`.toLowerCase().includes(query));
-  }, [allowed, search]);
+    return allowed.filter((app) => {
+      if (activeCategory !== "all" && app.category !== activeCategory) return false;
+      if (!query) return true;
+      return `${app.title} ${app.titleEn} ${app.subtitle} ${app.subtitleEn} ${app.key}`.toLowerCase().includes(query);
+    });
+  }, [activeCategory, allowed, search]);
 
   const toggleFavorite = (key: string) => {
     setFavorites((current) => {
@@ -109,16 +132,45 @@ function AppsLauncherPage() {
             <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground md:text-base">{copy.description}</p>
             <div className="mt-4 inline-flex rounded-lg border border-border bg-background px-3 py-2 text-xs font-bold"><span className="text-muted-foreground">{copy.plan}:</span><span className="ms-2 text-primary">{tenant.label.plan}</span></div>
           </div>
-          <div className="relative"><Search className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={copy.search} className="h-12 pe-10" /></div>
+          <div className="space-y-3">
+            <div className="relative"><Search className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={copy.search} className="h-12 rounded-xl bg-background pe-10" /></div>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                [copy.available, allowed.length],
+                [copy.categories, availableCategories.length],
+                [copy.pinned, allowed.filter((app) => favorites.includes(app.key)).length],
+              ].map(([label, value]) => (
+                <div key={String(label)} className="rounded-xl border border-border bg-background px-3 py-3 text-center">
+                  <div className="text-xl font-black text-foreground">{value}</div>
+                  <div className="mt-0.5 text-[10px] font-semibold text-muted-foreground">{label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
         </div>
       </section>
 
-      <AccountingIntegrationOverview />
+      <section className="rounded-2xl border border-border bg-card p-4 md:p-5">
+        <div className="mb-4 flex items-center gap-2">
+          <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary/10 text-primary"><Layers3 className="h-4 w-4" /></span>
+          <div>
+            <h2 className="text-sm font-black">{copy.browse}</h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">{filtered.length} {filtered.length === 1 ? copy.module : copy.modules}</p>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2" role="group" aria-label={copy.browse}>
+          <button type="button" aria-pressed={activeCategory === "all"} onClick={() => setActiveCategory("all")} className={`rounded-xl border px-3 py-2 text-xs font-bold transition ${activeCategory === "all" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background text-muted-foreground hover:border-primary/25 hover:text-foreground"}`}>{copy.all}</button>
+          {availableCategories.map((category) => (
+            <button key={category.key} type="button" aria-pressed={activeCategory === category.key} onClick={() => setActiveCategory(category.key)} className={`rounded-xl border px-3 py-2 text-xs font-bold transition ${activeCategory === category.key ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background text-muted-foreground hover:border-primary/25 hover:text-foreground"}`}>
+              {english ? category.labelEn : category.label}
+              <span className="ms-2 opacity-70">{allowed.filter((app) => app.category === category.key).length}</span>
+            </button>
+          ))}
+        </div>
+      </section>
 
-      <WorkspaceSubscriptionPanel />
-
-      {favorites.length > 0 && !search && (
+      {favorites.length > 0 && !search && activeCategory === "all" && (
         <section>
           <div className="mb-3 flex items-center gap-2"><Star className="h-4 w-4 fill-amber-400 text-amber-400" /><h2 className="text-sm font-black">{copy.favorites}</h2></div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
@@ -127,7 +179,7 @@ function AppsLauncherPage() {
         </section>
       )}
 
-      {ERP_APP_CATEGORIES.map((category) => {
+      {availableCategories.map((category) => {
         const apps = filtered.filter((app) => app.category === category.key);
         if (!apps.length) return null;
         return (
@@ -140,7 +192,18 @@ function AppsLauncherPage() {
         );
       })}
 
-      {!filtered.length && <div className="rounded-2xl border border-dashed border-border py-14 text-center text-sm text-muted-foreground">{copy.empty}</div>}
+      {!filtered.length && (
+        <div className="rounded-2xl border border-dashed border-border bg-card px-6 py-14 text-center">
+          <p className="text-sm text-muted-foreground">{copy.empty}</p>
+          <button type="button" onClick={() => { setSearch(""); setActiveCategory("all"); }} className="mt-4 rounded-xl border border-border bg-background px-4 py-2 text-xs font-bold text-primary transition hover:border-primary/25">{copy.clear}</button>
+        </div>
+      )}
+
+      <section className="space-y-4 border-t border-border pt-8">
+        <h2 className="text-sm font-black">{copy.governance}</h2>
+        <AccountingIntegrationOverview />
+        <WorkspaceSubscriptionPanel />
+      </section>
     </div>
   );
 }
