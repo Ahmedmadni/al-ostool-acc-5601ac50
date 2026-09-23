@@ -249,7 +249,13 @@ export function AppShell({ children }: { children: ReactNode }) {
     return () => document.removeEventListener("keydown", handleShortcut);
   }, []);
 
-  useEffect(() => setMobileNavOpen(false), [path]);
+  useEffect(() => {
+    setMobileNavOpen(false);
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById("main-content")?.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [path]);
 
   const navigateFromCommand = (to: string) => {
     setCommandOpen(false);
@@ -264,6 +270,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen bg-background">
+      <a href="#main-content" className="onexa-skip-link">{lang === "en" ? "Skip to main content" : "تخطي إلى المحتوى الرئيسي"}</a>
       <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
         <SheetContent
           side={dir === "rtl" ? "right" : "left"}
@@ -509,7 +516,12 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         </header>
 
-        <CommandDialog open={commandOpen} onOpenChange={setCommandOpen}>
+        <CommandDialog
+          open={commandOpen}
+          onOpenChange={setCommandOpen}
+          title={lang === "en" ? "Global navigation search" : "البحث الشامل في التنقل"}
+          description={lang === "en" ? "Search pages available to your account and open one." : "ابحث في الصفحات المتاحة لحسابك وانتقل إلى إحداها."}
+        >
           <CommandInput
             autoFocus
             placeholder={lang === "en" ? "Search by page, application, or path..." : "ابحث باسم الصفحة أو التطبيق أو المسار..."}
@@ -546,7 +558,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </CommandDialog>
 
         <div className="onexa-shell-pattern pointer-events-none absolute inset-x-0 top-[4.5rem] h-20 opacity-60" />
-        <main className="relative flex-1 overflow-x-hidden p-4 md:p-6 lg:p-8 xl:p-9">{children}</main>
+        <main id="main-content" tabIndex={-1} className="relative flex-1 overflow-x-hidden p-4 outline-none md:p-6 lg:p-8 xl:p-9">{children}</main>
       </div>
     </div>
   );
