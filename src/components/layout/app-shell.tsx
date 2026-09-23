@@ -228,29 +228,29 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen bg-background">
-      <aside className="w-72 bg-sidebar text-sidebar-foreground flex-col fixed inset-y-0 end-0 z-30 no-print hidden md:flex border-s border-sidebar-border shadow-xl shadow-foreground/5">
+      <aside className="fixed inset-y-0 end-0 z-30 hidden w-[17rem] flex-col border-s border-sidebar-border bg-sidebar text-sidebar-foreground md:flex no-print">
         <div className="min-h-24 shrink-0 border-b border-sidebar-border px-5 py-4">
-          <OnexaBrandLockup language={lang === "ar" ? "ar" : "en"} compact inverse showDescriptor={false} />
-          <div className="mt-2 truncate ps-[52px] text-[10px] font-medium text-sidebar-foreground/55">{tenant.label.name} • {tenant.label.plan}</div>
+          <OnexaBrandLockup language={lang === "ar" ? "ar" : "en"} compact showDescriptor={false} />
+          <div className="mt-2 truncate ps-[52px] text-[10px] font-medium text-sidebar-foreground/50">{tenant.label.name} • {tenant.label.plan}</div>
         </div>
 
         <nav className="flex-1 overflow-y-auto px-3 py-4 scrollbar-thin">
           <Link
             to="/apps"
-            className={`flex items-center gap-3 rounded-xl border px-3 py-3 text-sm font-bold transition ${path === "/apps" ? "border-sidebar-primary/40 bg-sidebar-primary/10 text-sidebar-primary" : "border-sidebar-border bg-sidebar-accent/45 text-sidebar-foreground hover:bg-sidebar-accent"}`}
+            className={`flex items-center gap-3 rounded-xl border px-3 py-3 text-sm font-semibold transition ${path === "/apps" ? "border-sidebar-primary/15 bg-sidebar-accent text-sidebar-primary" : "border-sidebar-border bg-sidebar text-sidebar-foreground hover:border-sidebar-primary/20 hover:bg-sidebar-accent/60"}`}
           >
-            <span className="grid h-9 w-9 place-items-center rounded-lg bg-sidebar-primary/10 text-sidebar-primary"><LayoutGrid className="h-4.5 w-4.5" /></span>
+            <span className="grid h-9 w-9 place-items-center rounded-lg bg-sidebar-accent text-sidebar-primary"><LayoutGrid className="h-4.5 w-4.5" strokeWidth={1.8} /></span>
             <span className="flex-1 text-start">{lang === "en" ? "App launcher" : "مشغّل التطبيقات"}</span>
             <ChevronLeft className={`h-3.5 w-3.5 ${dir === "ltr" ? "rotate-180" : ""}`} />
           </Link>
 
           <div className="mt-5">
-            <div className="mb-2 px-2 text-[10px] font-extrabold uppercase tracking-[0.12em] text-sidebar-foreground/40">{lang === "en" ? "Current application" : "التطبيق الحالي"}</div>
+            <div className="mb-2 px-2 text-[10px] font-bold uppercase tracking-[0.12em] text-sidebar-foreground/45">{lang === "en" ? "Current application" : "التطبيق الحالي"}</div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button type="button" className="flex w-full items-center gap-3 rounded-xl border border-sidebar-border bg-sidebar-accent px-3 py-3 text-start transition hover:border-sidebar-primary/40">
+                <button type="button" className="flex w-full items-center gap-3 rounded-xl border border-sidebar-primary/15 bg-sidebar-accent px-3 py-3 text-start text-sidebar-accent-foreground transition hover:border-sidebar-primary/30">
                   <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-sidebar-primary/10 text-sidebar-primary">
-                    <ActiveGroupIcon className="h-4.5 w-4.5" />
+                    <ActiveGroupIcon className="h-4.5 w-4.5" strokeWidth={1.8} />
                   </span>
                   <span className="min-w-0 flex-1 truncate text-sm font-bold">{activeGroupLabel}</span>
                   <ChevronsUpDown className="h-4 w-4 text-sidebar-foreground/50" />
@@ -274,7 +274,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
           {activeGroup && (
             <div className="mt-5">
-              <div className="mb-2 px-2 text-[10px] font-extrabold uppercase tracking-[0.12em] text-sidebar-foreground/40">{lang === "en" ? "Navigation" : "التنقل"}</div>
+              <div className="mb-2 px-2 text-[10px] font-bold uppercase tracking-[0.12em] text-sidebar-foreground/45">{lang === "en" ? "Navigation" : "التنقل"}</div>
               <div className="space-y-1">
                 {activeGroup.links.map((link) => {
                   const active = path === link.to || (path.startsWith(`${link.to}/`) && path.split("/").length === link.to.split("/").length);
@@ -282,9 +282,9 @@ export function AppShell({ children }: { children: ReactNode }) {
                     <Link
                       key={link.to}
                       to={link.to}
-                      className={`flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] transition ${active ? "bg-sidebar-primary/12 font-semibold text-sidebar-primary" : "text-sidebar-foreground/65 hover:bg-sidebar-accent/70 hover:text-sidebar-foreground"}`}
+                      className={`flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] transition ${active ? "bg-sidebar-accent font-semibold text-sidebar-primary" : "text-sidebar-foreground/65 hover:bg-sidebar-accent/65 hover:text-sidebar-foreground"}`}
                     >
-                      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${active ? "bg-sidebar-primary" : "bg-sidebar-foreground/25"}`} />
+                      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${active ? "bg-sidebar-primary" : "bg-sidebar-foreground/20"}`} />
                       <span className="flex-1">{lang === "en" ? link.label_en : link.label}</span>
                       {active && <ChevronLeft className={`h-3 w-3 ${dir === "ltr" ? "rotate-180" : ""}`} />}
                     </Link>
@@ -297,8 +297,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 
 
         <div className="p-3 border-t border-sidebar-border">
-          <div className="flex items-center gap-3 rounded-md bg-sidebar-accent/60 p-2.5">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-sidebar-primary/15 text-sm font-bold text-sidebar-primary">{user?.email?.slice(0, 1).toUpperCase() ?? "A"}</div>
+          <div className="flex items-center gap-3 rounded-xl border border-sidebar-border bg-sidebar p-2.5">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-sm font-bold text-sidebar-primary">{user?.email?.slice(0, 1).toUpperCase() ?? "A"}</div>
             <div className="min-w-0 flex-1">
               <div className="text-xs text-sidebar-foreground truncate">{user?.email}</div>
               <div className="text-[10px] text-sidebar-foreground/50 truncate">{roles.map((r) => roleLabel[r] ?? r).join(" • ") || "—"}</div>
@@ -310,16 +310,26 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <div className="flex-1 md:me-72 flex flex-col min-w-0">
-        <header className="h-16 bg-card/95 backdrop-blur border-b border-border/80 flex items-center px-4 md:px-6 gap-2 sticky top-0 z-20 no-print shadow-sm shadow-foreground/[0.02]">
-          <div className="hidden min-w-0 items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 lg:flex">
-            <Building2 className="h-4 w-4 shrink-0 text-primary" />
-            <span className="max-w-48 truncate text-xs font-bold">{tenant.label.name}</span>
-            <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[9px] font-black uppercase text-primary">{tenant.label.plan}</span>
+      <div className="flex min-w-0 flex-1 flex-col md:me-[17rem]">
+        <header className="sticky top-0 z-20 flex h-[4.5rem] items-center gap-2 border-b border-border/80 bg-card/95 px-4 backdrop-blur md:px-6 no-print">
+          <div className="hidden min-w-0 items-center gap-3 lg:flex">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/8 text-primary">
+              <ActiveGroupIcon className="h-[18px] w-[18px]" strokeWidth={1.8} />
+            </span>
+            <div className="min-w-0">
+              <div className="truncate text-xs font-semibold text-foreground">{activeGroupLabel}</div>
+              <div className="mt-0.5 flex items-center gap-1 text-[10px] text-muted-foreground">
+                <Building2 className="h-3 w-3" />
+                <span className="max-w-40 truncate">{tenant.label.name}</span>
+                <span>•</span>
+                <span className="font-semibold text-primary">{tenant.label.plan}</span>
+              </div>
+            </div>
           </div>
-          <div className="max-w-md w-full relative hidden sm:block">
+          <div className="relative hidden w-full max-w-lg sm:block lg:ms-4">
             <Search className="w-4 h-4 absolute end-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder={t("search")} className="pe-10" />
+            <Input placeholder={t("search")} className="h-10 rounded-xl border-border bg-muted/55 pe-10 ps-14 shadow-none focus-visible:bg-card" />
+            <span className="onexa-kbd absolute start-2.5 top-1/2 -translate-y-1/2">Ctrl K</span>
           </div>
           <div className="ms-auto flex items-center gap-1" />
           <DropdownMenu>
@@ -366,7 +376,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         </header>
 
-        <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-x-hidden">{children}</main>
+        <div className="onexa-shell-pattern pointer-events-none absolute inset-x-0 top-[4.5rem] h-20 opacity-60" />
+        <main className="relative flex-1 overflow-x-hidden p-4 md:p-6 lg:p-8 xl:p-9">{children}</main>
       </div>
     </div>
   );

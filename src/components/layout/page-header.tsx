@@ -3,10 +3,10 @@ import { Card } from "@/components/ui/card";
 
 export function PageHeader({ title, description, actions }: { title: string; description?: string; actions?: ReactNode }) {
   return (
-    <div className="flex items-start justify-between mb-7 gap-4 flex-wrap border-b border-border/70 pb-5">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">{title}</h1>
-        {description && <p className="text-sm text-muted-foreground mt-1.5 max-w-3xl leading-6">{description}</p>}
+    <div className="mb-7 flex flex-wrap items-start justify-between gap-4">
+      <div className="min-w-0">
+        <h1 className="text-2xl font-bold leading-tight text-foreground md:text-[1.75rem]">{title}</h1>
+        {description && <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">{description}</p>}
       </div>
       {actions && <div className="flex gap-2 flex-wrap">{actions}</div>}
     </div>
@@ -25,16 +25,16 @@ export function KpiCard({ title, value, icon: Icon, hint, trend, color = "primar
     info: "bg-info/10 text-info",
   };
   return (
-    <Card className="p-5 transition-[box-shadow,border-color] hover:border-primary/25 hover:shadow-md">
+    <Card className="group p-5 transition-[box-shadow,border-color,transform] hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-md">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-xs text-muted-foreground mb-1">{title}</div>
-          <div className="text-2xl font-bold text-foreground truncate tabular-nums">{value}</div>
+          <div className="mb-2 text-xs font-medium text-muted-foreground">{title}</div>
+          <div className="truncate text-2xl font-bold leading-none text-foreground tabular-nums">{value}</div>
           {hint && <div className="text-xs text-muted-foreground mt-1">{hint}</div>}
           {trend && <div className="text-xs text-success mt-1">{trend}</div>}
         </div>
         {Icon && (
-          <div className={`p-2.5 rounded-lg ${colorMap[color]} shrink-0`}>
+          <div className={`shrink-0 rounded-xl p-2.5 transition-transform group-hover:scale-105 ${colorMap[color]}`}>
             <Icon className="w-5 h-5" />
           </div>
         )}

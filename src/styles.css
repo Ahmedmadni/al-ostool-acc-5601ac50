@@ -5,8 +5,8 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: "Manrope", "Noto Kufi Arabic", system-ui, -apple-system, sans-serif;
-  --font-display: "Manrope", "Noto Kufi Arabic", system-ui, -apple-system, sans-serif;
+  --font-sans: "Manrope", "IBM Plex Sans Arabic", "Noto Kufi Arabic", system-ui, -apple-system, sans-serif;
+  --font-display: "Manrope", "IBM Plex Sans Arabic", "Noto Kufi Arabic", system-ui, -apple-system, sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -58,22 +58,22 @@
 
 :root {
   color-scheme: light;
-  --radius: 0.625rem;
-  --background: #f4f7fb;
-  --foreground: #101828;
+  --radius: 0.75rem;
+  --background: #f7f8fc;
+  --foreground: #171b2a;
   --card: #ffffff;
   --card-foreground: #151920;
   --popover: #ffffff;
   --popover-foreground: #151920;
   --primary: #1d4ed8;
   --primary-foreground: #ffffff;
-  --primary-glow: #2563eb;
-  --secondary: #e8eefb;
-  --secondary-foreground: #17356f;
-  --muted: #edf1f7;
-  --muted-foreground: #637083;
-  --accent: #e7f8fb;
-  --accent-foreground: #075d6b;
+  --primary-glow: #6967e8;
+  --secondary: #f0f1f6;
+  --secondary-foreground: #30364a;
+  --muted: #f1f2f6;
+  --muted-foreground: #737b8c;
+  --accent: #eeedff;
+  --accent-foreground: #4543b6;
   --destructive: #d92d20;
   --destructive-foreground: #ffffff;
   --success: #0f9f6e;
@@ -82,22 +82,22 @@
   --warning-foreground: #231708;
   --info: #1677a8;
   --info-foreground: #ffffff;
-  --border: #d7dbe0;
-  --input: #cfd4da;
-  --ring: #1d4ed8;
-  --chart-1: #1d4ed8;
+  --border: #e1e4eb;
+  --input: #d5d9e2;
+  --ring: #5755d9;
+  --chart-1: #5755d9;
   --chart-2: #0891b2;
   --chart-3: #0f9f6e;
-  --chart-4: #8b5cf6;
+  --chart-4: #8b6fe8;
   --chart-5: #49515c;
-  --sidebar: #0b1739;
-  --sidebar-foreground: #f5f6f7;
-  --sidebar-primary: #67e8f9;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #202432;
+  --sidebar-primary: #5755d9;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #132653;
-  --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #243c6b;
-  --sidebar-ring: #67e8f9;
+  --sidebar-accent: #f1f0ff;
+  --sidebar-accent-foreground: #4543b6;
+  --sidebar-border: #e5e7ed;
+  --sidebar-ring: #5755d9;
   --brand-ink: #0b1739;
   --brand-blue: #1d4ed8;
   --brand-cyan: #0891b2;
@@ -162,13 +162,34 @@
     letter-spacing: 0;
   }
   :lang(ar) body, :lang(ar) h1, :lang(ar) h2, :lang(ar) h3, :lang(ar) h4, :lang(ar) h5, :lang(ar) h6,
-  [dir="rtl"] { font-family: "Noto Kufi Arabic", system-ui, -apple-system, sans-serif; }
+  [dir="rtl"] { font-family: "IBM Plex Sans Arabic", "Noto Kufi Arabic", system-ui, -apple-system, sans-serif; }
   h1, h2, h3, h4, h5, h6 { font-family: var(--font-display); letter-spacing: 0; }
   button, input, textarea, select { font: inherit; }
 }
 
 @utility app-surface {
-  box-shadow: 0 1px 2px color-mix(in oklab, var(--foreground) 8%, transparent), 0 10px 28px color-mix(in oklab, var(--foreground) 6%, transparent);
+  box-shadow: 0 1px 2px color-mix(in oklab, var(--foreground) 5%, transparent), 0 8px 24px color-mix(in oklab, var(--foreground) 3%, transparent);
+}
+
+@layer components {
+  .onexa-shell-pattern {
+    background-image:
+      linear-gradient(135deg, color-mix(in oklab, var(--primary) 5%, transparent) 25%, transparent 25%),
+      linear-gradient(225deg, color-mix(in oklab, var(--primary) 5%, transparent) 25%, transparent 25%);
+    background-position: 0 0, 12px 0;
+    background-size: 24px 24px;
+  }
+
+  .onexa-kbd {
+    border: 1px solid var(--border);
+    border-radius: 0.375rem;
+    background: var(--card);
+    padding: 0.1rem 0.4rem;
+    color: var(--muted-foreground);
+    font-size: 0.625rem;
+    font-weight: 700;
+    line-height: 1.2rem;
+  }
 }
 
 @layer components {
