@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { SettingsWorkspaceShell } from "@/components/settings/settings-workspace";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -21,7 +22,7 @@ import { createUserByAdmin, deleteUserByAdmin } from "@/lib/admin-users.function
 import { exportToExcel } from "@/lib/export";
 
 
-export const Route = createFileRoute("/_authenticated/settings/users")({ component: Page });
+export const Route = createFileRoute("/_authenticated/settings/users")({ component: SettingsUsersRoute });
 
 const statusLabel: Record<string, { label: string; variant: "default" | "destructive" | "outline" | "secondary" }> = {
   active: { label: "نشط", variant: "default" },
@@ -406,4 +407,9 @@ function Page() {
       </Dialog>
     </div>
   );
+}
+
+
+function SettingsUsersRoute() {
+  return <SettingsWorkspaceShell><Page /></SettingsWorkspaceShell>;
 }
