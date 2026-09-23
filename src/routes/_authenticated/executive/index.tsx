@@ -438,32 +438,36 @@ function ExecutivePage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
              <Card className="p-5">
                <div className="text-sm font-semibold mb-5">الإيرادات وصافي الربح — آخر 12 شهراً</div>
-              <ResponsiveContainer width="100%" height={280}>
-                <ComposedChart data={data?.trend12 ?? []}>
-                   <CartesianGrid stroke="var(--border)" vertical={false} />
-                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} />
-                  <Tooltip formatter={(v: number) => fmtSAR(v)} />
-                  <Legend />
-                   <Line type="monotone" dataKey="revenue" stroke="var(--chart-3)" strokeWidth={2.5} name="الإيرادات" dot={false} />
-                   <Line type="monotone" dataKey="profit" stroke="var(--chart-1)" strokeWidth={2.5} name="صافي الربح" dot={false} />
-                </ComposedChart>
-              </ResponsiveContainer>
+              {data?.trend12.some((point) => point.revenue !== 0 || point.profit !== 0) ? (
+  <ResponsiveContainer width="100%" height={280}>
+                  <ComposedChart data={data.trend12}>
+                     <CartesianGrid stroke="var(--border)" vertical={false} />
+                    <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                    <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} />
+                    <Tooltip formatter={(v: number) => fmtSAR(v)} />
+                    <Legend />
+                     <Line type="monotone" dataKey="revenue" stroke="var(--chart-3)" strokeWidth={2.5} name="الإيرادات" dot={false} />
+                     <Line type="monotone" dataKey="profit" stroke="var(--chart-1)" strokeWidth={2.5} name="صافي الربح" dot={false} />
+                  </ComposedChart>
+                </ResponsiveContainer>
+) : <ChartEmptyState title="لا توجد حركة مالية للرسم" description="أضف أو استورد فواتير المبيعات والتكاليف لإظهار اتجاه الإيرادات والربحية." to="/imports" action="فتح مركز الاستيراد" />}
             </Card>
              <Card className="p-5">
                <div className="text-sm font-semibold mb-5">التدفق النقدي — آخر 6 أشهر</div>
-              <ResponsiveContainer width="100%" height={280}>
-                <ComposedChart data={data?.cashFlow6 ?? []}>
-                   <CartesianGrid stroke="var(--border)" vertical={false} />
-                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} />
-                  <Tooltip formatter={(v: number) => fmtSAR(v)} />
-                  <Legend />
-                   <Bar dataKey="collections" fill="var(--chart-1)" radius={[4, 4, 0, 0]} name="التحصيلات" />
-                   <Bar dataKey="payments" fill="var(--chart-4)" radius={[4, 4, 0, 0]} name="المدفوعات" />
-                   <Line type="monotone" dataKey="net" stroke="var(--chart-3)" strokeWidth={2.5} name="صافي النقد التراكمي" dot={false} />
-                </ComposedChart>
-              </ResponsiveContainer>
+              {data?.cashFlow6.some((point) => point.collections !== 0 || point.payments !== 0) ? (
+  <ResponsiveContainer width="100%" height={280}>
+                  <ComposedChart data={data.cashFlow6}>
+                     <CartesianGrid stroke="var(--border)" vertical={false} />
+                    <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                    <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} />
+                    <Tooltip formatter={(v: number) => fmtSAR(v)} />
+                    <Legend />
+                     <Bar dataKey="collections" fill="var(--chart-1)" radius={[4, 4, 0, 0]} name="التحصيلات" />
+                     <Bar dataKey="payments" fill="var(--chart-4)" radius={[4, 4, 0, 0]} name="المدفوعات" />
+                     <Line type="monotone" dataKey="net" stroke="var(--chart-3)" strokeWidth={2.5} name="صافي النقد التراكمي" dot={false} />
+                  </ComposedChart>
+                </ResponsiveContainer>
+) : <ChartEmptyState title="لا توجد حركة نقدية للرسم" description="سجّل التحصيلات والمدفوعات لإظهار التدفق النقدي وصافي الحركة التراكمية." to="/treasury" action="فتح الخزينة" />}
             </Card>
           </div>
 
