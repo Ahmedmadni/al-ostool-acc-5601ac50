@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
 import { exportToExcel } from "@/lib/export";
+import { OnexaFleetTripCostsPanel } from "@/components/fleet/onexa-fleet-trip-costs-panel";
 
 export const Route = createFileRoute("/_authenticated/fleet/trips/")({ component: TripsPage });
 
@@ -66,6 +67,7 @@ function TripsPage() {
 
   return (
     <div className="p-6 space-y-6" dir="rtl">
+      <OnexaFleetTripCostsPanel />
       <PageHeader title="الرحلات" description="خطوط السير والرحلات المرتبطة بالمشاريع والعقود" actions={
         <div className="flex flex-wrap gap-2 no-print">
           <Button variant="outline" onClick={() => exportToExcel(rows, "fleet_trips")} className="gap-1"><FileSpreadsheet className="w-4 h-4" /> Excel</Button>
