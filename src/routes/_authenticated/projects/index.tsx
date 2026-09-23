@@ -13,6 +13,7 @@ import { projectStatusLabel } from "@/lib/labels";
 import { Plus, Pencil, Eye } from "lucide-react";
 import { DataTableToolbar } from "@/components/data-table-toolbar";
 import { AddEditProjectDialog } from "@/components/projects/add-edit-project-dialog";
+import { OnexaProjectCostsPanel } from "@/components/projects/onexa-project-costs-panel";
 
 export const Route = createFileRoute("/_authenticated/projects/")({ component: Page });
 
@@ -99,6 +100,8 @@ function Page() {
           <div className="text-lg font-bold mt-1 text-destructive">{fmtSAR(totals.retention)}</div>
         </Card>
       </div>
+
+      <OnexaProjectCostsPanel />
 
       <DataTableToolbar
         search={search} onSearchChange={setSearch}
