@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/select";
 import { PURCHASE_TAX_CATEGORIES } from "@/lib/tax-categories";
 import { toast } from "sonner";
+import { OnexaPurchaseInvoicePanel } from "@/components/procurement/onexa-purchase-invoice-panel";
 
 export const Route = createFileRoute("/_authenticated/vendors/invoices")({ component: Page });
 
@@ -111,6 +112,7 @@ function Page() {
           </Button>
         }
       />
+      <OnexaPurchaseInvoicePanel />
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <KpiCard title="عدد الفواتير" value={String(totals.count)} icon={Receipt} color="primary" />
         <KpiCard title="إجمالي الفواتير" value={fmtSAR(totals.total)} icon={Receipt} color="info" />
