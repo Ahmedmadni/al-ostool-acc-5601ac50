@@ -256,7 +256,7 @@ export function OnexaSalesInvoicePanel() {
                         <Input aria-label={`ضريبة البند ${index + 1}`} type="number" min="0" max="100" step="0.01" placeholder="الضريبة %" value={line.taxRate}
                           onChange={(event) => setLines((current) => current.map((item) => item.key === line.key ? { ...item, taxRate: event.target.value } : item))} />
                         <Button type="button" size="icon" variant="ghost" aria-label={`حذف البند ${index + 1}`} disabled={lines.length === 1}
-                          onClick={() => setLines((current) => current.filter((item) => item.key !== line.key)}>
+                          onClick={() => setLines((current) => current.filter((item) => item.key !== line.key))}>
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </div>
