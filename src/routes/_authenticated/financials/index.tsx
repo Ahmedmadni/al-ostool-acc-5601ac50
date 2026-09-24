@@ -173,7 +173,9 @@ function Page() {
         <section className="min-w-0 space-y-5">
           <AccountingOperationsHub />
           <AccountingDocumentWorkQueue />
-          <ManualJournalPanel />
+          <div id="manual-journal" className="scroll-mt-24">
+            <ManualJournalPanel />
+          </div>
           <Card className="overflow-hidden">
             <div className="flex items-center justify-between border-b border-border px-5 py-4">
               <div>
