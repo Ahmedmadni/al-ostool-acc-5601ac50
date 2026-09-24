@@ -4,7 +4,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";\nimport { BadgeDollarSign } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { BadgeDollarSign } from "lucide-react";
 import { OperationalGateCard } from "@/components/operations/operational-gate-card";
 import { ONEXA_SUPPLIER_PAYMENT_POSTING_ENABLED } from "@/lib/runtime-flags";
 import {
