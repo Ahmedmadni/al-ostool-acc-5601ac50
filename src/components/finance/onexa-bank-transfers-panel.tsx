@@ -4,7 +4,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/components/ui/input";\nimport { ArrowLeftRight } from "lucide-react";
+import { OperationalGateCard } from "@/components/operations/operational-gate-card";
 import { ONEXA_BANK_TRANSFER_POSTING_ENABLED } from "@/lib/runtime-flags";
 import {
   approveOnexaBankTransfer, createOnexaBankTransfer,
@@ -44,9 +45,15 @@ export function OnexaBankTransfersPanel() {
     onError: (error) => toast.error(error.message),
   });
 
-  if (!ONEXA_BANK_TRANSFER_POSTING_ENABLED) return <Card className="mb-5 p-5 text-sm text-muted-foreground">
-    تحويلات ONEXA البنكية غير مفعّلة؛ يلزم تجهيز الحسابات وفحص حزمة Gate 41 قبل التشغيل.
-  </Card>;
+  if (!ONEXA_BANK_TRANSFER_POSTING_ENABLED) return (
+    <OperationalGateCard
+      icon={ArrowLeftRight}
+      title="التحويلات البنكية"
+      description="نموذج التحويل بين حسابات الخزينة موجود، لكن تشغيله متوقف حتى تجهيز الحسابات البنكية واجتياز فحوص المطابقة والترحيل."
+      gate="Gate 41"
+      actionLabel="إنشاء تحويل بنكي"
+    />
+  );
   const source = accounts.data?.find((row) => row.id === sourceId);
   return <Card className="mb-5 space-y-4 p-5">
     <div>
