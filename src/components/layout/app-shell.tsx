@@ -38,6 +38,7 @@ import { usePermissions } from "@/hooks/use-permissions";
 import { pathToModule } from "@/lib/route-permissions";
 import { useTenantContext } from "@/hooks/use-tenant-context";
 import { OnexaBrandLockup } from "@/components/brand/onexa-brand";
+import { ConnectivityBanner } from "@/components/shared/connectivity-banner";
 
 type NavLink = { to: string; label: string; label_en: string };
 type NavGroup = { key: string; label: string; label_en: string; icon: React.ComponentType<{ className?: string }>; links: NavLink[] };
@@ -515,6 +516,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Button>
 
         </header>
+
+        <ConnectivityBanner />
 
         <CommandDialog
           open={commandOpen}
