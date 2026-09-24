@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/select";
 import { SALES_TAX_CATEGORIES } from "@/lib/tax-categories";
 import { toast } from "sonner";
+import { OnexaSalesInvoicePanel } from "@/components/sales/onexa-sales-invoice-panel";
 
 export const Route = createFileRoute("/_authenticated/customers/invoices")({ component: Page });
 
@@ -168,6 +169,7 @@ function Page() {
   return (
     <div>
       <PageHeader title="الفوترة والمطالبات" description={`${filtered.length} فاتورة`} />
+      <OnexaSalesInvoicePanel />
       <DataTableToolbar
         search={search}
         onSearchChange={setSearch}

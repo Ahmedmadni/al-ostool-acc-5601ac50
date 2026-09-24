@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AccountingIntegrationOverview } from "@/components/accounting/integration-overview";
+import { AccountingOperationsHub } from "@/components/accounting/operations-hub";
 import { fmtSAR } from "@/lib/format";
 import {
   Activity,
@@ -168,6 +169,7 @@ function Page() {
         </aside>
 
         <section className="min-w-0 space-y-5">
+          <AccountingOperationsHub />
           <Card className="overflow-hidden">
             <div className="flex items-center justify-between border-b border-border px-5 py-4">
               <div>
