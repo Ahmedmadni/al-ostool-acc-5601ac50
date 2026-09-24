@@ -16,7 +16,7 @@ const OPERATIONS = [
     description: "تسجيل فاتورة مورد وتصنيف بنودها",
     to: "/vendors/invoices",
     icon: ReceiptText,
-    state: "المرحلة التالية",
+    state: "متاح الآن",
     active: true,
   },
   {
