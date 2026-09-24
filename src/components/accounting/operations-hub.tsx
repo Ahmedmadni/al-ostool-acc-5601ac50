@@ -24,7 +24,7 @@ const OPERATIONS = [
     description: "تسجيل المقبوض وتخصيصه على الفواتير",
     to: "/customers/collections",
     icon: HandCoins,
-    state: "المرحلة التالية",
+    state: "جاهز بعد Gate 39",
     active: true,
   },
   {
@@ -32,7 +32,7 @@ const OPERATIONS = [
     description: "إنشاء دفعة وتخصيصها على المستحقات",
     to: "/vendors/payments",
     icon: BadgeDollarSign,
-    state: "المرحلة التالية",
+    state: "جاهز بعد Gate 40",
     active: true,
   },
   {
@@ -40,7 +40,7 @@ const OPERATIONS = [
     description: "تحويل محكوم بين حسابات الخزينة",
     to: "/banks",
     icon: ArrowLeftRight,
-    state: "مرتبط بجاهزية Gate 41",
+    state: "جاهز بعد Gate 41",
     active: true,
   },
 ] as const;
