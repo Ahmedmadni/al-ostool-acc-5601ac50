@@ -64,7 +64,7 @@ export function ConnectivityBanner() {
       role="status"
       aria-live={restored ? "polite" : "assertive"}
       data-connectivity={state}
-      className={`sticky top-[4.5rem] z-20 flex items-start justify-center gap-3 border-b px-4 py-2.5 text-sm shadow-sm ${restored ? "border-success/20 bg-success/10 text-success" : "border-warning/30 bg-warning/10 text-foreground"}`}
+      className={`no-print sticky top-[4.5rem] z-20 flex items-start justify-center gap-3 border-b px-4 py-2.5 text-sm shadow-sm ${restored ? "border-success/20 bg-success/10 text-success" : "border-warning/30 bg-warning/10 text-foreground"}`}
     >
       {restored ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /> : <WifiOff className="mt-0.5 h-4 w-4 shrink-0 text-warning" />}
       <span>
