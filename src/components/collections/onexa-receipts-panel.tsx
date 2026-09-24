@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { HandCoins } from "lucide-react";
+import { OperationalGateCard } from "@/components/operations/operational-gate-card";
 import { ONEXA_CUSTOMER_RECEIPT_POSTING_ENABLED } from "@/lib/runtime-flags";
 import {
   approveOnexaReceipt, createOnexaReceipt, listOnexaReceivables,
@@ -48,9 +50,13 @@ export function OnexaReceiptsPanel() {
   });
 
   if (!ONEXA_CUSTOMER_RECEIPT_POSTING_ENABLED) return (
-    <Card className="mb-5 p-5 text-sm text-muted-foreground">
-      تحصيلات ONEXA المحاسبية غير مفعّلة. يلزم تطبيق حزمة Gate 39 وفحوصها قبل التشغيل.
-    </Card>
+    <OperationalGateCard
+      icon={HandCoins}
+      title="سندات تحصيل العملاء"
+      description="العملية جاهزة في الواجهة وستنشئ سندًا أصليًا مرتبطًا بفاتورة مرحلة، مع اعتماد وترحيل منفصلين. الإيقاف الحالي يحمي الذمم والأستاذ حتى اكتمال قاعدة البيانات."
+      gate="Gate 39"
+      actionLabel="إنشاء سند تحصيل"
+    />
   );
 
   const invoice = receivables.data?.find((row) => row.invoice_id === invoiceId);

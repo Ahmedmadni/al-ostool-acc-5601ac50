@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { BadgeDollarSign } from "lucide-react";
+import { OperationalGateCard } from "@/components/operations/operational-gate-card";
 import { ONEXA_SUPPLIER_PAYMENT_POSTING_ENABLED } from "@/lib/runtime-flags";
 import {
   approveOnexaPayment, createOnexaPayment, listOnexaPayables,
@@ -48,9 +50,13 @@ export function OnexaPaymentsPanel() {
   });
 
   if (!ONEXA_SUPPLIER_PAYMENT_POSTING_ENABLED) return (
-    <Card className="mb-5 p-5 text-sm text-muted-foreground">
-      مدفوعات ONEXA المحاسبية غير مفعّلة. يلزم تطبيق حزمة Gate 40 وفحوصها قبل التشغيل.
-    </Card>
+    <OperationalGateCard
+      icon={BadgeDollarSign}
+      title="سندات دفع الموردين"
+      description="العملية جاهزة في الواجهة وستنشئ سندًا أصليًا مرتبطًا بفاتورة مشتريات مرحلة، مع تخصيص المبلغ واعتماده وترحيله دون كتابة مباشرة في جداول الاستيراد."
+      gate="Gate 40"
+      actionLabel="إنشاء سند دفع"
+    />
   );
 
   const invoice = payables.data?.find((row) => row.invoice_id === invoiceId);
