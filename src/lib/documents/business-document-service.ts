@@ -67,6 +67,18 @@ export type BusinessDocumentListItem = {
   updated_at: string;
 };
 
+export type ApprovalInboxItem = Pick<BusinessDocumentListItem,
+  "id" | "module_key" | "document_type" | "document_number" | "document_date" |
+  "accounting_date" | "currency" | "party_name_snapshot" | "gross_total"
+> & {
+  legal_entity_id: string;
+  branch_id: string | null;
+  created_by: string;
+  submitted_by: string;
+  submitted_at: string;
+  revision: number;
+};
+
 export type AccountingInboxItem = Pick<BusinessDocumentListItem,
   "id" | "module_key" | "document_type" | "document_number" | "document_date" |
   "accounting_date" | "currency" | "party_name_snapshot" | "gross_total"
@@ -178,6 +190,19 @@ export async function listBusinessDocuments(module: OnexaModuleKey, limit = 100)
     .limit(Math.min(Math.max(limit, 1), 500));
   if (error) throw new Error(error.message || "ONEXA_DOCUMENT_LIST_FAILED");
   return (data ?? []) as BusinessDocumentListItem[];
+}
+
+/** Submitted source documents waiting for an approver other than their creator. */
+export async function listApprovalInbox(limit = 100): Promise<ApprovalInboxItem[]> {
+  const db = supabase as any;
+  const { data, error } = await db
+    .from("onexa_business_documents")
+    .select("id,legal_entity_id,branch_id,module_key,document_type,document_number,document_date,accounting_date,currency,party_name_snapshot,gross_total,created_by,submitted_by,submitted_at,revision")
+    .eq("status", "submitted")
+    .order("submitted_at", { ascending: true })
+    .limit(Math.min(Math.max(limit, 1), 500));
+  if (error) throw new Error(error.message || "ONEXA_APPROVAL_INBOX_FAILED");
+  return (data ?? []) as ApprovalInboxItem[];
 }
 
 /** Approved, unposted source documents waiting for the accountant. */
