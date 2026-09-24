@@ -72,16 +72,16 @@ export function AccountingOperationsHub() {
             </Link>
           );
         })}
-        <div className="bg-card p-5 opacity-75" title="يتطلب توسيع عقد قاعدة البيانات بمسار اعتماد مستقل">
+        <a href="#manual-journal" className="group bg-card p-5 transition-colors hover:bg-accent/40">
           <div className="flex items-start justify-between gap-3">
-            <span className="grid h-10 w-10 place-items-center rounded-xl bg-muted text-muted-foreground">
+            <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/8 text-primary">
               <BookPlus className="h-5 w-5" strokeWidth={1.8} />
             </span>
-            <span className="rounded-full bg-warning/10 px-2.5 py-1 text-[10px] font-semibold text-warning">يتطلب Migration</span>
+            <span className="rounded-full bg-muted px-2.5 py-1 text-[10px] font-semibold text-muted-foreground">جاهز بعد تفعيل Gate 58</span>
           </div>
           <div className="mt-4 font-bold">قيد يومية يدوي</div>
-          <p className="mt-1 text-xs leading-5 text-muted-foreground">لن يُفعّل قبل إضافة مسودة واعتماد وفصل المنشئ عن المرحّل في قاعدة البيانات.</p>
-        </div>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">إنشاء مسودة متوازنة واعتمادها وترحيلها مع فصل الصلاحيات وسجل تدقيق.</p>
+        </a>
       </div>
     </Card>
   );

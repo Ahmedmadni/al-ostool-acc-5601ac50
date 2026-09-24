@@ -37,7 +37,7 @@ for (const operation of [
   "/vendors/payments",
   "/banks",
   "قيد يومية يدوي",
-  "يتطلب Migration",
+  "جاهز بعد تفعيل Gate 58",
 ]) assert.ok(hub.includes(operation), `operations hub missing: ${operation}`);
 
 assert.equal(pkg.scripts["check:gate55-native-sales-invoicing"], "node scripts/check-gate55-native-sales-invoicing.mjs");
