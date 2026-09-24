@@ -560,8 +560,18 @@ export function AppShell({ children }: { children: ReactNode }) {
           </CommandList>
         </CommandDialog>
 
-        <div className="onexa-shell-pattern pointer-events-none absolute inset-x-0 top-[4.5rem] h-20 opacity-60" />
-        <main id="main-content" tabIndex={-1} className="relative flex-1 overflow-x-hidden p-4 outline-none md:p-6 lg:p-8 xl:p-9">{children}</main>
+        <div className="onexa-shell-pattern no-print pointer-events-none absolute inset-x-0 top-[4.5rem] h-20 opacity-60" />
+        <main id="main-content" data-print-root tabIndex={-1} className="relative flex-1 overflow-x-hidden p-4 outline-none md:p-6 lg:p-8 xl:p-9">
+          <div className="print-only print-document-header" aria-hidden="true">
+            <OnexaBrandLockup language={lang === "ar" ? "ar" : "en"} compact showDescriptor={false} />
+            <div className="print-document-meta">
+              <strong>{tenant.label.name}</strong>
+              <span>{activeGroupLabel}</span>
+              <span>{tenant.label.plan}</span>
+            </div>
+          </div>
+          {children}
+        </main>
       </div>
     </div>
   );

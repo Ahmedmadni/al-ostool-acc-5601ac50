@@ -294,9 +294,84 @@
   }
 }
 
+.print-only { display: none; }
+
+@page {
+  size: A4 portrait;
+  margin: 12mm 11mm 14mm;
+}
+
 @media print {
-  .no-print { display: none !important; }
-  body { background: white; color: black; }
+  :root {
+    color-scheme: light;
+    --background: #ffffff;
+    --foreground: #111827;
+    --card: #ffffff;
+    --card-foreground: #111827;
+    --muted: #f8fafc;
+    --muted-foreground: #475569;
+    --border: #d7dce3;
+  }
+
+  html, body {
+    width: auto;
+    min-width: 0;
+    background: #ffffff !important;
+    color: #111827 !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  body { font-size: 10pt; }
+  .no-print, button, [role="dialog"], [role="tablist"] { display: none !important; }
+  .print-only { display: block !important; }
+
+  [data-print-root] {
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .print-document-header {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 8mm;
+    padding-bottom: 4mm;
+    border-bottom: 1px solid #cbd5e1;
+  }
+
+  .print-document-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.1rem;
+    color: #475569;
+    font-size: 8.5pt;
+  }
+
+  .print-document-meta strong {
+    color: #111827;
+    font-size: 10pt;
+  }
+
+  [data-slot="card"] {
+    break-inside: avoid-page;
+    box-shadow: none !important;
+  }
+
+  table {
+    width: 100% !important;
+    border-collapse: collapse;
+  }
+
+  thead { display: table-header-group; }
+  tfoot { display: table-footer-group; }
+  tr, th, td, img, svg { break-inside: avoid; }
+  th, td { padding: 2.5mm 2mm !important; }
+  a { color: inherit !important; text-decoration: none !important; }
+  input, select, textarea { border-color: #cbd5e1 !important; box-shadow: none !important; }
 }
 
 @layer base {
