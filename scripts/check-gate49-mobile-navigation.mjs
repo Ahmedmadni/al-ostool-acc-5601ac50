@@ -10,7 +10,7 @@ for (const pattern of [
   /<ScrollArea className="h-\[calc\(100dvh-10\.5rem\)\]">/,
   /<SheetClose asChild>/,
   /allGroups\.map\(\(group\) =>/,
-  /setMobileNavOpen\(false\).*\[path\]/,
+  /setMobileNavOpen\(false\);[\s\S]*?\}, \[path\]\);/,
   /className="shrink-0 md:hidden"/,
   /className="shrink-0 sm:hidden"/,
   /فتح قائمة التنقل/,

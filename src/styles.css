@@ -190,6 +190,29 @@
     font-weight: 700;
     line-height: 1.2rem;
   }
+
+  .onexa-skip-link {
+    position: fixed;
+    inset-inline-start: 1rem;
+    top: 0.75rem;
+    z-index: 100;
+    transform: translateY(-180%);
+    border: 2px solid var(--ring);
+    border-radius: 0.75rem;
+    background: var(--card);
+    padding: 0.65rem 1rem;
+    color: var(--foreground);
+    font-size: 0.8125rem;
+    font-weight: 800;
+    box-shadow: 0 10px 30px color-mix(in oklab, var(--foreground) 18%, transparent);
+    transition: transform 160ms ease;
+  }
+
+  .onexa-skip-link:focus-visible {
+    transform: translateY(0);
+    outline: 3px solid color-mix(in oklab, var(--ring) 28%, transparent);
+    outline-offset: 2px;
+  }
 }
 
 @layer components {
@@ -259,6 +282,16 @@
 
   .input-public::placeholder { color: var(--muted-foreground); }
   .input-public option { background: var(--card); color: var(--foreground); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 @media print {
