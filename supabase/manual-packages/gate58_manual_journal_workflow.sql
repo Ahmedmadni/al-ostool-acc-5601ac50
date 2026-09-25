@@ -1,5 +1,5 @@
 -- ONEXA Gate 58: governed manual journal workflow.
--- PREPARE ONLY before 27 September 2026. Do not execute in production earlier.
+-- Production execution is operator-authorized; run the full transaction atomically.
 -- Requires verified Gate 34, B3 authorization, and B4 journal posting foundation.
 
 begin;
@@ -42,7 +42,7 @@ create table if not exists public.onexa_manual_journals (
   branch_id uuid not null references public.onexa_branches(id),
   journal_number text not null,
   accounting_date date not null,
-  period_code text not null check (period_code ~ '^\\d{4}-(0[1-9]|1[0-2])$'),
+  period_code text not null check (period_code ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'),
   currency text not null default 'SAR' check (currency ~ '^[A-Z]{3}$'),
   memo text not null check (length(btrim(memo)) > 0),
   external_reference text,
@@ -170,7 +170,7 @@ begin
   if not onexa_private.has_module_action(_actor, 'finance', 'create') then
     raise exception 'ONEXA_MANUAL_JOURNAL_CREATE_NOT_AUTHORIZED';
   end if;
-  if _accounting_date is null or _period_code !~ '^\\d{4}-(0[1-9]|1[0-2])$' then
+  if _accounting_date is null or _period_code !~ '^[0-9]{4}-(0[1-9]|1[0-2])$' then
     raise exception 'ONEXA_MANUAL_JOURNAL_PERIOD_INVALID';
   end if;
   if upper(coalesce(_currency, '')) !~ '^[A-Z]{3}$' then
@@ -402,7 +402,7 @@ begin
     raise exception 'ONEXA_MANUAL_JOURNAL_REQUIRES_TWO_LINES';
   end if;
 
-  select public.onexa_post_journal(
+  _journal_id_result := public.onexa_post_journal(
     _legal_entity_id => _journal.legal_entity_id,
     _source_document_type => 'manual_journal',
     _source_document_id => _journal.id::text,
@@ -419,7 +419,7 @@ begin
     _currency => _journal.currency,
     _memo => _journal.memo,
     _lines => _lines
-  )::uuid into _journal_id_result;
+  )::uuid;
 
   if _journal_id_result is null then raise exception 'ONEXA_POST_JOURNAL_INVALID_RESPONSE'; end if;
 
@@ -457,7 +457,10 @@ declare
   _journal public.onexa_manual_journals%rowtype;
   _reversal_id uuid;
 begin
-  if _actor is null or not onexa_private.has_module_action(_actor, 'finance', 'reverse') then
+  if _actor is null or nullif(_tenant_id, '') is null then
+    raise exception 'ONEXA_AUTHENTICATED_TENANT_REQUIRED';
+  end if;
+  if not onexa_private.has_module_action(_actor, 'finance', 'reverse') then
     raise exception 'ONEXA_MANUAL_JOURNAL_REVERSE_NOT_AUTHORIZED';
   end if;
   if nullif(btrim(_reason), '') is null then
@@ -475,12 +478,12 @@ begin
     raise exception 'ONEXA_MANUAL_JOURNAL_MUST_BE_POSTED';
   end if;
 
-  select public.onexa_reverse_journal(
+  _reversal_id := public.onexa_reverse_journal(
     _journal_id => _journal.posted_journal_id,
     _accounting_date => _accounting_date,
     _period_code => _period_code,
     _reason => btrim(_reason)
-  )::uuid into _reversal_id;
+  )::uuid;
 
   update public.onexa_manual_journals
   set status = 'reversed', reversal_journal_id = _reversal_id,

@@ -37,6 +37,9 @@ for (const invariant of [
   "manual-journal-v1",
 ]) assert.ok(sql.includes(invariant), `manual journal invariant missing: ${invariant}`);
 assert.ok(!sql.includes("grant insert") && !sql.includes("grant update") && !sql.includes("grant delete"), "manual journal tables must not expose direct writes");
+assert.ok(sql.includes("_journal_id_result := public.onexa_post_journal("), "manual journal posting must use PostgreSQL-safe direct assignment");
+assert.ok(sql.includes("_reversal_id := public.onexa_reverse_journal("), "manual journal reversal must use PostgreSQL-safe direct assignment");
+assert.ok(!sql.includes("::uuid into _journal_id_result") && !sql.includes("::uuid into _reversal_id"), "legacy SELECT INTO assignment syntax must not return");
 assert.ok(postcheck.includes("authenticated_can_execute") && postcheck.includes("anon_cannot_execute"), "Gate 58 postcheck is incomplete");
 assert.ok(smoke.includes("ONEXA_SMOKE_DISTINCT_MANUAL_JOURNAL_POSTER_REQUIRED"), "distinct poster smoke check missing");
 assert.ok(smoke.includes("ONEXA_SMOKE_MANUAL_JOURNAL_RETRY_FAILED"), "idempotency smoke check missing");
