@@ -203,3 +203,25 @@ Gate 36 يرحّل تكلفة اقتناء الأصل المصنّفة داخل 
    - `VITE_ENABLE_ONEXA_MANUAL_JOURNALS=true`
 
 الحزمة لا تمنح إدخالًا مباشرًا على جداول الأستاذ أو جداول مسودات القيود. كل الإنشاء والانتقال والترحيل والعكس يتم عبر RPC محكومة، مع فصل منشئ القيد عن معتمده ومرحّله.
+
+## Gate 60 — إنشاء وتفعيل المحاسب الثاني
+
+تعالج هذه الحزمة خطأ `Database error creating new user` بعد جعل
+`profiles.tenant_id` و`user_roles.tenant_id` إلزاميين، وتربط المستخدم الجديد
+بمساحة العمل بصورة محكومة من مالك المساحة.
+
+ترتيب التنفيذ:
+
+1. نفّذ `gate60_workspace_accountant_activation.sql` كاملًا.
+2. نفّذ `gate60_workspace_accountant_activation_postcheck.sql`.
+3. تأكد أن الدالتين `READY`، وأن Trigger `on_auth_user_created` مفعّل،
+   وأن `authenticated_can_execute = true` و`anon_can_execute = false`.
+4. فعّل `VITE_ENABLE_ONEXA_WORKSPACE_ACCOUNTANT_ACTIVATION=true`.
+5. من شاشة المستخدمين أضف محاسبًا جديدًا برقم وظيفي وبريد غير مستخدمين.
+   يمرر الخادم `tenant_id` داخل `app_metadata` الموثوقة من لحظة إنشاء
+   هوية Auth، ثم يفعّل العضوية والدور ويطبق حد المقاعد.
+6. أعد تنفيذ `gate58_manual_journal_smoke_test_rollback.sql`. يفضّل الاختبار
+   المحاسب الجديد كمنشئ للقيد ومالك المساحة أو المدير المالي كمعتمد ومرحّل.
+
+لا تُنشئ المستخدمين مباشرة داخل `auth.users`، ولا تمنح المحاسب صلاحية
+`approve` لتجاوز فصل المهام.
