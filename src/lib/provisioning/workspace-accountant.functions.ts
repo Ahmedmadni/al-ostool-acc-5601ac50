@@ -71,13 +71,11 @@ export const createWorkspaceAccountantByOwner = createServerFn({
       db
         .from("profiles")
         .select("id")
-        .eq("tenant_id", workspace.tenant_id)
         .eq("employee_id", employeeId)
         .maybeSingle(),
       db
         .from("profiles")
         .select("id")
-        .eq("tenant_id", workspace.tenant_id)
         .eq("email", email)
         .maybeSingle(),
     ]);
