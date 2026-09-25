@@ -19,6 +19,8 @@ import { usePermissions } from "@/hooks/use-permissions";
 import { toast } from "sonner";
 import { Pencil, Check, X, Plus, Trash2, Shield, Info, FileSpreadsheet } from "lucide-react";
 import { createUserByAdmin, deleteUserByAdmin } from "@/lib/admin-users.functions";
+import { createWorkspaceAccountantByOwner } from "@/lib/provisioning/workspace-accountant.functions";
+import { ONEXA_WORKSPACE_ACCOUNTANT_ACTIVATION_ENABLED } from "@/lib/runtime-flags";
 import { exportToExcel } from "@/lib/export";
 
 
@@ -40,7 +42,13 @@ const emptyUser: NewUser = {
 };
 
 const createErrorMessages: Record<string, string> = {
-  "Database error creating new user": "تعذر إنشاء ملف المستخدم. تحقق من عدم تكرار الرقم الوظيفي وصحة الإدارة والوظيفة",
+  ONEXA_WORKSPACE_OWNER_REQUIRED: "يجب تنفيذ الإضافة من مالك مساحة العمل",
+  ONEXA_ACTIVE_WORKSPACE_REQUIRED: "مساحة العمل غير مفعلة",
+  ONEXA_WORKSPACE_SEAT_LIMIT_REACHED: "اكتمل عدد المقاعد المتاحة في الباقة الحالية",
+  ONEXA_DISTINCT_ACCOUNTANT_USER_REQUIRED: "يجب أن يكون المحاسب مستخدمًا مختلفًا عن مالك المساحة",
+  ONEXA_TARGET_BELONGS_TO_ANOTHER_WORKSPACE: "المستخدم مرتبط بمساحة عمل أخرى",
+  ONEXA_TARGET_AUTH_USER_WITH_TENANT_CLAIM_REQUIRED: "لم يتم ربط المستخدم بمساحة العمل",
+  "Database error creating new user": "تعذر إنشاء ملف المستخدم. تأكد من تطبيق حزمة Gate 60 ومن عدم تكرار الرقم الوظيفي",
 };
 
 function createErrorMessage(error: unknown) {
@@ -68,6 +76,7 @@ function Page() {
   const [form, setForm] = useState<NewUser>(emptyUser);
   const [saving, setSaving] = useState(false);
   const createFn = useServerFn(createUserByAdmin);
+  const createWorkspaceAccountantFn = useServerFn(createWorkspaceAccountantByOwner);
   const deleteFn = useServerFn(deleteUserByAdmin);
 
   const [searchQ, setSearchQ] = useState("");
@@ -150,12 +159,16 @@ function Page() {
     }
     setSaving(true);
     try {
-      await createFn({ data: {
+      const userData = {
         email: form.email, password: form.password, full_name: form.full_name,
         employee_id: form.employee_id, phone: form.phone || null,
         department_id: form.department_id || null, job_title_id: form.job_title_id || null,
-        role: "accountant",
-      }});
+      };
+      if (ONEXA_WORKSPACE_ACCOUNTANT_ACTIVATION_ENABLED) {
+        await createWorkspaceAccountantFn({ data: userData });
+      } else {
+        await createFn({ data: { ...userData, role: "accountant" } });
+      }
       toast.success("تم إنشاء المستخدم");
       setOpen(false); setForm(emptyUser);
       qc.invalidateQueries({ queryKey: ["profiles-admin"] });

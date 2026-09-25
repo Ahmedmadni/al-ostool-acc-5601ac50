@@ -62,7 +62,7 @@ begin
   end if;
 
   for _candidate in
-    select distinct membership.user_id
+    select membership.user_id
     from public.onexa_workspace_memberships membership
     where membership.tenant_id = _tenant
       and membership.status = 'active'
@@ -71,7 +71,16 @@ begin
         'finance_manager',
         'accountant'
       )
-    order by membership.user_id
+    group by membership.user_id
+    order by
+      min(
+        case membership.role_key
+          when 'accountant' then 1
+          when 'finance_manager' then 2
+          else 3
+        end
+      ),
+      membership.user_id
   loop
     perform set_config(
       'request.jwt.claims',
@@ -95,7 +104,7 @@ begin
   end if;
 
   for _candidate in
-    select distinct membership.user_id
+    select membership.user_id
     from public.onexa_workspace_memberships membership
     where membership.tenant_id = _tenant
       and membership.status = 'active'
@@ -105,7 +114,16 @@ begin
         'accountant'
       )
       and membership.user_id <> _creator
-    order by membership.user_id
+    group by membership.user_id
+    order by
+      min(
+        case membership.role_key
+          when 'finance_manager' then 1
+          when 'workspace_owner' then 2
+          else 3
+        end
+      ),
+      membership.user_id
   loop
     perform set_config(
       'request.jwt.claims',
