@@ -41,8 +41,15 @@ assert.ok(sql.includes("_journal_id_result := public.onexa_post_journal("), "man
 assert.ok(sql.includes("_reversal_id := public.onexa_reverse_journal("), "manual journal reversal must use PostgreSQL-safe direct assignment");
 assert.ok(!sql.includes("::uuid into _journal_id_result") && !sql.includes("::uuid into _reversal_id"), "legacy SELECT INTO assignment syntax must not return");
 assert.ok(postcheck.includes("authenticated_can_execute") && postcheck.includes("anon_cannot_execute"), "Gate 58 postcheck is incomplete");
-assert.ok(smoke.includes("ONEXA_SMOKE_DISTINCT_MANUAL_JOURNAL_POSTER_REQUIRED"), "distinct poster smoke check missing");
-assert.ok(smoke.includes("ONEXA_SMOKE_MANUAL_JOURNAL_RETRY_FAILED"), "idempotency smoke check missing");
+for (const marker of [
+  "_manual_journal := public.onexa_create_manual_journal(",
+  "_to_status => 'submitted'",
+  "_to_status => 'approved'",
+  "ONEXA_SMOKE_CREATOR_APPROVAL_ALLOWED",
+  "ONEXA_SMOKE_DISTINCT_AUTHORIZED_APPROVER_AND_POSTER_REQUIRED",
+  "ONEXA_SMOKE_MANUAL_JOURNAL_RETRY_FAILED",
+  "ONEXA_SMOKE_MANUAL_JOURNAL_CROSS_TENANT_ALLOWED",
+]) assert.ok(smoke.includes(marker), `manual journal end-to-end smoke check missing: ${marker}`);
 assert.ok(smoke.includes("rollback;") && !smoke.includes("commit;"), "manual journal smoke test must roll back");
 
 for (const marker of ['db.rpc("onexa_create_manual_journal"', 'db.rpc("onexa_transition_manual_journal"', 'db.rpc("onexa_post_manual_journal"']) {
