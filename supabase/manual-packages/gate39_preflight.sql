@@ -45,40 +45,124 @@ from (
 ) as dependency(check_name, ready)
 order by check_name;
 
+create temporary table gate39_authorization_candidates (
+  user_id uuid primary key,
+  role_key text not null,
+  can_create boolean not null,
+  can_submit boolean not null,
+  can_approve boolean not null,
+  can_post boolean not null
+) on commit drop;
+
+do $authorization$
+declare
+  _candidate record;
+begin
+  for _candidate in
+    select
+      membership.user_id,
+      membership.role_key
+    from public.onexa_workspace_memberships membership
+    join auth.users auth_user
+      on auth_user.id = membership.user_id
+    where membership.tenant_id = 'tenant-001-al-ostool'
+      and membership.status = 'active'
+      and membership.role_key in (
+        'workspace_owner',
+        'finance_manager',
+        'accountant'
+      )
+    order by membership.role_key, membership.user_id
+  loop
+    perform set_config(
+      'request.jwt.claims',
+      jsonb_build_object(
+        'sub', _candidate.user_id,
+        'role', 'authenticated',
+        'app_metadata', jsonb_build_object(
+          'onexa_tenant_id',
+          'tenant-001-al-ostool'
+        )
+      )::text,
+      true
+    );
+
+    insert into gate39_authorization_candidates (
+      user_id,
+      role_key,
+      can_create,
+      can_submit,
+      can_approve,
+      can_post
+    )
+    values (
+      _candidate.user_id,
+      _candidate.role_key,
+      coalesce(
+        onexa_private.has_module_action(
+          _candidate.user_id,
+          'sales',
+          'create'
+        ),
+        false
+      ),
+      coalesce(
+        onexa_private.has_module_action(
+          _candidate.user_id,
+          'sales',
+          'submit'
+        ),
+        false
+      ),
+      coalesce(
+        onexa_private.has_module_action(
+          _candidate.user_id,
+          'sales',
+          'approve'
+        ),
+        false
+      ),
+      coalesce(
+        onexa_private.has_module_action(
+          _candidate.user_id,
+          'sales',
+          'post'
+        ),
+        false
+      )
+    );
+  end loop;
+end;
+$authorization$;
+
 select
-  membership.user_id,
-  membership.role_key,
-  onexa_private.has_module_action(
-    membership.user_id,
-    'sales',
-    'create'
-  ) as can_create,
-  onexa_private.has_module_action(
-    membership.user_id,
-    'sales',
-    'submit'
-  ) as can_submit,
-  onexa_private.has_module_action(
-    membership.user_id,
-    'sales',
-    'approve'
-  ) as can_approve,
-  onexa_private.has_module_action(
-    membership.user_id,
-    'sales',
-    'post'
-  ) as can_post
-from public.onexa_workspace_memberships membership
-join auth.users auth_user
-  on auth_user.id = membership.user_id
-where membership.tenant_id = 'tenant-001-al-ostool'
-  and membership.status = 'active'
-  and membership.role_key in (
-    'workspace_owner',
-    'finance_manager',
-    'accountant'
-  )
-order by membership.role_key, membership.user_id;
+  candidate.user_id,
+  candidate.role_key,
+  candidate.can_create,
+  candidate.can_submit,
+  candidate.can_approve,
+  candidate.can_post
+from gate39_authorization_candidates candidate
+order by candidate.role_key, candidate.user_id;
+
+select
+  count(*) filter (
+    where can_create and can_submit
+  ) as eligible_creators,
+  count(*) filter (
+    where can_approve and can_post
+  ) as eligible_operators,
+  exists (
+    select 1
+    from gate39_authorization_candidates creator
+    cross join gate39_authorization_candidates operator
+    where creator.user_id <> operator.user_id
+      and creator.can_create
+      and creator.can_submit
+      and operator.can_approve
+      and operator.can_post
+  ) as distinct_creator_and_operator_ready
+from gate39_authorization_candidates;
 
 select
   mapping.account_role,
