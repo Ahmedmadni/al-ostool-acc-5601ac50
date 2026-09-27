@@ -131,7 +131,7 @@ begin
     true
   );
 
-  select document.*, reconciliation.outstanding_amount
+  select document, reconciliation.outstanding_amount
   into _invoice, _outstanding
   from public.onexa_customer_receivables_reconciliation reconciliation
   join public.onexa_business_documents document
