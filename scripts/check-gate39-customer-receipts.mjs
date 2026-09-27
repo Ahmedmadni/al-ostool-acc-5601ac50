@@ -26,9 +26,18 @@ assert.ok(!/grant\s+(insert|update|delete)/i.test(sql), "Direct ledger writes ex
 assert.ok(postcheck.includes("authenticated_direct_writes_denied"));
 assert.ok(postcheck.includes("security_invoker"));
 assert.ok(mapping.includes("ONEXA_GATE39_CASH_ACCOUNT_SELECTION_REQUIRED"));
-assert.ok(smoke.includes("ONEXA_SMOKE_RECEIPT_RETRY_FAILED"));
+assert.ok(mapping.includes("ONEXA_GATE39_AR_MAPPING_INVALID"));
+assert.ok(!mapping.includes("account_code = '1120'"), "Gate 39 must honor the active AR role mapping instead of hardcoding an account");
+for (const marker of [
+  "onexa_create_business_document(",
+  "onexa_transition_business_document(",
+  "ONEXA_SMOKE_POSTED_SALES_INVOICE_WITH_BALANCE_REQUIRED",
+  "ONEXA_SMOKE_RECEIPT_CREATOR_APPROVAL_ALLOWED",
+  "ONEXA_SMOKE_RECEIPT_RETRY_FAILED",
+  "gate39_customer_receipt_smoke_test",
+]) assert.ok(smoke.includes(marker), "Missing self-contained receipt smoke control: " + marker);
 assert.ok(smoke.includes("ONEXA_SMOKE_CROSS_TENANT_ALLOWED"));
-assert.match(smoke.trim(), /rollback;$/);
+assert.match(smoke, /rollback;[\s\S]*gate39_customer_receipt_smoke_test[\s\S]*passed/);
 assert.ok(!smoke.includes("commit;"));
 assert.ok(service.includes("createBusinessDocument") && service.includes("onexa_post_customer_receipt"));
 assert.ok(panel.includes("approveOnexaReceipt") && route.includes("OnexaReceiptsPanel"));
