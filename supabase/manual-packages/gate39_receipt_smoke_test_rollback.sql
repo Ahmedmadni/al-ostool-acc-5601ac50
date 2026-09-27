@@ -131,8 +131,8 @@ begin
     true
   );
 
-  select document, reconciliation.outstanding_amount
-  into _invoice, _outstanding
+  select document.*
+  into _invoice
   from public.onexa_customer_receivables_reconciliation reconciliation
   join public.onexa_business_documents document
     on document.id = reconciliation.invoice_id
@@ -149,6 +149,17 @@ begin
   limit 1;
 
   if _invoice.id is null then
+    raise exception 'ONEXA_SMOKE_POSTED_SALES_INVOICE_WITH_BALANCE_REQUIRED';
+  end if;
+
+  select reconciliation.outstanding_amount
+  into _outstanding
+  from public.onexa_customer_receivables_reconciliation reconciliation
+  where reconciliation.tenant_id = _tenant
+    and reconciliation.invoice_id = _invoice.id
+    and reconciliation.reconciliation_status = 'reconciled';
+
+  if _outstanding is null or _outstanding <= 0 then
     raise exception 'ONEXA_SMOKE_POSTED_SALES_INVOICE_WITH_BALANCE_REQUIRED';
   end if;
 
