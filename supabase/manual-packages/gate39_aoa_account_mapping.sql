@@ -1,25 +1,21 @@
--- Al Ostool Gate 39 mapping: choose the actual active cash/bank detail account
--- after reviewing the first SELECT. Replace the placeholder below only after
--- confirming the GL account. Reuse the existing AR role from Gate 35.
+-- Al Ostool Gate 39 mapping.
+-- Account 1110 (النقد وما في حكمه) was confirmed from the production chart
+-- on 2026-09-27. Reuse the active accounts-receivable role from Gate 35.
 select code, name_ar, name_en, category, account_type, is_active
 from public.chart_of_accounts
 where tenant_id = 'tenant-001-al-ostool' and is_active is true
   and category::text = 'assets'
 order by code;
 
--- This guarded transaction intentionally fails until an accountant chooses an
--- account. Do not infer a bank account from its code or display name.
+-- The guarded transaction verifies both account roles before persisting 1110.
 begin;
 do $mapping$
 declare
   _tenant constant text := 'tenant-001-al-ostool';
   _entity constant uuid := '3ba2a953-db1d-4c1f-a192-c7343a93ab36';
-  _cash_account text := 'REPLACE_WITH_CONFIRMED_CASH_OR_BANK_DETAIL_CODE';
+  _cash_account constant text := '1110';
   _ar_account text;
 begin
-  if _cash_account = 'REPLACE_WITH_CONFIRMED_CASH_OR_BANK_DETAIL_CODE' then
-    raise exception 'ONEXA_GATE39_CASH_ACCOUNT_SELECTION_REQUIRED';
-  end if;
   if not exists (select 1 from public.onexa_legal_entities
     where id = _entity and tenant_id = _tenant and code = 'AOA' and is_active) then
     raise exception 'ONEXA_GATE39_AOA_ENTITY_REQUIRED';
