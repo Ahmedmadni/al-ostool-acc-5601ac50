@@ -31,7 +31,10 @@ assert.ok(!mapping.includes("account_code = '1120'"), "Gate 39 must honor the ac
 for (const marker of [
   "onexa_create_business_document(",
   "onexa_transition_business_document(",
-  "ONEXA_SMOKE_POSTED_SALES_INVOICE_WITH_BALANCE_REQUIRED",
+  "onexa_post_sales_invoice(",
+  "onexa_inventory_balances",
+  "ONEXA_SMOKE_SALES_INVOICE_CREATION_FAILED",
+  "ONEXA_SMOKE_SALES_INVOICE_POSTING_FAILED",
   "ONEXA_SMOKE_RECEIPT_CREATOR_APPROVAL_ALLOWED",
   "ONEXA_SMOKE_RECEIPT_RETRY_FAILED",
   "gate39_customer_receipt_smoke_test",
