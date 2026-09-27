@@ -11,6 +11,8 @@ for (const path of [sqlPath, mappingPath, postcheckPath, smokePath]) {
 }
 
 const sql = read(sqlPath);
+assert.equal((sql.match(/\bcommit\s*;/gi) ?? []).length, 1, "Gate 36 migration must contain one transaction commit");
+assert.match(sql.trim(), /commit;$/, "Gate 36 migration must end immediately after commit");
 const mapping = read(mappingPath);
 const postcheck = read(postcheckPath);
 const smoke = read(smokePath);
@@ -29,7 +31,7 @@ assert.ok(sql.includes("security_invoker = true"), "Gate 36 views must use secur
 assert.ok(sql.includes("pg_advisory_xact_lock"), "atomic posting advisory lock is missing");
 assert.ok(sql.includes("for update"), "row locking is missing");
 assert.ok(sql.includes("order by warehouse_id nulls last, item_id nulls last, line_number"), "inventory lock order is not deterministic");
-assert.ok(sql.includes("return _document.posted_journal_id"), "safe posting retry is missing");
+assert.ok(sql.includes("ONEXA_PURCHASE_RETRY_JOURNAL_MISMATCH") && sql.includes("return _journal_id"), "safe posting retry is missing");
 assert.ok(sql.includes("ONEXA_PURCHASE_LINE_CLASSIFICATION_INVALID"), "line classification validation is missing");
 assert.ok(sql.includes("ONEXA_POSTER_MUST_DIFFER_FROM_CREATOR"), "creator/poster separation is missing");
 assert.ok(sql.includes("onexa_private.has_module_action(_actor, 'procurement', 'post')"), "server-side procurement posting authorization is missing");
