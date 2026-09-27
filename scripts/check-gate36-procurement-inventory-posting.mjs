@@ -73,4 +73,9 @@ for (const phrase of ["one PostgreSQL transaction", "explicit accounting classif
 assert.equal(pkg.scripts["check:gate36-procurement-inventory-posting"], "node scripts/check-gate36-procurement-inventory-posting.mjs");
 assert.ok(pkg.scripts.verify.includes("check:gate36-procurement-inventory-posting"), "Gate 36 is missing from verify");
 
+assert.ok(sql.includes("ONEXA_PURCHASE_RETRY_JOURNAL_MISMATCH"), "Gate 36 retry consistency check is missing");
+assert.ok(sql.includes("!~ '^[0-9]{4}-(0[1-9]|1[0-2])$'"), "Gate 36 strict period validation is missing");
+assert.ok(postcheck.includes("to_regclass"), "Gate 36 postcheck must resolve objects safely");
+assert.ok(postcheck.includes("workflow_pending_count"), "Gate 36 postcheck must separate workflow-pending documents");
+assert.match(postcheck.trim(), /rollback;$/, "Gate 36 postcheck diagnostics must roll back");
 console.log("Gate 36 ONEXA procurement/inventory posting checks passed ✓");
