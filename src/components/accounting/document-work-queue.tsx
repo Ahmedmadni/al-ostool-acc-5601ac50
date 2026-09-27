@@ -22,9 +22,15 @@ import {
 } from "@/lib/documents/business-document-service";
 import { postSalesInvoice } from "@/lib/sales/sales-posting-service";
 import { postPurchaseInvoice } from "@/lib/procurement/purchase-posting-service";
+import { postOnexaReceipt } from "@/lib/sales/customer-receipt-service";
+import { postOnexaPayment } from "@/lib/procurement/supplier-payment-service";
+import { postOnexaBankTransfer } from "@/lib/finance/bank-transfer-service";
 import {
+  ONEXA_BANK_TRANSFER_POSTING_ENABLED,
+  ONEXA_CUSTOMER_RECEIPT_POSTING_ENABLED,
   ONEXA_PROCUREMENT_POSTING_ENABLED,
   ONEXA_SALES_POSTING_ENABLED,
+  ONEXA_SUPPLIER_PAYMENT_POSTING_ENABLED,
 } from "@/lib/runtime-flags";
 import { fmtDate, fmtSAR } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
@@ -54,7 +60,22 @@ function describePostingAvailability(item: AccountingInboxItem) {
       ? { enabled: true, label: "جاهز للترحيل" }
       : { enabled: false, label: "يتطلب تنفيذ وتفعيل Gate 36" };
   }
-  return { enabled: false, label: "مسار الترحيل غير مفعّل بعد" };
+  if (item.document_type === "customer_receipt") {
+    return ONEXA_CUSTOMER_RECEIPT_POSTING_ENABLED
+      ? { enabled: true, label: "جاهز لترحيل التحصيل" }
+      : { enabled: false, label: "يتطلب تنفيذ وتفعيل Gate 39" };
+  }
+  if (item.document_type === "supplier_payment") {
+    return ONEXA_SUPPLIER_PAYMENT_POSTING_ENABLED
+      ? { enabled: true, label: "جاهز لترحيل الدفعة" }
+      : { enabled: false, label: "يتطلب تنفيذ وتفعيل Gate 40" };
+  }
+  if (item.document_type === "bank_transfer") {
+    return ONEXA_BANK_TRANSFER_POSTING_ENABLED
+      ? { enabled: true, label: "جاهز لترحيل التحويل" }
+      : { enabled: false, label: "يتطلب تنفيذ وتفعيل Gate 41" };
+  }
+  return { enabled: false, label: "نوع المستند غير مدعوم في صندوق الترحيل" };
 }
 
 function DocumentSummary({ item }: { item: ApprovalInboxItem | AccountingInboxItem }) {
@@ -102,6 +123,11 @@ export function AccountingDocumentWorkQueue() {
       cache.invalidateQueries({ queryKey: ["onexa-accounting-posting-inbox"] }),
       cache.invalidateQueries({ queryKey: ["onexa-sales-business-documents"] }),
       cache.invalidateQueries({ queryKey: ["onexa-purchase-business-documents"] }),
+      cache.invalidateQueries({ queryKey: ["onexa-receivables"] }),
+      cache.invalidateQueries({ queryKey: ["onexa-receipts"] }),
+      cache.invalidateQueries({ queryKey: ["onexa-payables"] }),
+      cache.invalidateQueries({ queryKey: ["onexa-payments"] }),
+      cache.invalidateQueries({ queryKey: ["onexa-bank-transfers"] }),
     ]);
   };
 
@@ -128,7 +154,16 @@ export function AccountingDocumentWorkQueue() {
         if (result.status === "disabled") throw new Error("ترحيل المشتريات غير مفعّل في إعدادات التشغيل");
         return result.journalId;
       }
-      throw new Error("لا يوجد مسار ترحيل مفعّل لهذا النوع من المستندات");
+      if (item.document_type === "customer_receipt") {
+        return postOnexaReceipt(item.id, periodCode);
+      }
+      if (item.document_type === "supplier_payment") {
+        return postOnexaPayment(item.id, periodCode);
+      }
+      if (item.document_type === "bank_transfer") {
+        return postOnexaBankTransfer(item.id, periodCode);
+      }
+      throw new Error("نوع المستند غير مدعوم في صندوق الترحيل");
     },
     onSuccess: async (journalId) => {
       toast.success(`تم الترحيل إلى القيد ${journalId}`);
@@ -155,7 +190,7 @@ export function AccountingDocumentWorkQueue() {
             صندوق الاعتماد والترحيل
           </div>
           <p className="mt-1 text-xs leading-5 text-muted-foreground">
-            دورة تشغيل موحّدة للمستندات الأصلية: إنشاء، اعتماد من مستخدم آخر، ثم ترحيل محاسبي محكوم.
+            دورة موحّدة للفواتير وسندات القبض ومدفوعات الموردين والتحويلات البنكية: اعتماد مستقل ثم ترحيل محاسبي محكوم.
           </p>
         </div>
         <Button type="button" size="sm" variant="outline" disabled={busy} onClick={refreshQueues}>
