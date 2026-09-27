@@ -15,6 +15,7 @@ declare
   _tenant constant text := 'tenant-001-al-ostool';
   _entity constant uuid := '3ba2a953-db1d-4c1f-a192-c7343a93ab36';
   _cash_account text := 'REPLACE_WITH_CONFIRMED_CASH_OR_BANK_DETAIL_CODE';
+  _ar_account text;
 begin
   if _cash_account = 'REPLACE_WITH_CONFIRMED_CASH_OR_BANK_DETAIL_CODE' then
     raise exception 'ONEXA_GATE39_CASH_ACCOUNT_SELECTION_REQUIRED';
@@ -28,10 +29,28 @@ begin
       and account_type::text = 'detail' and category::text = 'assets') then
     raise exception 'ONEXA_GATE39_CASH_ACCOUNT_INVALID';
   end if;
-  if not exists (select 1 from public.onexa_account_role_mappings
-    where tenant_id = _tenant and legal_entity_id = _entity
-      and account_role = 'accounts_receivable' and account_code = '1120' and is_active) then
+  select account_code
+  into _ar_account
+  from public.onexa_account_role_mappings
+  where tenant_id = _tenant
+    and legal_entity_id = _entity
+    and account_role = 'accounts_receivable'
+    and is_active is true;
+
+  if _ar_account is null then
     raise exception 'ONEXA_GATE39_AR_MAPPING_REQUIRED';
+  end if;
+
+  if not exists (
+    select 1
+    from public.chart_of_accounts
+    where tenant_id = _tenant
+      and code = _ar_account
+      and is_active is true
+      and account_type::text = 'detail'
+      and category::text = 'assets'
+  ) then
+    raise exception 'ONEXA_GATE39_AR_MAPPING_INVALID';
   end if;
   insert into public.onexa_account_role_mappings
     (tenant_id, legal_entity_id, account_role, account_code, is_active)
