@@ -191,7 +191,9 @@ begin
     raise exception 'ONEXA_PROCUREMENT_POST_NOT_AUTHORIZED';
   end if;
   if coalesce(btrim(_period_code), '')
-       !~ '^[0-9]{4}-(0[1-9]|1[0-2])
+       !~ '^[0-9]{4}-(0[1-9]|1[0-2])$' then
+    raise exception 'ONEXA_FISCAL_PERIOD_REQUIRED';
+  end if;
 
   perform pg_advisory_xact_lock(hashtextextended(_tenant_id || ':procurement:' || _document_id::text, 0));
 
