@@ -11,7 +11,7 @@ for (const path of [sqlPath, mappingPath, postcheckPath, smokePath]) {
 }
 
 const sql = read(sqlPath);
-assert.equal((sql.match(/\\bcommit\\s*;/gi) ?? []).length, 1, "Gate 36 migration must contain one transaction commit");
+assert.equal((sql.match(/\bcommit\s*;/gi) ?? []).length, 1, "Gate 36 migration must contain one transaction commit");
 assert.match(sql.trim(), /commit;$/, "Gate 36 migration must end immediately after commit");
 const mapping = read(mappingPath);
 const postcheck = read(postcheckPath);
