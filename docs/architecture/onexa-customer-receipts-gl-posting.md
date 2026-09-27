@@ -29,8 +29,10 @@ package, mapping, postcheck and rollback-only smoke test succeed. Do not apply
 the package during the deferred production rollout window.
 
 
-The rollback smoke test is self-contained from receipt creation onward. It selects
-one posted ONEXA sales invoice with a positive reconciled balance, creates a
-temporary receipt as an authorized maker, verifies that the maker cannot approve
-it, approves and posts it as a distinct authorized operator, checks allocation
-and retry idempotency, validates cross-tenant denial, and rolls everything back.
+The rollback smoke test is self-contained across the full Gate 35–39 pipeline.
+It creates temporary inventory and a sales invoice, approves and posts the
+invoice, creates its fully allocated customer receipt as an authorized maker,
+verifies that the maker cannot approve it, approves and posts it as a distinct
+authorized operator, checks settlement and retry idempotency, validates
+cross-tenant denial, and rolls everything back. Production sales invoices are
+never required or modified by the smoke test.
