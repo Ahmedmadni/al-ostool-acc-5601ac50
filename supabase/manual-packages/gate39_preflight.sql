@@ -129,7 +129,9 @@ select
       and document.party_type = 'customer'
       and document.party_id is not null
   ) as posted_sales_invoice_candidates,
-  count(distinct document.created_by) as distinct_sales_invoice_creators
+  count(distinct document.created_by) as distinct_sales_invoice_creators,
+  true as smoke_test_creates_temporary_sales_invoice,
+  'INFORMATIONAL_ONLY'::text as candidate_count_status
 from public.onexa_business_documents document
 join public.onexa_sales_posting_runs posting
   on posting.document_id = document.id
