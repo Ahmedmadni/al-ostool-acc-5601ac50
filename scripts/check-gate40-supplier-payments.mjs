@@ -37,4 +37,11 @@ assert.ok(panel.includes("approveOnexaPayment") && route.includes("OnexaPayments
 assert.ok(flags.includes("ONEXA_SUPPLIER_PAYMENT_POSTING_ENABLED"));
 assert.ok(env.includes('VITE_ENABLE_ONEXA_SUPPLIER_PAYMENT_POSTING=""'));
 assert.ok(pkg.scripts.verify.includes("check:gate40-supplier-payments"));
+assert.ok(sql.includes("purchase_run.document_id = invoice.id"), "Gate 40 purchase posting alias is invalid");
+assert.ok(!sql.includes("procurement.document_id"), "Gate 40 stale procurement alias remains");
+assert.ok(sql.includes("account.category::text = 'assets'"), "Gate 40 cash account validation is missing");
+assert.ok(sql.includes("account.category::text = 'liabilities'"), "Gate 40 AP account validation is missing");
+assert.ok(postcheck.includes("workflow_pending_count"), "Gate 40 postcheck must separate workflow-pending invoices");
+assert.ok(postcheck.includes("distinct_creator_and_operator"), "Gate 40 authorization readiness check is missing");
+assert.match(postcheck.trim(), /rollback;$/, "Gate 40 postcheck diagnostics must roll back");
 console.log("Gate 40 supplier payments package checks passed");
