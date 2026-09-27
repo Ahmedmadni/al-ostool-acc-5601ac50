@@ -6,6 +6,13 @@ do $$
 begin
   if to_regprocedure('public.onexa_post_journal(uuid,text,text,integer,text,jsonb,date,text,text,text,jsonb)') is null
     or to_regclass('public.onexa_purchase_posting_runs') is null
+    or to_regclass('public.onexa_business_documents') is null
+    or to_regclass('public.onexa_business_document_lines') is null
+    or to_regclass('public.onexa_business_document_events') is null
+    or to_regclass('public.onexa_legal_entities') is null
+    or to_regclass('public.onexa_account_role_mappings') is null
+    or to_regclass('public.chart_of_accounts') is null
+    or to_regprocedure('onexa_private.claim_tenant_id()') is null
     or to_regprocedure('onexa_private.has_module_action(uuid,text,text)') is null then
     raise exception 'ONEXA_GATE40_FOUNDATION_REQUIRED';
   end if;
@@ -63,8 +70,9 @@ select invoice.id as invoice_id, invoice.tenant_id, invoice.legal_entity_id,
        when coalesce(sum(allocation.amount), 0) > invoice.gross_total + 0.01 then 'overallocated'
        else 'reconciled' end as reconciliation_status
 from public.onexa_business_documents invoice
-left join public.onexa_purchase_posting_runs purchase_run on procurement.document_id = invoice.id
-  and procurement.tenant_id = invoice.tenant_id
+left join public.onexa_purchase_posting_runs purchase_run
+  on purchase_run.document_id = invoice.id
+ and purchase_run.tenant_id = invoice.tenant_id
 left join public.onexa_supplier_payment_allocations allocation on allocation.invoice_id = invoice.id
   and allocation.tenant_id = invoice.tenant_id
 where invoice.document_type = 'purchase_invoice'
@@ -134,7 +142,10 @@ begin
         and item_id is null and tax_amount = 0 and net_amount = _payment.gross_total
         and gross_amount = _payment.gross_total
     ) then raise exception 'ONEXA_PAYMENT_LINE_MISMATCH'; end if;
-  if jsonb_typeof(_payment.source_snapshot->'invoice_allocations') <> 'array'
+  if coalesce(
+      jsonb_typeof(_payment.source_snapshot->'invoice_allocations'),
+      ''
+    ) <> 'array'
     or jsonb_array_length(_payment.source_snapshot->'invoice_allocations') = 0 then
     raise exception 'ONEXA_PAYMENT_ALLOCATIONS_REQUIRED';
   end if;
@@ -183,14 +194,35 @@ begin
     raise exception 'ONEXA_PAYMENT_ALLOCATION_TOTAL_MISMATCH';
   end if;
 
-  select account_code into _cash from public.onexa_account_role_mappings
-    where tenant_id = _tenant and legal_entity_id = _payment.legal_entity_id
-      and account_role = 'cash_or_bank' and is_active = true;
-  select account_code into _ap from public.onexa_account_role_mappings
-    where tenant_id = _tenant and legal_entity_id = _payment.legal_entity_id
-      and account_role = 'accounts_payable' and is_active = true;
+  select mapping.account_code
+  into _cash
+  from public.onexa_account_role_mappings as mapping
+  join public.chart_of_accounts as account
+    on account.tenant_id = mapping.tenant_id
+   and account.code = mapping.account_code
+  where mapping.tenant_id = _tenant
+    and mapping.legal_entity_id = _payment.legal_entity_id
+    and mapping.account_role = 'cash_or_bank'
+    and mapping.is_active = true
+    and account.is_active = true
+    and account.account_type::text = 'detail'
+    and account.category::text = 'assets';
+
+  select mapping.account_code
+  into _ap
+  from public.onexa_account_role_mappings as mapping
+  join public.chart_of_accounts as account
+    on account.tenant_id = mapping.tenant_id
+   and account.code = mapping.account_code
+  where mapping.tenant_id = _tenant
+    and mapping.legal_entity_id = _payment.legal_entity_id
+    and mapping.account_role = 'accounts_payable'
+    and mapping.is_active = true
+    and account.is_active = true
+    and account.account_type::text = 'detail'
+    and account.category::text = 'liabilities';
   if _cash is null or _ap is null then raise exception 'ONEXA_PAYMENT_ACCOUNT_MAPPING_REQUIRED'; end if;
-  _dimensions := _payment.dimensions || jsonb_build_object(
+  _dimensions := coalesce(_payment.dimensions, '{}'::jsonb) || jsonb_build_object(
     'legalEntity', _payment.legal_entity_id, 'branch', _payment.branch_id,
     'vendor', _payment.party_id
   );
@@ -200,7 +232,8 @@ begin
     _source_document_id => _payment.id::text,
     _source_revision => _payment.revision,
     _source_status => 'approved',
-    _source_snapshot => _payment.source_snapshot || jsonb_build_object(
+    _source_snapshot => coalesce(_payment.source_snapshot, '{}'::jsonb)
+      || jsonb_build_object(
       'document_number', _payment.document_number,
       'posting_contract_version', 'supplier-payment-v1'),
     _accounting_date => _payment.accounting_date,
