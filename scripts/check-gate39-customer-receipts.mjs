@@ -6,6 +6,7 @@ const sql = read("supabase/manual-packages/gate39_customer_receipts.sql");
 const postcheck = read("supabase/manual-packages/gate39_postcheck.sql");
 const smoke = read("supabase/manual-packages/gate39_receipt_smoke_test_rollback.sql");
 const mapping = read("supabase/manual-packages/gate39_aoa_account_mapping.sql");
+const preflight = read("supabase/manual-packages/gate39_preflight.sql");
 const service = read("src/lib/sales/customer-receipt-service.ts");
 const panel = read("src/components/collections/onexa-receipts-panel.tsx");
 const route = read("src/routes/_authenticated/customers/collections.tsx");
@@ -29,8 +30,12 @@ assert.ok(postcheck.includes("SKIPPED_OBJECT_MISSING"));
 assert.ok(postcheck.includes("MAPPING_REQUIRED"));
 assert.ok(postcheck.includes("gate39_postcheck_results"));
 assert.ok(!postcheck.includes("::regclass"), "Gate 39 postcheck must report missing objects instead of hard-failing");
-assert.ok(mapping.includes("ONEXA_GATE39_CASH_ACCOUNT_SELECTION_REQUIRED"));
+assert.ok(mapping.includes("_cash_account constant text := '1110'"));
+assert.ok(!mapping.includes("REPLACE_WITH_CONFIRMED"), "Gate 39 AOA cash account must stay resolved after accountant confirmation");
 assert.ok(mapping.includes("ONEXA_GATE39_AR_MAPPING_INVALID"));
+assert.ok(preflight.includes("gate39_authorization_candidates"));
+assert.ok(preflight.includes("'sub', _candidate.user_id"));
+assert.ok(preflight.includes("distinct_creator_and_operator_ready"));
 assert.ok(!mapping.includes("account_code = '1120'"), "Gate 39 must honor the active AR role mapping instead of hardcoding an account");
 for (const marker of [
   "onexa_create_business_document(",
