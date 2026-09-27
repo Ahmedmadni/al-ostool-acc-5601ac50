@@ -27,3 +27,10 @@ this first slice; the RPC refuses an unallocated receipt.
 Keep `VITE_ENABLE_ONEXA_CUSTOMER_RECEIPT_POSTING` disabled until the manual
 package, mapping, postcheck and rollback-only smoke test succeed. Do not apply
 the package during the deferred production rollout window.
+
+
+The rollback smoke test is self-contained from receipt creation onward. It selects
+one posted ONEXA sales invoice with a positive reconciled balance, creates a
+temporary receipt as an authorized maker, verifies that the maker cannot approve
+it, approves and posts it as a distinct authorized operator, checks allocation
+and retry idempotency, validates cross-tenant denial, and rolls everything back.
