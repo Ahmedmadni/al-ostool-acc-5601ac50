@@ -6,13 +6,11 @@ import {
   Clock3,
   Inbox,
   Loader2,
-  LockKeyhole,
   RefreshCw,
   Send,
   XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import {
   listAccountingInbox,
   listApprovalInbox,
@@ -97,16 +95,6 @@ export function AccountingDocumentWorkQueue() {
   const cache = useQueryClient();
   const [periodCode, setPeriodCode] = useState(currentPeriod);
 
-  const currentUser = useQuery({
-    queryKey: ["onexa-current-user-id"],
-    queryFn: async () => {
-      const { data, error } = await supabase.auth.getUser();
-      if (error) throw error;
-      return data.user?.id ?? null;
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-
   const approvals = useQuery({
     queryKey: ["onexa-document-approval-inbox"],
     queryFn: () => listApprovalInbox(100),
@@ -179,7 +167,7 @@ export function AccountingDocumentWorkQueue() {
   };
 
   const busy = approvals.isFetching || postings.isFetching;
-  const hasError = approvals.isError || postings.isError || currentUser.isError;
+  const hasError = approvals.isError || postings.isError;
 
   return (
     <Card className="overflow-hidden border-primary/15">
@@ -213,7 +201,7 @@ export function AccountingDocumentWorkQueue() {
                 <Clock3 className="h-4 w-4 text-warning" />
                 بانتظار الاعتماد
               </div>
-              <p className="mt-1 text-[11px] text-muted-foreground">لا يستطيع منشئ المستند اعتماد مستنده بنفسه.</p>
+              <p className="mt-1 text-[11px] text-muted-foreground">تظهر لكل مستخدم الخطوة المسندة إليه حسب خريطة الشركة.</p>
             </div>
             <Badge variant="secondary">{approvals.data?.length ?? 0}</Badge>
           </div>
@@ -225,7 +213,7 @@ export function AccountingDocumentWorkQueue() {
           ) : approvals.data?.length ? (
             <div className="space-y-3">
               {approvals.data.map((item) => {
-                const isCreator = Boolean(currentUser.data && currentUser.data === item.created_by);
+                const canAct = item.can_current_user_act;
                 const isPending = transition.isPending && transition.variables?.item.id === item.id;
                 return (
                   <div key={item.id} className="rounded-xl border bg-card p-4">
@@ -233,7 +221,7 @@ export function AccountingDocumentWorkQueue() {
                     <div className="mt-4 flex flex-wrap items-center gap-2 border-t pt-3">
                       <Button
                         size="sm"
-                        disabled={isCreator || isPending || currentUser.isLoading}
+                        disabled={!canAct || isPending}
                         onClick={() => transition.mutate({ item, action: "approved" })}
                       >
                         {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
@@ -243,10 +231,15 @@ export function AccountingDocumentWorkQueue() {
                         <XCircle className="h-4 w-4" />
                         رفض
                       </Button>
-                      {isCreator && (
-                        <span className="inline-flex items-center gap-1 text-[11px] text-warning">
-                          <LockKeyhole className="h-3.5 w-3.5" />يلزم مستخدم مالي آخر
+                      {!canAct && (
+                        <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                          هذه الخطوة مسندة لمستخدم أو دور آخر
                         </span>
+                      )}
+                      {item.current_step_name && (
+                        <Badge variant="secondary">
+                          {item.current_step_name} · {item.approvals_received}/{item.minimum_approvals}
+                        </Badge>
                       )}
                     </div>
                   </div>
