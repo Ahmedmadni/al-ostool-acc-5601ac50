@@ -25,16 +25,17 @@ for (const marker of [
   "postPurchaseInvoice",
   "ONEXA_SALES_POSTING_ENABLED",
   "ONEXA_PROCUREMENT_POSTING_ENABLED",
-  "currentUser.data === item.created_by",
-  "يلزم مستخدم مالي آخر",
+  "item.can_current_user_act",
+  "current_step_name",
   "صندوق الاعتماد والترحيل",
   "يتطلب تنفيذ وتفعيل Gate 36",
 ]) assert.ok(queue.includes(marker), `work queue contract missing: ${marker}`);
 
 for (const marker of [
   'export async function listApprovalInbox',
-  '.eq("status", "submitted")',
+  '.from("onexa_approval_task_inbox")',
   'created_by,submitted_by,submitted_at,revision',
+  'can_current_user_act',
   'export async function listAccountingInbox',
   '.from("onexa_accounting_inbox")',
 ]) assert.ok(service.includes(marker), `document service contract missing: ${marker}`);
