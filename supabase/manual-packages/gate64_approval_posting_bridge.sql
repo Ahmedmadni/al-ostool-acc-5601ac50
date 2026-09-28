@@ -205,6 +205,69 @@ for each row
 when (old.status = 'approved' and new.status = 'posted')
 execute function onexa_private.finalize_approval_posting();
 
+create or replace function public.onexa_can_post_business_document(_document_id uuid)
+returns boolean
+language plpgsql
+stable
+security definer
+set search_path = pg_catalog, public
+as $function$
+declare
+  _tenant text := onexa_private.claim_tenant_id();
+  _actor uuid := auth.uid();
+  _document public.onexa_business_documents%rowtype;
+  _instance public.onexa_approval_instances%rowtype;
+  _step public.onexa_approval_workflow_steps%rowtype;
+begin
+  if _actor is null or nullif(_tenant, '') is null then return false; end if;
+
+  select * into _document
+  from public.onexa_business_documents document
+  where document.id = _document_id
+    and document.tenant_id = _tenant
+    and document.status = 'approved'
+    and document.posted_journal_id is null;
+  if not found then return false; end if;
+
+  if not onexa_private.has_module_action(_actor, _document.module_key, 'post') then
+    return false;
+  end if;
+
+  select * into _instance
+  from public.onexa_approval_instances instance
+  where instance.tenant_id = _tenant
+    and instance.document_id = _document.id
+    and instance.status = 'awaiting_post'
+  order by instance.started_at desc
+  limit 1;
+
+  if found then
+    select * into _step
+    from public.onexa_approval_workflow_steps step
+    where step.id = _instance.current_step_id and step.tenant_id = _tenant;
+    return _step.action_key = 'post'
+      and onexa_private.approval_actor_matches_step(_step.id, _document.id, _actor)
+      and (
+        _actor <> _document.created_by
+        or not public.onexa_approval_separation_required(_document.document_type, 'post')
+      );
+  end if;
+
+  if exists (
+    select 1
+    from public.onexa_approval_workflows workflow
+    join public.onexa_approval_workflow_steps step
+      on step.workflow_id = workflow.id and step.tenant_id = workflow.tenant_id
+    where workflow.tenant_id = _tenant
+      and workflow.process_key = _document.document_type
+      and workflow.is_active and step.is_required and step.action_key = 'post'
+  ) then return false; end if;
+
+  return _actor <> _document.created_by
+    or not public.onexa_approval_separation_required(_document.document_type, 'post');
+end;
+$function$;
+
 -- Preserve the original inbox columns and append assignment-aware posting data.
 create or replace view public.onexa_accounting_inbox
 with (security_invoker = true)
@@ -230,33 +293,7 @@ select
   document.revision,
   instance.id as approval_instance_id,
   step.name_ar as posting_step_name,
-  case
-    when instance.id is not null then
-      onexa_private.has_module_action(auth.uid(), document.module_key, 'post')
-      and onexa_private.approval_actor_matches_step(step.id, document.id, auth.uid())
-      and (
-        auth.uid() <> document.created_by
-        or not public.onexa_approval_separation_required(document.document_type, 'post')
-      )
-    when exists (
-      select 1
-      from public.onexa_approval_workflows workflow
-      join public.onexa_approval_workflow_steps required_step
-        on required_step.workflow_id = workflow.id
-        and required_step.tenant_id = workflow.tenant_id
-      where workflow.tenant_id = document.tenant_id
-        and workflow.process_key = document.document_type
-        and workflow.is_active
-        and required_step.is_required
-        and required_step.action_key = 'post'
-    ) then false
-    else
-      onexa_private.has_module_action(auth.uid(), document.module_key, 'post')
-      and (
-        auth.uid() <> document.created_by
-        or not public.onexa_approval_separation_required(document.document_type, 'post')
-      )
-  end as can_current_user_post
+  public.onexa_can_post_business_document(document.id) as can_current_user_post
 from public.onexa_business_documents document
 left join lateral (
   select candidate.*
@@ -273,6 +310,8 @@ where document.status = 'approved' and document.posted_journal_id is null;
 
 revoke all on function onexa_private.guard_approval_posting() from public, anon, authenticated;
 revoke all on function onexa_private.finalize_approval_posting() from public, anon, authenticated;
+revoke all on function public.onexa_can_post_business_document(uuid) from public, anon;
+grant execute on function public.onexa_can_post_business_document(uuid) to authenticated;
 grant select on public.onexa_accounting_inbox to authenticated;
 
 commit;
