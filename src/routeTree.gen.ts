@@ -896,7 +896,6 @@ export interface FileRoutesByFullPath {
   '/real-estate/reports': typeof AuthenticatedRealEstateReportsRoute
   '/settings/approvals': typeof AuthenticatedSettingsApprovalsRoute
   '/settings/workflows': typeof AuthenticatedSettingsWorkflowsRoute
-  '/settings/workflows': typeof AuthenticatedSettingsWorkflowsRoute
   '/settings/permissions': typeof AuthenticatedSettingsPermissionsRoute
   '/settings/permissions-dashboard': typeof AuthenticatedSettingsPermissionsDashboardRoute
   '/settings/regional': typeof AuthenticatedSettingsRegionalRoute
@@ -1021,6 +1020,7 @@ export interface FileRoutesByTo {
   '/projects/reports': typeof AuthenticatedProjectsReportsRoute
   '/real-estate/reports': typeof AuthenticatedRealEstateReportsRoute
   '/settings/approvals': typeof AuthenticatedSettingsApprovalsRoute
+  '/settings/workflows': typeof AuthenticatedSettingsWorkflowsRoute
   '/settings/permissions': typeof AuthenticatedSettingsPermissionsRoute
   '/settings/permissions-dashboard': typeof AuthenticatedSettingsPermissionsDashboardRoute
   '/settings/regional': typeof AuthenticatedSettingsRegionalRoute
@@ -1275,7 +1275,6 @@ export interface FileRouteTypes {
     | '/real-estate/reports'
     | '/settings/approvals'
     | '/settings/workflows'
-    | '/settings/workflows'
     | '/settings/permissions'
     | '/settings/permissions-dashboard'
     | '/settings/regional'
@@ -1400,6 +1399,7 @@ export interface FileRouteTypes {
     | '/projects/reports'
     | '/real-estate/reports'
     | '/settings/approvals'
+    | '/settings/workflows'
     | '/settings/permissions'
     | '/settings/permissions-dashboard'
     | '/settings/regional'
