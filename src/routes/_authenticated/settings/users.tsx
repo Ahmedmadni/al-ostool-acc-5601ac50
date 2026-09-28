@@ -18,9 +18,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { usePermissions } from "@/hooks/use-permissions";
 import { toast } from "sonner";
 import { Pencil, Check, X, Plus, Trash2, Shield, Info, FileSpreadsheet } from "lucide-react";
-import { createUserByAdmin, deleteUserByAdmin } from "@/lib/admin-users.functions";
+import { deleteUserByAdmin } from "@/lib/admin-users.functions";
 import { createWorkspaceAccountantByOwner } from "@/lib/provisioning/workspace-accountant.functions";
-import { ONEXA_WORKSPACE_ACCOUNTANT_ACTIVATION_ENABLED } from "@/lib/runtime-flags";
 import { exportToExcel } from "@/lib/export";
 
 
@@ -75,7 +74,6 @@ function Page() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<NewUser>(emptyUser);
   const [saving, setSaving] = useState(false);
-  const createFn = useServerFn(createUserByAdmin);
   const createWorkspaceAccountantFn = useServerFn(createWorkspaceAccountantByOwner);
   const deleteFn = useServerFn(deleteUserByAdmin);
 
@@ -164,11 +162,7 @@ function Page() {
         employee_id: form.employee_id, phone: form.phone || null,
         department_id: form.department_id || null, job_title_id: form.job_title_id || null,
       };
-      if (ONEXA_WORKSPACE_ACCOUNTANT_ACTIVATION_ENABLED) {
-        await createWorkspaceAccountantFn({ data: userData });
-      } else {
-        await createFn({ data: { ...userData, role: "accountant" } });
-      }
+      await createWorkspaceAccountantFn({ data: userData });
       toast.success("تم إنشاء المستخدم");
       setOpen(false); setForm(emptyUser);
       qc.invalidateQueries({ queryKey: ["profiles-admin"] });

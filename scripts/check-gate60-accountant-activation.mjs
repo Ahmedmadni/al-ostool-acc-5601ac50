@@ -72,8 +72,10 @@ for (const marker of [
 }
 
 assert.ok(
-  users.includes("ONEXA_WORKSPACE_ACCOUNTANT_ACTIVATION_ENABLED"),
-  "users UI activation flag missing",
+  !users.includes("createUserByAdmin") &&
+    !users.includes("ONEXA_WORKSPACE_ACCOUNTANT_ACTIVATION_ENABLED") &&
+    users.includes("await createWorkspaceAccountantFn({ data: userData });"),
+  "users UI must always use tenant-safe accountant provisioning",
 );
 assert.ok(
   users.includes("createWorkspaceAccountantByOwner"),
