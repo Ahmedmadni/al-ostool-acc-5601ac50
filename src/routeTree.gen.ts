@@ -72,6 +72,7 @@ import { Route as AuthenticatedRealEstateReportsRouteImport } from './routes/_au
 import { Route as AuthenticatedReportsIndexRouteImport } from './routes/_authenticated/reports/index'
 import { Route as AuthenticatedScenariosIndexRouteImport } from './routes/_authenticated/scenarios/index'
 import { Route as AuthenticatedSettingsApprovalsRouteImport } from './routes/_authenticated/settings/approvals'
+import { Route as AuthenticatedSettingsWorkflowsRouteImport } from './routes/_authenticated/settings/workflows'
 import { Route as AuthenticatedSettingsPermissionsRouteImport } from './routes/_authenticated/settings/permissions'
 import { Route as AuthenticatedSettingsPermissionsDashboardRouteImport } from './routes/_authenticated/settings/permissions-dashboard'
 import { Route as AuthenticatedSettingsRegionalRouteImport } from './routes/_authenticated/settings/regional'
@@ -488,6 +489,12 @@ const AuthenticatedSettingsApprovalsRoute =
     path: '/settings/approvals',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedSettingsWorkflowsRoute =
+  AuthenticatedSettingsWorkflowsRouteImport.update({
+    id: '/settings/workflows',
+    path: '/settings/workflows',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedSettingsPermissionsRoute =
   AuthenticatedSettingsPermissionsRouteImport.update({
     id: '/settings/permissions',
@@ -888,6 +895,8 @@ export interface FileRoutesByFullPath {
   '/projects/reports': typeof AuthenticatedProjectsReportsRoute
   '/real-estate/reports': typeof AuthenticatedRealEstateReportsRoute
   '/settings/approvals': typeof AuthenticatedSettingsApprovalsRoute
+  '/settings/workflows': typeof AuthenticatedSettingsWorkflowsRoute
+  '/settings/workflows': typeof AuthenticatedSettingsWorkflowsRoute
   '/settings/permissions': typeof AuthenticatedSettingsPermissionsRoute
   '/settings/permissions-dashboard': typeof AuthenticatedSettingsPermissionsDashboardRoute
   '/settings/regional': typeof AuthenticatedSettingsRegionalRoute
@@ -1138,6 +1147,7 @@ export interface FileRoutesById {
   '/_authenticated/projects/reports': typeof AuthenticatedProjectsReportsRoute
   '/_authenticated/real-estate_/reports': typeof AuthenticatedRealEstateReportsRoute
   '/_authenticated/settings/approvals': typeof AuthenticatedSettingsApprovalsRoute
+  '/_authenticated/settings/workflows': typeof AuthenticatedSettingsWorkflowsRoute
   '/_authenticated/settings/permissions': typeof AuthenticatedSettingsPermissionsRoute
   '/_authenticated/settings/permissions-dashboard': typeof AuthenticatedSettingsPermissionsDashboardRoute
   '/_authenticated/settings/regional': typeof AuthenticatedSettingsRegionalRoute
@@ -1264,6 +1274,8 @@ export interface FileRouteTypes {
     | '/projects/reports'
     | '/real-estate/reports'
     | '/settings/approvals'
+    | '/settings/workflows'
+    | '/settings/workflows'
     | '/settings/permissions'
     | '/settings/permissions-dashboard'
     | '/settings/regional'
@@ -1513,6 +1525,7 @@ export interface FileRouteTypes {
     | '/_authenticated/projects/reports'
     | '/_authenticated/real-estate_/reports'
     | '/_authenticated/settings/approvals'
+    | '/_authenticated/settings/workflows'
     | '/_authenticated/settings/permissions'
     | '/_authenticated/settings/permissions-dashboard'
     | '/_authenticated/settings/regional'
@@ -2054,6 +2067,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsApprovalsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/settings/workflows': {
+      id: '/_authenticated/settings/workflows'
+      path: '/settings/workflows'
+      fullPath: '/settings/workflows'
+      preLoaderRoute: typeof AuthenticatedSettingsWorkflowsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/settings/permissions': {
       id: '/_authenticated/settings/permissions'
       path: '/settings/permissions'
@@ -2512,6 +2532,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedProjectsReportsRoute: typeof AuthenticatedProjectsReportsRoute
   AuthenticatedRealEstateReportsRoute: typeof AuthenticatedRealEstateReportsRoute
   AuthenticatedSettingsApprovalsRoute: typeof AuthenticatedSettingsApprovalsRoute
+  AuthenticatedSettingsWorkflowsRoute: typeof AuthenticatedSettingsWorkflowsRoute
   AuthenticatedSettingsPermissionsRoute: typeof AuthenticatedSettingsPermissionsRoute
   AuthenticatedSettingsPermissionsDashboardRoute: typeof AuthenticatedSettingsPermissionsDashboardRoute
   AuthenticatedSettingsRegionalRoute: typeof AuthenticatedSettingsRegionalRoute
@@ -2628,6 +2649,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedProjectsReportsRoute: AuthenticatedProjectsReportsRoute,
   AuthenticatedRealEstateReportsRoute: AuthenticatedRealEstateReportsRoute,
   AuthenticatedSettingsApprovalsRoute: AuthenticatedSettingsApprovalsRoute,
+  AuthenticatedSettingsWorkflowsRoute: AuthenticatedSettingsWorkflowsRoute,
   AuthenticatedSettingsPermissionsRoute: AuthenticatedSettingsPermissionsRoute,
   AuthenticatedSettingsPermissionsDashboardRoute:
     AuthenticatedSettingsPermissionsDashboardRoute,
