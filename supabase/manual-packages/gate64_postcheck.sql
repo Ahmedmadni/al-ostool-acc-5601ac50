@@ -9,6 +9,8 @@ from (values
     and exists (select 1 from pg_trigger where tgname = 'onexa_finalize_approval_posting' and not tgisinternal)
     then 'READY' else 'MISSING' end),
   ('assignment_aware_inbox', case when
+    to_regprocedure('public.onexa_can_post_business_document(uuid)') is not null
+    and
     exists (
       select 1 from information_schema.columns
       where table_schema = 'public' and table_name = 'onexa_accounting_inbox'
