@@ -77,6 +77,14 @@ export type ApprovalInboxItem = Pick<BusinessDocumentListItem,
   submitted_by: string;
   submitted_at: string;
   revision: number;
+  approval_instance_id: string | null;
+  current_step_order: number | null;
+  current_step_name: string | null;
+  current_action_key: "review" | "approve" | null;
+  assignee_kind: "user" | "role" | "department" | "manager" | null;
+  minimum_approvals: number;
+  approvals_received: number;
+  can_current_user_act: boolean;
 };
 
 export type AccountingInboxItem = Pick<BusinessDocumentListItem,
@@ -196,9 +204,8 @@ export async function listBusinessDocuments(module: OnexaModuleKey, limit = 100)
 export async function listApprovalInbox(limit = 100): Promise<ApprovalInboxItem[]> {
   const db = supabase as any;
   const { data, error } = await db
-    .from("onexa_business_documents")
-    .select("id,legal_entity_id,branch_id,module_key,document_type,document_number,document_date,accounting_date,currency,party_name_snapshot,gross_total,created_by,submitted_by,submitted_at,revision")
-    .eq("status", "submitted")
+    .from("onexa_approval_task_inbox")
+    .select("id,legal_entity_id,branch_id,module_key,document_type,document_number,document_date,accounting_date,currency,party_name_snapshot,gross_total,created_by,submitted_by,submitted_at,revision,approval_instance_id,current_step_order,current_step_name,current_action_key,assignee_kind,minimum_approvals,approvals_received,can_current_user_act")
     .order("submitted_at", { ascending: true })
     .limit(Math.min(Math.max(limit, 1), 500));
   if (error) throw new Error(error.message || "ONEXA_APPROVAL_INBOX_FAILED");
