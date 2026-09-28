@@ -15,6 +15,7 @@ for (const marker of [
   "ONEXA_APPROVAL_POST_INSTANCE_REQUIRED",
   "onexa_approval_separation_required",
   "approval_actor_matches_step",
+  "onexa_can_post_business_document",
   "can_current_user_post",
   "decision, reason",
   "'posted'",
