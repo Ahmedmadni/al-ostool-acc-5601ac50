@@ -23,10 +23,14 @@ import { postPurchaseInvoice } from "@/lib/procurement/purchase-posting-service"
 import { postOnexaReceipt } from "@/lib/sales/customer-receipt-service";
 import { postOnexaPayment } from "@/lib/procurement/supplier-payment-service";
 import { postOnexaBankTransfer } from "@/lib/finance/bank-transfer-service";
+import { postOnexaProjectCost } from "@/lib/projects/project-cost-service";
+import { postOnexaFleetTripCost } from "@/lib/fleet/fleet-trip-cost-service";
 import {
   ONEXA_BANK_TRANSFER_POSTING_ENABLED,
   ONEXA_CUSTOMER_RECEIPT_POSTING_ENABLED,
+  ONEXA_FLEET_TRIP_COST_POSTING_ENABLED,
   ONEXA_PROCUREMENT_POSTING_ENABLED,
+  ONEXA_PROJECT_COST_POSTING_ENABLED,
   ONEXA_SALES_POSTING_ENABLED,
   ONEXA_SUPPLIER_PAYMENT_POSTING_ENABLED,
 } from "@/lib/runtime-flags";
@@ -43,6 +47,8 @@ const TYPE_LABELS: Record<string, string> = {
   customer_receipt: "تحصيل عميل",
   supplier_payment: "دفعة مورد",
   bank_transfer: "تحويل بنكي",
+  project_cost: "تكلفة مشروع",
+  fleet_trip_cost: "تكلفة رحلة أسطول",
 };
 
 const currentPeriod = () => new Date().toISOString().slice(0, 7);
@@ -72,6 +78,16 @@ function describePostingAvailability(item: AccountingInboxItem) {
     return ONEXA_BANK_TRANSFER_POSTING_ENABLED
       ? { enabled: true, label: "جاهز لترحيل التحويل" }
       : { enabled: false, label: "يتطلب تنفيذ وتفعيل Gate 41" };
+  }
+  if (item.document_type === "project_cost") {
+    return ONEXA_PROJECT_COST_POSTING_ENABLED
+      ? { enabled: true, label: "جاهز لترحيل تكلفة المشروع" }
+      : { enabled: false, label: "يتطلب تنفيذ وتفعيل Gate 42" };
+  }
+  if (item.document_type === "fleet_trip_cost") {
+    return ONEXA_FLEET_TRIP_COST_POSTING_ENABLED
+      ? { enabled: true, label: "جاهز لترحيل تكلفة الرحلة" }
+      : { enabled: false, label: "يتطلب تنفيذ وتفعيل Gate 43" };
   }
   return { enabled: false, label: "نوع المستند غير مدعوم في صندوق الترحيل" };
 }
@@ -116,6 +132,8 @@ export function AccountingDocumentWorkQueue() {
       cache.invalidateQueries({ queryKey: ["onexa-payables"] }),
       cache.invalidateQueries({ queryKey: ["onexa-payments"] }),
       cache.invalidateQueries({ queryKey: ["onexa-bank-transfers"] }),
+      cache.invalidateQueries({ queryKey: ["onexa-project-costs"] }),
+      cache.invalidateQueries({ queryKey: ["onexa-fleet-trip-costs"] }),
     ]);
   };
 
@@ -151,6 +169,12 @@ export function AccountingDocumentWorkQueue() {
       if (item.document_type === "bank_transfer") {
         return postOnexaBankTransfer(item.id, periodCode);
       }
+      if (item.document_type === "project_cost") {
+        return postOnexaProjectCost(item.id, periodCode);
+      }
+      if (item.document_type === "fleet_trip_cost") {
+        return postOnexaFleetTripCost(item.id, periodCode);
+      }
       throw new Error("نوع المستند غير مدعوم في صندوق الترحيل");
     },
     onSuccess: async (journalId) => {
@@ -178,7 +202,7 @@ export function AccountingDocumentWorkQueue() {
             صندوق الاعتماد والترحيل
           </div>
           <p className="mt-1 text-xs leading-5 text-muted-foreground">
-            دورة موحّدة للفواتير وسندات القبض ومدفوعات الموردين والتحويلات البنكية: اعتماد مستقل ثم ترحيل محاسبي محكوم.
+            دورة موحّدة للفواتير والخزينة وتكاليف المشاريع والأسطول: اعتماد حسب خريطة الشركة ثم ترحيل محاسبي محكوم.
           </p>
         </div>
         <Button type="button" size="sm" variant="outline" disabled={busy} onClick={refreshQueues}>
@@ -283,6 +307,7 @@ export function AccountingDocumentWorkQueue() {
             <div className="space-y-3">
               {postings.data.map((item) => {
                 const availability = describePostingAvailability(item);
+                const canPost = item.can_current_user_post;
                 const isPending = post.isPending && post.variables?.id === item.id;
                 return (
                   <div key={item.id} className="rounded-xl border bg-card p-4">
@@ -290,15 +315,16 @@ export function AccountingDocumentWorkQueue() {
                     <div className="mt-4 flex flex-wrap items-center gap-2 border-t pt-3">
                       <Button
                         size="sm"
-                        disabled={!availability.enabled || isPending || !periodCode.trim()}
+                        disabled={!availability.enabled || !canPost || isPending || !periodCode.trim()}
                         onClick={() => post.mutate(item)}
                       >
                         {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                         ترحيل
                       </Button>
-                      <span className={`text-[11px] ${availability.enabled ? "text-success" : "text-muted-foreground"}`}>
-                        {availability.label}
+                      <span className={`text-[11px] ${availability.enabled && canPost ? "text-success" : "text-muted-foreground"}`}>
+                        {canPost ? availability.label : "خطوة الترحيل مسندة لمستخدم أو دور آخر"}
                       </span>
+                      {item.posting_step_name && <Badge variant="secondary">{item.posting_step_name}</Badge>}
                     </div>
                   </div>
                 );
