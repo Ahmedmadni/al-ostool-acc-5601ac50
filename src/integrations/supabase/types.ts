@@ -8223,6 +8223,7 @@ export type Database = {
       onexa_accounting_inbox: {
         Row: {
           accounting_date: string | null
+          approval_instance_id: string | null
           approved_at: string | null
           approved_by: string | null
           branch_id: string | null
@@ -8238,11 +8239,14 @@ export type Database = {
           party_id: string | null
           party_name_snapshot: string | null
           party_type: string | null
+          posting_step_name: string | null
+          can_current_user_post: boolean | null
           revision: number | null
           tenant_id: string | null
         }
         Insert: {
           accounting_date?: string | null
+          approval_instance_id?: string | null
           approved_at?: string | null
           approved_by?: string | null
           branch_id?: string | null
@@ -8258,11 +8262,14 @@ export type Database = {
           party_id?: string | null
           party_name_snapshot?: string | null
           party_type?: string | null
+          posting_step_name?: string | null
+          can_current_user_post?: boolean | null
           revision?: number | null
           tenant_id?: string | null
         }
         Update: {
           accounting_date?: string | null
+          approval_instance_id?: string | null
           approved_at?: string | null
           approved_by?: string | null
           branch_id?: string | null
@@ -8278,6 +8285,8 @@ export type Database = {
           party_id?: string | null
           party_name_snapshot?: string | null
           party_type?: string | null
+          posting_step_name?: string | null
+          can_current_user_post?: boolean | null
           revision?: number | null
           tenant_id?: string | null
         }
