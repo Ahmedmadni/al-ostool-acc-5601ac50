@@ -19,7 +19,8 @@ create table if not exists public.onexa_approval_instances (
   document_id uuid not null references public.onexa_business_documents(id) on delete cascade,
   workflow_id uuid not null references public.onexa_approval_workflows(id) on delete restrict,
   workflow_version integer not null check (workflow_version > 0),
-  current_step_id uuid references public.onexa_approval_workflow_steps(id) on delete restrict,
+  workflow_snapshot jsonb not null check (jsonb_typeof(workflow_snapshot) = 'object'),
+  current_step_id uuid references public.onexa_approval_workflow_steps(id) on delete set null,
   current_step_order integer,
   status text not null default 'active' check (status in (
     'active','awaiting_post','completed','rejected','cancelled'
@@ -27,8 +28,7 @@ create table if not exists public.onexa_approval_instances (
   started_by uuid not null,
   started_at timestamptz not null default now(),
   completed_at timestamptz,
-  updated_at timestamptz not null default now(),
-  unique (tenant_id, document_id)
+  updated_at timestamptz not null default now()
 );
 
 create table if not exists public.onexa_approval_decisions (
@@ -36,8 +36,9 @@ create table if not exists public.onexa_approval_decisions (
   tenant_id text not null,
   instance_id uuid not null references public.onexa_approval_instances(id) on delete cascade,
   document_id uuid not null references public.onexa_business_documents(id) on delete cascade,
-  step_id uuid not null references public.onexa_approval_workflow_steps(id) on delete restrict,
+  step_id uuid references public.onexa_approval_workflow_steps(id) on delete set null,
   step_order integer not null,
+  step_snapshot jsonb not null check (jsonb_typeof(step_snapshot) = 'object'),
   actor_user_id uuid not null,
   decision text not null check (decision in ('approved','rejected','posted')),
   reason text,
@@ -47,11 +48,34 @@ create table if not exists public.onexa_approval_decisions (
 
 create index if not exists onexa_approval_instances_active_idx
   on public.onexa_approval_instances (tenant_id, status, current_step_order, updated_at);
+create unique index if not exists onexa_approval_instances_one_active_document_idx
+  on public.onexa_approval_instances (tenant_id,document_id)
+  where status in ('active','awaiting_post');
 create index if not exists onexa_approval_decisions_step_idx
   on public.onexa_approval_decisions (tenant_id, instance_id, step_id, decision);
 
 alter table public.onexa_approval_instances enable row level security;
 alter table public.onexa_approval_decisions enable row level security;
+
+create or replace function onexa_private.guard_active_approval_step_delete()
+returns trigger
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $function$
+begin
+  if exists (
+    select 1 from public.onexa_approval_instances instance
+    where instance.current_step_id=old.id
+      and instance.status in ('active','awaiting_post')
+  ) then raise exception 'ONEXA_ACTIVE_APPROVAL_WORKFLOW_CANNOT_BE_RECONFIGURED'; end if;
+  return old;
+end;
+$function$;
+drop trigger if exists onexa_guard_active_approval_step_delete on public.onexa_approval_workflow_steps;
+create trigger onexa_guard_active_approval_step_delete before delete
+on public.onexa_approval_workflow_steps for each row
+execute function onexa_private.guard_active_approval_step_delete();
 
 drop policy if exists onexa_approval_instances_read on public.onexa_approval_instances;
 create policy onexa_approval_instances_read on public.onexa_approval_instances
@@ -194,19 +218,18 @@ begin
         order by step.step_order limit 1;
       if not found then raise exception 'ONEXA_APPROVAL_ACTION_STEP_REQUIRED'; end if;
       insert into public.onexa_approval_instances (
-        tenant_id,document_id,workflow_id,workflow_version,current_step_id,
+        tenant_id,document_id,workflow_id,workflow_version,workflow_snapshot,current_step_id,
         current_step_order,status,started_by
       ) values (
-        _tenant,_document_id,_workflow.id,_workflow.version,_step.id,
+        _tenant,_document_id,_workflow.id,_workflow.version,
+        to_jsonb(_workflow) || jsonb_build_object('steps',(
+          select jsonb_agg(to_jsonb(snapshot_step) order by snapshot_step.step_order)
+          from public.onexa_approval_workflow_steps snapshot_step
+          where snapshot_step.workflow_id=_workflow.id and snapshot_step.tenant_id=_tenant
+        )),_step.id,
         _step.step_order,case when _step.action_key='post' then 'awaiting_post' else 'active' end,_actor
-      ) on conflict (tenant_id,document_id) do update set
-        workflow_id=excluded.workflow_id,workflow_version=excluded.workflow_version,
-        current_step_id=excluded.current_step_id,current_step_order=excluded.current_step_order,
-        status=excluded.status,started_by=excluded.started_by,started_at=now(),
-        completed_at=null,updated_at=now()
+      )
       returning id into _instance.id;
-      delete from public.onexa_approval_decisions
-        where instance_id=_instance.id and tenant_id=_tenant;
       if _step.action_key = 'post' then
         perform onexa_private.set_business_document_status(_document_id,'approved',_actor,'workflow_ready_for_post');
       end if;
@@ -235,9 +258,10 @@ begin
       raise exception 'ONEXA_TRANSITION_REASON_REQUIRED';
     end if;
     insert into public.onexa_approval_decisions (
-      tenant_id,instance_id,document_id,step_id,step_order,actor_user_id,decision,reason
+      tenant_id,instance_id,document_id,step_id,step_order,step_snapshot,
+      actor_user_id,decision,reason
     ) values (
-      _tenant,_instance.id,_document_id,_step.id,_step.step_order,_actor,
+      _tenant,_instance.id,_document_id,_step.id,_step.step_order,to_jsonb(_step),_actor,
       case when _to_status='approved' then 'approved' else 'rejected' end,nullif(btrim(_reason),'')
     ) on conflict do nothing;
     if _to_status = 'rejected' then
@@ -323,6 +347,7 @@ revoke all on public.onexa_approval_instances,public.onexa_approval_decisions fr
 grant select on public.onexa_approval_instances,public.onexa_approval_decisions to authenticated;
 grant select on public.onexa_approval_task_inbox to authenticated;
 revoke all on function onexa_private.approval_actor_matches_step(uuid,uuid,uuid) from public,anon,authenticated;
+revoke all on function onexa_private.guard_active_approval_step_delete() from public,anon,authenticated;
 revoke all on function onexa_private.set_business_document_status(uuid,text,uuid,text) from public,anon,authenticated;
 revoke all on function public.onexa_can_act_on_approval_step(uuid) from public,anon;
 grant execute on function public.onexa_can_act_on_approval_step(uuid) to authenticated;
