@@ -96,6 +96,9 @@ export type AccountingInboxItem = Pick<BusinessDocumentListItem,
   approved_by: string;
   approved_at: string;
   revision: number;
+  approval_instance_id: string | null;
+  posting_step_name: string | null;
+  can_current_user_post: boolean;
 };
 
 const roundMoney = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100;
@@ -217,7 +220,7 @@ export async function listAccountingInbox(limit = 100): Promise<AccountingInboxI
   const db = supabase as any;
   const { data, error } = await db
     .from("onexa_accounting_inbox")
-    .select("id,legal_entity_id,branch_id,module_key,document_type,document_number,document_date,accounting_date,currency,party_name_snapshot,gross_total,approved_by,approved_at,revision")
+    .select("id,legal_entity_id,branch_id,module_key,document_type,document_number,document_date,accounting_date,currency,party_name_snapshot,gross_total,approved_by,approved_at,revision,approval_instance_id,posting_step_name,can_current_user_post")
     .order("approved_at", { ascending: true })
     .limit(Math.min(Math.max(limit, 1), 500));
   if (error) throw new Error(error.message || "ONEXA_ACCOUNTING_INBOX_FAILED");
