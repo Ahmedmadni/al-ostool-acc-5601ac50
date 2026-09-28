@@ -8,6 +8,8 @@ for (const marker of [
   "onexa_approval_instances","onexa_approval_decisions","approval_actor_matches_step",
   "onexa_approval_task_inbox","minimum_approvals","can_current_user_act",
   "onexa_transition_business_document","ONEXA_APPROVAL_STEP_NOT_ASSIGNED_TO_ACTOR",
+  "workflow_snapshot","step_snapshot","onexa_approval_instances_one_active_document_idx",
+  "ONEXA_ACTIVE_APPROVAL_WORKFLOW_CANNOT_BE_RECONFIGURED",
 ]) assert.ok(sql.includes(marker),`runtime contract missing: ${marker}`);
 assert.ok(service.includes('.from("onexa_approval_task_inbox")'));
 assert.ok(service.includes("can_current_user_act"));
