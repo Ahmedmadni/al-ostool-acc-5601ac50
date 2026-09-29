@@ -319,6 +319,11 @@ revoke all on public.onexa_inventory_posting_runs from anon,authenticated;
 grant select on public.onexa_inventory_posting_runs to authenticated;
 grant select on public.onexa_inventory_document_reconciliation,
   public.onexa_inventory_posting_configuration_gaps to authenticated;
+-- Close the legacy bypass once Gate 65 is deliberately rolled out. Masters
+-- remain manageable; only transactional stock mutation moves behind the RPC.
+revoke insert,update,delete on public.inventory_receipts,
+  public.inventory_receipt_lines,public.inventory_issues,
+  public.inventory_issue_lines,public.inventory_stock_layers from anon,authenticated;
 revoke all on function public.onexa_post_inventory_document(uuid,text) from public,anon;
 grant execute on function public.onexa_post_inventory_document(uuid,text) to authenticated;
 
