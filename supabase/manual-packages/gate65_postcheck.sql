@@ -12,6 +12,14 @@ select c.relname,c.relrowsecurity as rls_enabled,
   not has_table_privilege('authenticated',c.oid,'INSERT,UPDATE,DELETE') as direct_writes_denied
 from pg_class c where c.oid='public.onexa_inventory_posting_runs'::regclass;
 
+select c.relname,
+  not has_table_privilege('authenticated',c.oid,'INSERT,UPDATE,DELETE') as legacy_direct_writes_denied
+from pg_class c where c.oid in (
+  'public.inventory_receipts'::regclass,'public.inventory_receipt_lines'::regclass,
+  'public.inventory_issues'::regclass,'public.inventory_issue_lines'::regclass,
+  'public.inventory_stock_layers'::regclass
+) order by c.relname;
+
 select coalesce(c.reloptions @> array['security_invoker=true'],false) as reconciliation_security_invoker
 from pg_class c where c.oid='public.onexa_inventory_document_reconciliation'::regclass;
 
