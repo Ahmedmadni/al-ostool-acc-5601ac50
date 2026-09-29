@@ -39,7 +39,9 @@ export async function listOnexaInventoryDocuments(kind: InventoryDocumentKind): 
   return (await listBusinessDocuments("inventory", 200)).filter((document) => document.document_type === type);
 }
 
-export async function createOnexaInventoryDocument(input: CreateInventoryDocumentInput): Promise<string> {
+export async function createOnexaInventoryDocument(
+  input: CreateInventoryDocumentInput,
+): Promise<{ id: string; status: "submitted" | "draft" }> {
   if (!ONEXA_INVENTORY_POSTING_ENABLED) throw new Error("ONEXA_INVENTORY_POSTING_DISABLED");
   if (!input.legalEntityId || !input.branchId || !/^\d{4}-\d{2}-\d{2}$/.test(input.date)) {
     throw new Error("ONEXA_INVENTORY_SCOPE_REQUIRED");
@@ -92,8 +94,12 @@ export async function createOnexaInventoryDocument(input: CreateInventoryDocumen
         : {},
     })),
   });
-  await transitionBusinessDocument(documentId, "submitted");
-  return documentId;
+  try {
+    await transitionBusinessDocument(documentId, "submitted");
+    return { id: documentId, status: "submitted" };
+  } catch {
+    return { id: documentId, status: "draft" };
+  }
 }
 
 export async function postOnexaInventoryDocument(documentId: string, periodCode: string): Promise<string> {
