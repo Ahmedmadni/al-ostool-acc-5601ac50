@@ -94,8 +94,9 @@ export function OnexaInventoryDocumentPanel({ kind }: Props) {
         lines:normalized.map((line)=>({itemId:line.item.id,itemLabel:`${line.item.name_ar} (${line.item.sku})`,
           warehouseId,quantity:line.quantity,unitCost:line.unitCost,unitOfMeasure:line.item.unit,costCenter}))});
     },
-    onSuccess:async()=>{
-      toast.success(`تم إنشاء سند ${receipt?"الاستلام":"الصرف"} وإرساله حسب خريطة الاعتماد`);
+    onSuccess:async(result)=>{
+      if(result.status==="submitted") toast.success(`تم إنشاء سند ${receipt?"الاستلام":"الصرف"} وإرساله حسب خريطة الاعتماد`);
+      else toast.warning(`تم حفظ سند ${receipt?"الاستلام":"الصرف"} كمسودة؛ أكمل إعداد خريطة الاعتماد ثم أرسله`);
       setOpen(false);reset();
       await Promise.all([
         cache.invalidateQueries({queryKey:["onexa-inventory-documents",kind]}),
