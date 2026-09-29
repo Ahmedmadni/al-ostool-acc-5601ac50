@@ -27,6 +27,7 @@ for (const pattern of [
   /with \(security_invoker = true\)/,
   /enable row level security/,
   /revoke all on public\.onexa_inventory_posting_runs from anon,authenticated/,
+  /revoke insert,update,delete on public\.inventory_receipts/,
 ]) assert.match(sql, pattern);
 
 assert.match(mapping, /'2120'/);
