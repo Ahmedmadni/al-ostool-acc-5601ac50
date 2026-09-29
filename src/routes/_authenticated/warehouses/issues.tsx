@@ -15,6 +15,8 @@ import { ArrowRight, Plus, Trash2, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
 import { fmtSAR } from "@/lib/format";
 import { exportToExcel } from "@/lib/export";
+import { OnexaInventoryDocumentPanel } from "@/components/inventory/onexa-inventory-document-panel";
+import { ONEXA_INVENTORY_POSTING_ENABLED } from "@/lib/runtime-flags";
 
 export const Route = createFileRoute("/_authenticated/warehouses/issues")({ component: IssuesPage });
 
@@ -99,10 +101,12 @@ function IssuesPage() {
 
   return (
     <div className="p-6 space-y-6" dir="rtl">
+      {ONEXA_INVENTORY_POSTING_ENABLED && <OnexaInventoryDocumentPanel kind="issue" />}
       <PageHeader title="سندات الصرف" description="إخراج مخزون بمنطق وارد أولاً صادر أولاً (FIFO)" actions={
         <div className="flex flex-wrap gap-2 no-print">
           <Link to="/warehouses"><Button variant="outline" className="gap-1"><ArrowRight className="w-4 h-4" />رجوع</Button></Link>
           <Button variant="outline" onClick={() => exportToExcel(exportRows, "inventory_issues")} className="gap-1"><FileSpreadsheet className="w-4 h-4" /> Excel</Button>
+          {!ONEXA_INVENTORY_POSTING_ENABLED && (
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild><Button><Plus className="w-4 h-4 ml-2" />سند صرف جديد</Button></DialogTrigger>
             <DialogContent dir="rtl" className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -171,8 +175,10 @@ function IssuesPage() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+          )}
         </div>
       } />
+      {!ONEXA_INVENTORY_POSTING_ENABLED && (
       <Card className="p-0 overflow-x-auto">
         <Table>
           <TableHeader><TableRow>
@@ -197,6 +203,7 @@ function IssuesPage() {
           </TableBody>
         </Table>
       </Card>
+      )}
     </div>
   );
 }

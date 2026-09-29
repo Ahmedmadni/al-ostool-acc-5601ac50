@@ -25,10 +25,12 @@ import { postOnexaPayment } from "@/lib/procurement/supplier-payment-service";
 import { postOnexaBankTransfer } from "@/lib/finance/bank-transfer-service";
 import { postOnexaProjectCost } from "@/lib/projects/project-cost-service";
 import { postOnexaFleetTripCost } from "@/lib/fleet/fleet-trip-cost-service";
+import { postOnexaInventoryDocument } from "@/lib/inventory/inventory-posting-service";
 import {
   ONEXA_BANK_TRANSFER_POSTING_ENABLED,
   ONEXA_CUSTOMER_RECEIPT_POSTING_ENABLED,
   ONEXA_FLEET_TRIP_COST_POSTING_ENABLED,
+  ONEXA_INVENTORY_POSTING_ENABLED,
   ONEXA_PROCUREMENT_POSTING_ENABLED,
   ONEXA_PROJECT_COST_POSTING_ENABLED,
   ONEXA_SALES_POSTING_ENABLED,
@@ -49,6 +51,8 @@ const TYPE_LABELS: Record<string, string> = {
   bank_transfer: "تحويل بنكي",
   project_cost: "تكلفة مشروع",
   fleet_trip_cost: "تكلفة رحلة أسطول",
+  inventory_receipt: "استلام مخزون",
+  inventory_issue: "صرف مخزون",
 };
 
 const currentPeriod = () => new Date().toISOString().slice(0, 7);
@@ -88,6 +92,11 @@ function describePostingAvailability(item: AccountingInboxItem) {
     return ONEXA_FLEET_TRIP_COST_POSTING_ENABLED
       ? { enabled: true, label: "جاهز لترحيل تكلفة الرحلة" }
       : { enabled: false, label: "يتطلب تنفيذ وتفعيل Gate 43" };
+  }
+  if (item.document_type === "inventory_receipt" || item.document_type === "inventory_issue") {
+    return ONEXA_INVENTORY_POSTING_ENABLED
+      ? { enabled: true, label: "جاهز لترحيل حركة المخزون" }
+      : { enabled: false, label: "يتطلب تنفيذ وتفعيل Gate 65" };
   }
   return { enabled: false, label: "نوع المستند غير مدعوم في صندوق الترحيل" };
 }
@@ -134,6 +143,8 @@ export function AccountingDocumentWorkQueue() {
       cache.invalidateQueries({ queryKey: ["onexa-bank-transfers"] }),
       cache.invalidateQueries({ queryKey: ["onexa-project-costs"] }),
       cache.invalidateQueries({ queryKey: ["onexa-fleet-trip-costs"] }),
+      cache.invalidateQueries({ queryKey: ["onexa-inventory-documents"] }),
+      cache.invalidateQueries({ queryKey: ["onexa-inventory-valuation"] }),
     ]);
   };
 
@@ -175,6 +186,9 @@ export function AccountingDocumentWorkQueue() {
       if (item.document_type === "fleet_trip_cost") {
         return postOnexaFleetTripCost(item.id, periodCode);
       }
+      if (item.document_type === "inventory_receipt" || item.document_type === "inventory_issue") {
+        return postOnexaInventoryDocument(item.id, periodCode);
+      }
       throw new Error("نوع المستند غير مدعوم في صندوق الترحيل");
     },
     onSuccess: async (journalId) => {
@@ -202,7 +216,7 @@ export function AccountingDocumentWorkQueue() {
             صندوق الاعتماد والترحيل
           </div>
           <p className="mt-1 text-xs leading-5 text-muted-foreground">
-            دورة موحّدة للفواتير والخزينة وتكاليف المشاريع والأسطول: اعتماد حسب خريطة الشركة ثم ترحيل محاسبي محكوم.
+            دورة موحّدة للفواتير والخزينة والمخزون وتكاليف المشاريع والأسطول: اعتماد حسب خريطة الشركة ثم ترحيل محاسبي محكوم.
           </p>
         </div>
         <Button type="button" size="sm" variant="outline" disabled={busy} onClick={refreshQueues}>
