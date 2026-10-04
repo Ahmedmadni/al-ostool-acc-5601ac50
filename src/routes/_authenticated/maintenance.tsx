@@ -16,6 +16,7 @@ import { ModuleAccessGuard } from "@/components/group/module-access-guard";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { OnexaMaintenanceCostsPanel } from "@/components/maintenance/onexa-maintenance-costs-panel";
 
 export const Route = createFileRoute("/_authenticated/maintenance")({
   component: MaintenanceModuleLanding,
@@ -134,6 +135,8 @@ function MaintenanceModuleLanding() {
             </div>
           </div>
         </div>
+
+        <OnexaMaintenanceCostsPanel />
 
         {error && (
           <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm leading-6 text-amber-800 dark:text-amber-200">
