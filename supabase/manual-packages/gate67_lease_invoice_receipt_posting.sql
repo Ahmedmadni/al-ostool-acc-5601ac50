@@ -275,7 +275,8 @@ begin
     or _document.source_snapshot->>'property_id' is distinct from _scope.property_id::text
     or _document.dimensions->>'property' is distinct from _scope.property_id::text
     or _document.dimensions->>'customer' is distinct from _lease.customer_id::text
-    or abs(_document.subtotal-_schedule.amount)>0.01 or _document.due_date is distinct from _schedule.due_date then
+    or abs(_document.subtotal-_schedule.amount)>0.01
+    or _document.due_date is distinct from greatest(_schedule.due_date,_document.document_date) then
     raise exception 'ONEXA_LEASE_SCHEDULE_DOCUMENT_MISMATCH'; end if;
   if exists (select 1 from public.onexa_lease_invoice_postings where schedule_id=_schedule.id) then raise exception 'ONEXA_LEASE_SCHEDULE_ALREADY_POSTED'; end if;
   _reference:=nullif(btrim(_document.external_reference),'');
