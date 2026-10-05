@@ -160,7 +160,7 @@ export async function createOnexaLeaseInvoice(input: {
     documentType: "lease_invoice",
     documentDate: input.documentDate,
     accountingDate: input.documentDate,
-    dueDate: input.candidate.due_date,
+    dueDate: input.candidate.due_date < input.documentDate ? input.documentDate : input.candidate.due_date,
     currency: "SAR",
     party: { type: "customer", id: input.candidate.customer_id, nameSnapshot: input.candidate.customer_name },
     externalReference: input.externalReference.trim(),
@@ -216,7 +216,8 @@ export async function createOnexaLeaseReceipt(input: {
 }): Promise<{ id: string; status: "submitted" | "draft" }> {
   if (!ONEXA_LEASE_ACCOUNTING_ENABLED) throw new Error("ONEXA_LEASE_ACCOUNTING_DISABLED");
   const amount = money(input.amount);
-  if (!Number.isFinite(amount) || amount <= 0 || amount > Number(input.receivable.outstanding_amount))
+  if (!Number.isFinite(input.amount) || Math.abs(amount - input.amount) > 1e-7 ||
+      amount <= 0 || amount > Number(input.receivable.outstanding_amount))
     throw new Error("ONEXA_LEASE_RECEIPT_AMOUNT_INVALID");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date) || !input.externalReference.trim())
     throw new Error("ONEXA_LEASE_RECEIPT_DETAILS_REQUIRED");
