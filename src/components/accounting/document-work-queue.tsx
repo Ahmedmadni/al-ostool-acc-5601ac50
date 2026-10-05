@@ -27,12 +27,14 @@ import { postOnexaProjectCost } from "@/lib/projects/project-cost-service";
 import { postOnexaFleetTripCost } from "@/lib/fleet/fleet-trip-cost-service";
 import { postOnexaInventoryDocument } from "@/lib/inventory/inventory-posting-service";
 import { postOnexaMaintenanceCost } from "@/lib/maintenance/maintenance-cost-service";
+import { postOnexaLeaseInvoice, postOnexaLeaseReceipt } from "@/lib/real-estate/lease-accounting-service";
 import {
   ONEXA_BANK_TRANSFER_POSTING_ENABLED,
   ONEXA_CUSTOMER_RECEIPT_POSTING_ENABLED,
   ONEXA_FLEET_TRIP_COST_POSTING_ENABLED,
   ONEXA_INVENTORY_POSTING_ENABLED,
   ONEXA_MAINTENANCE_COST_POSTING_ENABLED,
+  ONEXA_LEASE_ACCOUNTING_ENABLED,
   ONEXA_PROCUREMENT_POSTING_ENABLED,
   ONEXA_PROJECT_COST_POSTING_ENABLED,
   ONEXA_SALES_POSTING_ENABLED,
@@ -56,6 +58,8 @@ const TYPE_LABELS: Record<string, string> = {
   inventory_receipt: "استلام مخزون",
   inventory_issue: "صرف مخزون",
   maintenance_work_order_cost: "تكلفة أمر صيانة وتشغيل",
+  lease_invoice: "فاتورة إيجار",
+  lease_receipt: "تحصيل إيجار",
 };
 
 const currentPeriod = () => new Date().toISOString().slice(0, 7);
@@ -106,6 +110,11 @@ function describePostingAvailability(item: AccountingInboxItem) {
       ? { enabled: true, label: "جاهز لترحيل تكلفة أمر العمل" }
       : { enabled: false, label: "يتطلب تنفيذ وتفعيل Gate 66" };
   }
+  if (item.document_type === "lease_invoice" || item.document_type === "lease_receipt") {
+    return ONEXA_LEASE_ACCOUNTING_ENABLED
+      ? { enabled: true, label: "جاهز لترحيل الإيجار" }
+      : { enabled: false, label: "يتطلب تنفيذ وتفعيل Gate 67" };
+  }
   return { enabled: false, label: "نوع المستند غير مدعوم في صندوق الترحيل" };
 }
 
@@ -155,6 +164,9 @@ export function AccountingDocumentWorkQueue() {
       cache.invalidateQueries({ queryKey: ["onexa-inventory-valuation"] }),
       cache.invalidateQueries({ queryKey: ["onexa-maintenance-costs"] }),
       cache.invalidateQueries({ queryKey: ["onexa-maintenance-work-order-scopes"] }),
+      cache.invalidateQueries({ queryKey: ["onexa-lease-documents"] }),
+      cache.invalidateQueries({ queryKey: ["onexa-lease-billing-candidates"] }),
+      cache.invalidateQueries({ queryKey: ["onexa-lease-receivables"] }),
     ]);
   };
 
@@ -202,6 +214,8 @@ export function AccountingDocumentWorkQueue() {
       if (item.document_type === "maintenance_work_order_cost") {
         return postOnexaMaintenanceCost(item.id, periodCode);
       }
+      if (item.document_type === "lease_invoice") return postOnexaLeaseInvoice(item.id, periodCode);
+      if (item.document_type === "lease_receipt") return postOnexaLeaseReceipt(item.id, periodCode);
       throw new Error("نوع المستند غير مدعوم في صندوق الترحيل");
     },
     onSuccess: async (journalId) => {

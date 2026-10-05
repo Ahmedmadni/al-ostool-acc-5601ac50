@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { fmtSAR } from "@/lib/format";
+import { OnexaLeaseAccountingPanel } from "@/components/real-estate/onexa-lease-accounting-panel";
 
 export const Route = createFileRoute("/_authenticated/real-estate")({
   component: RealEstateModuleLanding,
@@ -229,6 +230,8 @@ function RealEstateModuleLanding() {
             </div>
           </CardContent>
         </Card>
+
+        <OnexaLeaseAccountingPanel />
       </div>
     </ModuleAccessGuard>
   );
