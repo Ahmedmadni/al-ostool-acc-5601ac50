@@ -5,7 +5,7 @@ import {
   transitionBusinessDocument,
   type BusinessDocumentListItem,
 } from "@/lib/documents/business-document-service";
-import { ONEXA_LEASE_ACCOUNTING_ENABLED } from "@/lib/runtime-flags";
+import { ONEXA_LEASE_ACCOUNTING_ENABLED, ONEXA_LEASE_PROPERTY_REPORT_ENABLED } from "@/lib/runtime-flags";
 
 export type TenantLeaseOption = {
   id: string;
@@ -49,6 +49,41 @@ export type LeaseBillingCandidate = LeaseAccountingScope & {
   period_end: string;
   net_amount: number;
 };
+
+export type LeasePropertyFinancialRow = {
+  legal_entity_id: string;
+  legal_entity_code: string;
+  invoice_count: number;
+  invoiced_net: number;
+  invoiced_tax: number;
+  invoiced_gross: number;
+  collected_gross: number;
+  outstanding_as_of: number;
+};
+
+export async function getLeasePropertyFinancialReport(
+  propertyId: string, from: string, to: string,
+): Promise<LeasePropertyFinancialRow[]> {
+  if (!ONEXA_LEASE_PROPERTY_REPORT_ENABLED) throw new Error("ONEXA_LEASE_PROPERTY_REPORT_DISABLED");
+  if (!propertyId || !/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to) || from > to) {
+    throw new Error("ONEXA_LEASE_REPORT_INPUT_INVALID");
+  }
+  const { data, error } = await (supabase as any).rpc("onexa_lease_property_financial_report", {
+    _property_id: propertyId, _from: from, _to: to,
+  });
+  if (error) throw new Error(error.message);
+  if (!Array.isArray(data)) throw new Error("ONEXA_LEASE_REPORT_INVALID_RESPONSE");
+  return data.map((row: any) => ({
+    legal_entity_id: row.legal_entity_id,
+    legal_entity_code: row.legal_entity_code,
+    invoice_count: Number(row.invoice_count),
+    invoiced_net: Number(row.invoiced_net),
+    invoiced_tax: Number(row.invoiced_tax),
+    invoiced_gross: Number(row.invoiced_gross),
+    collected_gross: Number(row.collected_gross),
+    outstanding_as_of: Number(row.outstanding_as_of),
+  }));
+}
 
 export type LeaseReceivable = {
   invoice_id: string;
