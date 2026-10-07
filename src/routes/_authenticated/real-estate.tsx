@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { fmtSAR } from "@/lib/format";
 import { OnexaLeaseAccountingPanel } from "@/components/real-estate/onexa-lease-accounting-panel";
+import { ONEXA_LEASE_RECONCILIATION_ENABLED } from "@/lib/runtime-flags";
 
 export const Route = createFileRoute("/_authenticated/real-estate")({
   component: RealEstateModuleLanding,
@@ -77,6 +78,12 @@ const ownershipAr: Record<string, string> = {
   managed: "مدار للغير",
 };
 
+const scheduleStatusAr: Record<string, string> = {
+  pending: "مستحق",
+  invoiced: "مفوتر",
+  partially_paid: "مسدد جزئيًا",
+};
+
 const leaseStatusAr: Record<string, string> = {
   draft: "مسودة",
   approved: "معتمد",
@@ -100,8 +107,10 @@ async function loadRealEstateDashboard() {
     db.from("re_properties").select("id,property_code,name_ar,property_type,ownership_model,status").order("created_at", { ascending: false }).limit(8),
     db.from("re_tenant_leases").select("id,lease_no,monthly_rent,start_date,end_date,status").order("created_at", { ascending: false }).limit(10),
     db.from("re_master_leases").select("id,lease_no,monthly_rent,start_date,end_date,status").order("created_at", { ascending: false }).limit(8),
-    db.from("re_lease_schedules").select("id,due_date,amount,status").gte("due_date", new Date().toISOString().slice(0, 10)).order("due_date", { ascending: true }).limit(12),
-    db.rpc("re_portfolio_snapshot"),
+    ONEXA_LEASE_RECONCILIATION_ENABLED
+      ? db.rpc("onexa_lease_schedule_dashboard")
+      : db.from("re_lease_schedules").select("id,due_date,amount,status").gte("due_date", new Date().toISOString().slice(0, 10)).order("due_date", { ascending: true }).limit(12),
+    db.rpc(ONEXA_LEASE_RECONCILIATION_ENABLED ? "onexa_lease_portfolio_snapshot" : "re_portfolio_snapshot"),
   ]);
 
   const firstError = [properties, tenantLeases, masterLeases, schedules, snapshot].find((x) => x.error)?.error;
@@ -118,7 +127,7 @@ async function loadRealEstateDashboard() {
 
 function RealEstateModuleLanding() {
   const { data, isLoading, error } = useQuery({
-    queryKey: ["real-estate-facilities-dashboard"],
+    queryKey: ["real-estate-facilities-dashboard", ONEXA_LEASE_RECONCILIATION_ENABLED],
     queryFn: loadRealEstateDashboard,
     retry: false,
   });
@@ -202,7 +211,7 @@ function RealEstateModuleLanding() {
                 <div key={schedule.id} className="rounded-xl border border-border p-3">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-sm font-semibold">{fmtSAR(schedule.amount)}</span>
-                    <Badge variant="outline">{schedule.status === "pending" ? "مستحق" : schedule.status}</Badge>
+                    <Badge variant="outline">{scheduleStatusAr[schedule.status] ?? schedule.status}</Badge>
                   </div>
                   <div className="mt-2 text-xs text-muted-foreground">{formatDate(schedule.due_date)}</div>
                 </div>
