@@ -167,6 +167,8 @@ export function AccountingDocumentWorkQueue() {
       cache.invalidateQueries({ queryKey: ["onexa-lease-documents"] }),
       cache.invalidateQueries({ queryKey: ["onexa-lease-billing-candidates"] }),
       cache.invalidateQueries({ queryKey: ["onexa-lease-receivables"] }),
+      cache.invalidateQueries({ queryKey: ["real-estate-facilities-dashboard"] }),
+      cache.invalidateQueries({ queryKey: ["onexa-lease-property-report"] }),
     ]);
   };
 
