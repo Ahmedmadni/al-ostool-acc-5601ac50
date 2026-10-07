@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { fmtDate, fmtSAR } from "@/lib/format";
 import { ONEXA_LEASE_ACCOUNTING_ENABLED } from "@/lib/runtime-flags";
+import { OnexaLeasePropertyReport } from "@/components/real-estate/onexa-lease-property-report";
 import {
   createOnexaLeaseInvoice,
   createOnexaLeaseReceipt,
@@ -54,6 +55,8 @@ export function OnexaLeaseAccountingPanel() {
     cache.invalidateQueries({ queryKey: ["onexa-lease-documents"] }),
     cache.invalidateQueries({ queryKey: ["onexa-document-approval-inbox"] }),
     cache.invalidateQueries({ queryKey: ["onexa-accounting-posting-inbox"] }),
+    cache.invalidateQueries({ queryKey: ["real-estate-facilities-dashboard"] }),
+    cache.invalidateQueries({ queryKey: ["onexa-lease-property-report"] }),
   ]);
 
   const saveScope = useMutation({
@@ -136,6 +139,8 @@ export function OnexaLeaseAccountingPanel() {
             </div>
           </section>
         </div>
+
+        <OnexaLeasePropertyReport scopes={scopes.data ?? []} />
 
         <section className="space-y-2"><div className="font-semibold">آخر مستندات الإيجارات</div>{documents.data?.length ? <div className="grid gap-2 md:grid-cols-2">{documents.data.map((document) => <div key={document.id} className="flex items-center justify-between gap-3 rounded-xl border p-3 text-sm"><div><div className="font-semibold">{document.document_number}</div><div className="mt-1 text-xs text-muted-foreground">{document.document_type === "lease_invoice" ? "فاتورة إيجار" : "تحصيل إيجار"} · {fmtDate(document.document_date)} · {fmtSAR(document.gross_total)}</div></div><Badge variant={document.status === "posted" ? "default" : "secondary"}>{STATUS[document.status] ?? document.status}</Badge></div>)}</div> : <p className="rounded-xl border border-dashed py-6 text-center text-sm text-muted-foreground">لا توجد مستندات إيجار محاسبية بعد.</p>}</section>
       </CardContent>
