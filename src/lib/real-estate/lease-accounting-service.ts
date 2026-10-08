@@ -5,7 +5,7 @@ import {
   transitionBusinessDocument,
   type BusinessDocumentListItem,
 } from "@/lib/documents/business-document-service";
-import { ONEXA_LEASE_ACCOUNTING_ENABLED, ONEXA_LEASE_PROPERTY_REPORT_ENABLED } from "@/lib/runtime-flags";
+import { ONEXA_LEASE_ACCOUNTING_ENABLED, ONEXA_LEASE_PROPERTY_REPORT_ENABLED, ONEXA_LEASE_AGING_ENABLED } from "@/lib/runtime-flags";
 
 export type TenantLeaseOption = {
   id: string;
@@ -83,6 +83,65 @@ export async function getLeasePropertyFinancialReport(
     collected_gross: Number(row.collected_gross),
     outstanding_as_of: Number(row.outstanding_as_of),
   }));
+}
+
+export type LeaseAgingCustomer = {
+  customer_id: string;
+  legal_entity_id: string;
+  legal_entity_code: string;
+  customer_name: string;
+  invoice_count: number;
+  oldest_due_date: string;
+  outstanding: number;
+  current_amount: number;
+  overdue: number;
+};
+
+export type LeaseReceivablesAging = {
+  property_id: string;
+  as_of: string;
+  invoice_count: number;
+  customer_count: number;
+  outstanding: number;
+  current_amount: number;
+  days_1_30: number;
+  days_31_60: number;
+  days_61_90: number;
+  days_over_90: number;
+  top_customers: LeaseAgingCustomer[];
+};
+
+export async function getLeaseReceivablesAging(propertyId: string, asOf: string): Promise<LeaseReceivablesAging> {
+  if (!ONEXA_LEASE_AGING_ENABLED) throw new Error("ONEXA_LEASE_AGING_DISABLED");
+  if (!propertyId || !/^\d{4}-\d{2}-\d{2}$/.test(asOf)) throw new Error("ONEXA_LEASE_AGING_INPUT_INVALID");
+  const { data, error } = await (supabase as any).rpc("onexa_lease_receivables_aging", {
+    _property_id: propertyId, _as_of: asOf,
+  });
+  if (error) throw new Error(error.message);
+  if (!data || !Array.isArray(data.top_customers)) throw new Error("ONEXA_LEASE_AGING_INVALID_RESPONSE");
+  return {
+    property_id: data.property_id,
+    as_of: data.as_of,
+    invoice_count: Number(data.invoice_count),
+    customer_count: Number(data.customer_count),
+    outstanding: Number(data.outstanding),
+    current_amount: Number(data.current_amount),
+    days_1_30: Number(data.days_1_30),
+    days_31_60: Number(data.days_31_60),
+    days_61_90: Number(data.days_61_90),
+    days_over_90: Number(data.days_over_90),
+    top_customers: data.top_customers.map((row: any) => ({
+      customer_id: row.customer_id,
+      legal_entity_id: row.legal_entity_id,
+      legal_entity_code: row.legal_entity_code,
+      customer_name: row.customer_name,
+      invoice_count: Number(row.invoice_count),
+      oldest_due_date: row.oldest_due_date,
+      outstanding: Number(row.outstanding),
+      current_amount: Number(row.current_amount),
+      overdue: Number(row.overdue),
+    })),
+  };
 }
 
 export type LeaseReceivable = {

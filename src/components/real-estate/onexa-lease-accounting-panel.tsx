@@ -57,6 +57,7 @@ export function OnexaLeaseAccountingPanel() {
     cache.invalidateQueries({ queryKey: ["onexa-accounting-posting-inbox"] }),
     cache.invalidateQueries({ queryKey: ["real-estate-facilities-dashboard"] }),
     cache.invalidateQueries({ queryKey: ["onexa-lease-property-report"] }),
+    cache.invalidateQueries({ queryKey: ["onexa-lease-aging"] }),
   ]);
 
   const saveScope = useMutation({

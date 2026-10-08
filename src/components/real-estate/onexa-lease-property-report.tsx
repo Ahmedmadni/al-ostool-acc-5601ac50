@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { fmtSAR } from "@/lib/format";
 import { ONEXA_LEASE_PROPERTY_REPORT_ENABLED } from "@/lib/runtime-flags";
+import { OnexaLeaseAgingReport } from "@/components/real-estate/onexa-lease-aging-report";
 import {
   getLeasePropertyFinancialReport,
   type LeaseAccountingScope,
@@ -69,6 +70,7 @@ export function OnexaLeasePropertyReport({ scopes }: { scopes: LeaseAccountingSc
           </div>)}
         </div>
       </>}
+      <OnexaLeaseAgingReport propertyId={propertyId} asOf={to} />
     </section>
   );
 }
