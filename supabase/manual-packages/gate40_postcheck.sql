@@ -191,6 +191,7 @@ begin
         count(*) filter (
           where reconciliation_status in (
             'invoice_journal_mismatch',
+            'invoice_journal_reversed_or_missing',
             'overallocated'
           )
           or outstanding_amount < 0
@@ -211,6 +212,68 @@ begin
         'anomaly_count', _anomaly_count,
         'workflow_pending_count', _pending_count
       ),
+      case when _anomaly_count = 0 then 'READY' else 'REVIEW_REQUIRED' end
+    );
+  end if;
+
+  -- A stray allocation, a cross-entity/vendor allocation, or an allocation
+  -- without a journal-backed posted payment must never silently reduce AP.
+  if to_regclass('public.onexa_supplier_payment_allocations') is null
+    or to_regclass('public.onexa_supplier_payment_postings') is null then
+    insert into onexa_gate40_postcheck_results
+      (check_group, check_name, details, status)
+    values ('reconciliation', 'payment_allocation_source_integrity', '{}'::jsonb, 'MISSING');
+  else
+    execute $sql$
+      select count(*) filter (
+        where posted_payment.document_id is null
+           or payment_journal.id is null
+           or payment_document.id is null
+           or invoice.id is null
+           or (payment_journal.state = 'posted' and payment_journal.reversal_journal_id is not null)
+           or (payment_journal.state = 'reversed' and payment_journal.reversal_journal_id is null)
+           or (payment_journal.id is not null and payment_journal.state not in ('posted','reversed'))
+      ), count(*) filter (
+        where payment_journal.state = 'reversed'
+          and payment_journal.reversal_journal_id is not null
+          and posted_payment.document_id is not null
+          and payment_document.id is not null and invoice.id is not null
+      )
+      from public.onexa_supplier_payment_allocations allocation
+      left join public.onexa_supplier_payment_postings posted_payment
+        on posted_payment.document_id = allocation.payment_id
+        and posted_payment.tenant_id = allocation.tenant_id
+        and posted_payment.legal_entity_id = allocation.legal_entity_id
+        and posted_payment.vendor_id = allocation.vendor_id
+      left join public.onexa_journal_headers payment_journal
+        on payment_journal.id = posted_payment.journal_id
+        and payment_journal.tenant_id = posted_payment.tenant_id
+        and payment_journal.legal_entity_id = posted_payment.legal_entity_id
+      left join public.onexa_business_documents payment_document
+        on payment_document.id = posted_payment.document_id
+        and payment_document.tenant_id = posted_payment.tenant_id
+        and payment_document.legal_entity_id = posted_payment.legal_entity_id
+        and payment_document.party_type = 'vendor'
+        and payment_document.party_id = posted_payment.vendor_id
+        and payment_document.document_type = 'supplier_payment'
+        and payment_document.module_key = 'procurement'
+        and payment_document.status = 'posted'
+        and payment_document.posted_journal_id = posted_payment.journal_id
+      left join public.onexa_business_documents invoice
+        on invoice.id = allocation.invoice_id
+        and invoice.tenant_id = allocation.tenant_id
+        and invoice.legal_entity_id = allocation.legal_entity_id
+        and invoice.party_id = allocation.vendor_id
+        and invoice.document_type = 'purchase_invoice'
+        and invoice.status = 'posted'
+    $sql$ into _anomaly_count, _pending_count;
+
+    insert into onexa_gate40_postcheck_results
+      (check_group, check_name, details, status)
+    values (
+      'reconciliation', 'payment_allocation_source_integrity',
+      jsonb_build_object('invalid_allocation_count', _anomaly_count,
+        'reversed_allocation_count', _pending_count),
       case when _anomaly_count = 0 then 'READY' else 'REVIEW_REQUIRED' end
     );
   end if;

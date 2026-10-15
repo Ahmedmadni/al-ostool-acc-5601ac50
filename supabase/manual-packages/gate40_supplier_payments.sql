@@ -6,6 +6,7 @@ do $$
 begin
   if to_regprocedure('public.onexa_post_journal(uuid,text,text,integer,text,jsonb,date,text,text,text,jsonb)') is null
     or to_regclass('public.onexa_purchase_posting_runs') is null
+    or to_regclass('public.onexa_journal_headers') is null
     or to_regclass('public.onexa_business_documents') is null
     or to_regclass('public.onexa_business_document_lines') is null
     or to_regclass('public.onexa_business_document_events') is null
@@ -58,25 +59,61 @@ create policy onexa_supplier_payment_allocations_read on public.onexa_supplier_p
     and onexa_private.has_module_action(auth.uid(), 'procurement', 'read')
   );
 
+-- Liability reduction must have an immutable posted payment source and a
+-- matching B4 journal. A stray allocation or unposted payment cannot suppress AP.
+-- The lateral aggregate also avoids multiplying invoices by unrelated allocations.
 create or replace view public.onexa_supplier_payables_reconciliation
 with (security_invoker = true) as
 select invoice.id as invoice_id, invoice.tenant_id, invoice.legal_entity_id,
   invoice.branch_id, invoice.party_id as vendor_id, invoice.document_number,
   invoice.currency, invoice.due_date, invoice.gross_total as invoiced_amount,
-  coalesce(sum(allocation.amount), 0)::numeric(20,4) as paid_amount,
-  (invoice.gross_total - coalesce(sum(allocation.amount), 0))::numeric(20,4) as outstanding_amount,
+  coalesce(paid.paid_amount, 0)::numeric(20,4) as paid_amount,
+  (invoice.gross_total - coalesce(paid.paid_amount, 0))::numeric(20,4) as outstanding_amount,
   case when invoice.status <> 'posted' then 'invoice_not_posted'
        when invoice.posted_journal_id is distinct from purchase_run.journal_id then 'invoice_journal_mismatch'
-       when coalesce(sum(allocation.amount), 0) > invoice.gross_total + 0.01 then 'overallocated'
+       when invoice_journal.id is null then 'invoice_journal_reversed_or_missing'
+       when coalesce(paid.paid_amount, 0) > invoice.gross_total + 0.01 then 'overallocated'
        else 'reconciled' end as reconciliation_status
 from public.onexa_business_documents invoice
 left join public.onexa_purchase_posting_runs purchase_run
   on purchase_run.document_id = invoice.id
  and purchase_run.tenant_id = invoice.tenant_id
-left join public.onexa_supplier_payment_allocations allocation on allocation.invoice_id = invoice.id
-  and allocation.tenant_id = invoice.tenant_id
-where invoice.document_type = 'purchase_invoice'
-group by invoice.id, purchase_run.journal_id;
+left join public.onexa_journal_headers invoice_journal
+  on invoice_journal.id = invoice.posted_journal_id
+ and invoice_journal.tenant_id = invoice.tenant_id
+ and invoice_journal.legal_entity_id = invoice.legal_entity_id
+ and invoice_journal.state = 'posted'
+ and invoice_journal.reversal_journal_id is null
+left join lateral (
+  select coalesce(sum(allocation.amount), 0) as paid_amount
+  from public.onexa_supplier_payment_allocations allocation
+  join public.onexa_supplier_payment_postings posted_payment
+    on posted_payment.document_id = allocation.payment_id
+   and posted_payment.tenant_id = allocation.tenant_id
+   and posted_payment.legal_entity_id = allocation.legal_entity_id
+   and posted_payment.vendor_id = allocation.vendor_id
+  join public.onexa_journal_headers payment_journal
+    on payment_journal.id = posted_payment.journal_id
+   and payment_journal.tenant_id = posted_payment.tenant_id
+   and payment_journal.legal_entity_id = posted_payment.legal_entity_id
+   and payment_journal.state = 'posted'
+   and payment_journal.reversal_journal_id is null
+  join public.onexa_business_documents payment_document
+    on payment_document.id = posted_payment.document_id
+   and payment_document.tenant_id = posted_payment.tenant_id
+   and payment_document.legal_entity_id = posted_payment.legal_entity_id
+   and payment_document.party_type = 'vendor'
+   and payment_document.party_id = posted_payment.vendor_id
+   and payment_document.document_type = 'supplier_payment'
+   and payment_document.module_key = 'procurement'
+   and payment_document.status = 'posted'
+   and payment_document.posted_journal_id = posted_payment.journal_id
+  where allocation.invoice_id = invoice.id
+    and allocation.tenant_id = invoice.tenant_id
+    and allocation.legal_entity_id = invoice.legal_entity_id
+    and allocation.vendor_id = invoice.party_id
+) paid on true
+where invoice.document_type = 'purchase_invoice';
 
 create or replace view public.onexa_supplier_payment_configuration_gaps
 with (security_invoker = true) as
@@ -87,7 +124,13 @@ from public.onexa_legal_entities entity cross join roles
 left join public.onexa_account_role_mappings mapping
   on mapping.tenant_id = entity.tenant_id and mapping.legal_entity_id = entity.id
  and mapping.account_role = roles.account_role and mapping.is_active = true
-where entity.is_active = true and mapping.id is null;
+left join public.chart_of_accounts account
+  on account.tenant_id = mapping.tenant_id
+ and account.code = mapping.account_code
+ and account.is_active = true and account.account_type::text = 'detail'
+ and ((roles.account_role = 'accounts_payable' and account.category::text = 'liabilities')
+   or (roles.account_role = 'cash_or_bank' and account.category::text = 'assets'))
+where entity.is_active = true and (mapping.id is null or account.code is null);
 
 create or replace function public.onexa_post_supplier_payment(_document_id uuid, _period_code text)
 returns uuid language plpgsql security definer set search_path = pg_catalog, public as $$
@@ -124,6 +167,11 @@ begin
     if _journal is distinct from _payment.posted_journal_id then
       raise exception 'ONEXA_PAYMENT_RETRY_JOURNAL_MISMATCH';
     end if;
+    perform 1 from public.onexa_journal_headers
+      where id = _journal and tenant_id = _tenant
+        and legal_entity_id = _payment.legal_entity_id
+        and state = 'posted' and reversal_journal_id is null;
+    if not found then raise exception 'ONEXA_PAYMENT_POSTED_JOURNAL_REVERSED_OR_MISSING'; end if;
     return _journal;
   end if;
   if _payment.status <> 'approved' then raise exception 'ONEXA_DOCUMENT_MUST_BE_APPROVED'; end if;
@@ -182,9 +230,39 @@ begin
       where document_id = _invoice.id and tenant_id = _tenant
         and journal_id = _invoice.posted_journal_id;
     if not found then raise exception 'ONEXA_PAYMENT_INVOICE_LEDGER_MISSING'; end if;
-    select coalesce(sum(amount), 0) into _allocated
-      from public.onexa_supplier_payment_allocations
-      where tenant_id = _tenant and invoice_id = _invoice.id;
+    perform 1 from public.onexa_journal_headers
+      where id = _invoice.posted_journal_id and tenant_id = _tenant
+        and legal_entity_id = _invoice.legal_entity_id
+        and state = 'posted' and reversal_journal_id is null;
+    if not found then raise exception 'ONEXA_PAYMENT_INVOICE_JOURNAL_REVERSED_OR_MISSING'; end if;
+    -- A reversed payment journal must not consume the supplier invoice's
+    -- outstanding balance. Keep historic allocations for audit, but do not
+    -- prevent a new approved settlement after a legitimate reversal.
+    select coalesce(sum(allocation.amount), 0) into _allocated
+      from public.onexa_supplier_payment_allocations allocation
+      join public.onexa_supplier_payment_postings posted_payment
+        on posted_payment.document_id = allocation.payment_id
+       and posted_payment.tenant_id = allocation.tenant_id
+       and posted_payment.legal_entity_id = allocation.legal_entity_id
+       and posted_payment.vendor_id = allocation.vendor_id
+      join public.onexa_business_documents payment_document
+        on payment_document.id = posted_payment.document_id
+       and payment_document.tenant_id = posted_payment.tenant_id
+       and payment_document.legal_entity_id = posted_payment.legal_entity_id
+       and payment_document.party_id = posted_payment.vendor_id
+       and payment_document.document_type = 'supplier_payment'
+       and payment_document.status = 'posted'
+       and payment_document.posted_journal_id = posted_payment.journal_id
+      join public.onexa_journal_headers payment_journal
+        on payment_journal.id = posted_payment.journal_id
+       and payment_journal.tenant_id = posted_payment.tenant_id
+       and payment_journal.legal_entity_id = posted_payment.legal_entity_id
+       and payment_journal.state = 'posted'
+       and payment_journal.reversal_journal_id is null
+      where allocation.tenant_id = _tenant
+        and allocation.invoice_id = _invoice.id
+        and allocation.legal_entity_id = _invoice.legal_entity_id
+        and allocation.vendor_id = _invoice.party_id;
     if _allocated + _allocation.amount > _invoice.gross_total then
       raise exception 'ONEXA_PAYMENT_INVOICE_OVERPAYMENT';
     end if;

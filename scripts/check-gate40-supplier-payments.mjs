@@ -34,6 +34,10 @@ assert.match(smoke.trim(), /rollback;$/);
 assert.ok(!smoke.includes("commit;"));
 assert.ok(service.includes("createBusinessDocument") && service.includes("onexa_post_supplier_payment"));
 assert.ok(panel.includes("approveOnexaPayment") && route.includes("OnexaPaymentsPanel"));
+assert.match(panel, /today\.getFullYear\(\)/);
+assert.match(panel, /today\.getMonth\(\)/);
+assert.doesNotMatch(panel, /new Date\(\)\.toISOString\(\)\.slice\(0, 10\)/,
+  "The default accounting date must follow the local calendar day, not UTC");
 assert.ok(flags.includes("ONEXA_SUPPLIER_PAYMENT_POSTING_ENABLED"));
 assert.ok(env.includes('VITE_ENABLE_ONEXA_SUPPLIER_PAYMENT_POSTING=""'));
 assert.ok(pkg.scripts.verify.includes("check:gate40-supplier-payments"));
@@ -41,6 +45,30 @@ assert.ok(sql.includes("purchase_run.document_id = invoice.id"), "Gate 40 purcha
 assert.ok(!sql.includes("procurement.document_id"), "Gate 40 stale procurement alias remains");
 assert.ok(sql.includes("account.category::text = 'assets'"), "Gate 40 cash account validation is missing");
 assert.ok(sql.includes("account.category::text = 'liabilities'"), "Gate 40 AP account validation is missing");
+// Correct liability balances require an actually posted, unreversed source.
+assert.match(sql, /join public\.onexa_supplier_payment_postings posted_payment/);
+assert.match(sql, /join public\.onexa_business_documents payment_document/);
+assert.match(sql, /join public\.onexa_journal_headers payment_journal/);
+assert.match(sql, /payment_document\.posted_journal_id = posted_payment\.journal_id/);
+assert.match(sql, /payment_journal\.state = 'posted'/);
+assert.match(sql, /payment_journal\.reversal_journal_id is null/);
+assert.match(sql, /invoice_journal\.state = 'posted'/);
+assert.match(sql, /invoice_journal\.reversal_journal_id is null/);
+assert.match(sql, /ONEXA_PAYMENT_POSTED_JOURNAL_REVERSED_OR_MISSING/);
+assert.match(sql, /ONEXA_PAYMENT_INVOICE_JOURNAL_REVERSED_OR_MISSING/);
+assert.match(sql, /mapping\.id is null or account\.code is null/);
+assert.match(sql, /roles\.account_role = 'accounts_payable' and account\.category::text = 'liabilities'/);
+assert.match(sql, /roles\.account_role = 'cash_or_bank' and account\.category::text = 'assets'/);
+assert.match(postcheck, /payment_allocation_source_integrity/);
+assert.match(postcheck, /invalid_allocation_count/);
+assert.match(postcheck, /payment_journal\.state = 'reversed'/);
+assert.match(postcheck, /reversed_allocation_count/);
+assert.match(sql, /-- A reversed payment journal must not consume the supplier invoice's/);
+assert.match(sql, /select coalesce\(sum\(allocation\.amount\), 0\) into _allocated/);
+assert.match(postcheck, /invoice_journal_reversed_or_missing/);
+assert.doesNotMatch(sql, /coalesce\(sum\(allocation\.amount\), 0\)::numeric\(20,4\) as paid_amount/,
+  "Do not aggregate raw allocations as a posted payment balance");
+
 assert.ok(postcheck.includes("workflow_pending_count"), "Gate 40 postcheck must separate workflow-pending invoices");
 assert.ok(postcheck.includes("distinct_creator_and_operator"), "Gate 40 authorization readiness check is missing");
 assert.match(postcheck.trim(), /rollback;$/, "Gate 40 postcheck diagnostics must roll back");
