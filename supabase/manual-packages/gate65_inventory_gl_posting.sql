@@ -10,7 +10,8 @@ begin
   end if;
   if to_regclass('public.onexa_inventory_balances') is null
      or to_regclass('public.onexa_inventory_movements') is null
-     or to_regclass('public.onexa_business_documents') is null then
+     or to_regclass('public.onexa_business_documents') is null
+     or to_regclass('public.onexa_journal_headers') is null then
     raise exception 'ONEXA_GATE35_INVENTORY_FOUNDATION_REQUIRED';
   end if;
   if to_regprocedure('public.onexa_approval_separation_required(text,text)') is null
@@ -36,6 +37,31 @@ create table if not exists public.onexa_inventory_posting_runs (
 create index if not exists onexa_inventory_posting_runs_lookup_idx
   on public.onexa_inventory_posting_runs (tenant_id, legal_entity_id, document_type, posted_at desc);
 
+-- Inventory movements are not reverted by a generic GL-only journal reversal.
+-- Keep the GL and physical stock valuation inseparable until a dedicated
+-- compensating receipt/issue reversal workflow is approved.
+create or replace function public.onexa_guard_inventory_journal_reversal()
+returns trigger language plpgsql security definer
+set search_path = pg_catalog, public as $
+begin
+  if old.source_document_type in ('inventory_receipt','inventory_issue')
+     and exists (
+       select 1 from public.onexa_inventory_posting_runs posting
+       where posting.journal_id = old.id
+         and posting.tenant_id = old.tenant_id
+         and posting.legal_entity_id = old.legal_entity_id
+     ) then
+    raise exception 'ONEXA_INVENTORY_STOCK_COMPENSATION_REQUIRED';
+  end if;
+  return new;
+end;
+$;
+drop trigger if exists onexa_guard_inventory_journal_reversal on public.onexa_journal_headers;
+create trigger onexa_guard_inventory_journal_reversal
+before update on public.onexa_journal_headers for each row
+when (old.state = 'posted' and new.state = 'reversed')
+execute function public.onexa_guard_inventory_journal_reversal();
+
 alter table public.onexa_inventory_posting_runs enable row level security;
 drop policy if exists onexa_inventory_posting_runs_select_tenant on public.onexa_inventory_posting_runs;
 create policy onexa_inventory_posting_runs_select_tenant
@@ -49,12 +75,12 @@ create or replace view public.onexa_inventory_document_reconciliation
 with (security_invoker = true)
 as
 with movement_totals as (
-  select tenant_id, source_document_id,
+  select tenant_id, legal_entity_id, source_document_id,
     count(*)::integer as movement_count,
     round(sum(abs(value_delta)),4) as movement_value
   from public.onexa_inventory_movements
   where movement_type in ('receipt','adjustment_out')
-  group by tenant_id, source_document_id
+  group by tenant_id, legal_entity_id, source_document_id
 ), expected_lines as (
   select tenant_id, document_id, count(*)::integer as expected_movement_count
   from public.onexa_business_document_lines
@@ -74,6 +100,13 @@ select document.id as document_id, document.tenant_id, document.legal_entity_id,
     when document.status <> 'posted' then 'not_posted'
     when document.posted_journal_id is null or run.journal_id is null then 'journal_missing'
     when document.posted_journal_id <> run.journal_id then 'journal_mismatch'
+    when journal.id is null then 'journal_reversed_or_missing'
+    when journal.source_document_type is distinct from document.document_type
+      or journal.source_document_id is distinct from document.id::text
+      or journal.total_debit is distinct from run.inventory_value
+      or journal.total_credit is distinct from run.inventory_value
+      or journal.currency is distinct from document.currency
+      then 'journal_source_or_value_mismatch'
     when coalesce(expected.expected_movement_count,0) <> coalesce(movement.movement_count,0) then 'movement_missing'
     when abs(coalesce(run.inventory_value,0)-coalesce(movement.movement_value,0)) > 0.01 then 'inventory_value_mismatch'
     else 'reconciled'
@@ -81,8 +114,14 @@ select document.id as document_id, document.tenant_id, document.legal_entity_id,
 from public.onexa_business_documents document
 left join public.onexa_inventory_posting_runs run
   on run.document_id=document.id and run.tenant_id=document.tenant_id
+  and run.legal_entity_id=document.legal_entity_id
+left join public.onexa_journal_headers journal
+  on journal.id=run.journal_id and journal.tenant_id=document.tenant_id
+ and journal.legal_entity_id=document.legal_entity_id
+ and journal.state='posted' and journal.reversal_journal_id is null
 left join movement_totals movement
   on movement.source_document_id=document.id and movement.tenant_id=document.tenant_id
+  and movement.legal_entity_id=document.legal_entity_id
 left join expected_lines expected
   on expected.document_id=document.id and expected.tenant_id=document.tenant_id
 where document.document_type in ('inventory_receipt','inventory_issue');
@@ -103,7 +142,15 @@ left join public.onexa_account_role_mappings mapping
  and mapping.legal_entity_id=entity.id
  and mapping.account_role=required.account_role
  and mapping.is_active=true
-where entity.is_active=true and mapping.id is null;
+left join public.chart_of_accounts account
+  on account.tenant_id=mapping.tenant_id and account.code=mapping.account_code
+ and account.is_active and account.account_type::text='detail'
+ and ((required.account_role='inventory' and account.category::text='assets')
+   or (required.account_role='goods_received_not_invoiced'
+       and account.category::text='liabilities')
+   or (required.account_role='project_cost_cogs_or_expense'
+       and account.category::text in ('assets','expenses','cost_of_revenue')))
+where entity.is_active=true and (mapping.id is null or account.code is null);
 
 create or replace function public.onexa_post_inventory_document(
   _document_id uuid,
@@ -151,6 +198,12 @@ begin
   if _document.status='posted' then
     if _document.posted_journal_id is not null
        and _run.journal_id is not distinct from _document.posted_journal_id then
+      perform 1 from public.onexa_journal_headers journal
+        where journal.id=_document.posted_journal_id
+          and journal.tenant_id=_tenant
+          and journal.legal_entity_id=_document.legal_entity_id
+          and journal.state='posted' and journal.reversal_journal_id is null;
+      if not found then raise exception 'ONEXA_INVENTORY_JOURNAL_REVERSED_OR_MISSING'; end if;
       return _document.posted_journal_id;
     end if;
     raise exception 'ONEXA_INVENTORY_POSTING_RETRY_STATE_INVALID';
@@ -197,7 +250,19 @@ begin
     and account_role=case when _document.document_type='inventory_receipt'
       then 'goods_received_not_invoiced' else 'project_cost_cogs_or_expense' end
     and is_active=true;
-  if _inventory_account is null or _offset_account is null then
+  if _inventory_account is null or _offset_account is null
+    or _inventory_account=_offset_account
+    or not exists (select 1 from public.chart_of_accounts account
+      where account.tenant_id=_tenant and account.code=_inventory_account
+        and account.is_active and account.account_type::text='detail'
+        and account.category::text='assets')
+    or not exists (select 1 from public.chart_of_accounts account
+      where account.tenant_id=_tenant and account.code=_offset_account
+        and account.is_active and account.account_type::text='detail'
+        and ((_document.document_type='inventory_receipt'
+          and account.category::text='liabilities')
+          or (_document.document_type='inventory_issue'
+            and account.category::text in ('assets','expenses','cost_of_revenue')))) then
     raise exception 'ONEXA_INVENTORY_ACCOUNT_MAPPING_REQUIRED';
   end if;
   _movement_type := case when _document.document_type='inventory_receipt'
@@ -324,6 +389,7 @@ grant select on public.onexa_inventory_document_reconciliation,
 revoke insert,update,delete on public.inventory_receipts,
   public.inventory_receipt_lines,public.inventory_issues,
   public.inventory_issue_lines,public.inventory_stock_layers from anon,authenticated;
+revoke all on function public.onexa_guard_inventory_journal_reversal() from public,anon,authenticated;
 revoke all on function public.onexa_post_inventory_document(uuid,text) from public,anon;
 grant execute on function public.onexa_post_inventory_document(uuid,text) to authenticated;
 
