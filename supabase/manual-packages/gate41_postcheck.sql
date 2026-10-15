@@ -26,6 +26,16 @@ left join public.chart_of_accounts gl
   on gl.tenant_id = account.tenant_id and gl.code = account.account_code
 order by account.tenant_id, account.legal_entity_id, account.account_code;
 
+-- Include missing/reversed B4 journals and legal-entity / branch mismatches in
+-- the existing fail-closed reconciliation result rather than reporting a false OK.
+-- A reversed journal is expected historical evidence, not an active GL transfer.
 select tenant_id, document_number, reconciliation_status, transfer_amount, posted_amount
 from public.onexa_bank_transfer_reconciliation
 where status = 'posted' and reconciliation_status <> 'reconciled';
+
+-- Explicit breakdown to distinguish a control failure from a historical reversal.
+select reconciliation_status, count(*) as document_count
+from public.onexa_bank_transfer_reconciliation
+where status = 'posted'
+  and reconciliation_status in ('journal_reversed_or_missing','account_scope_mismatch','journal_mismatch','amount_mismatch')
+group by reconciliation_status order by reconciliation_status;
