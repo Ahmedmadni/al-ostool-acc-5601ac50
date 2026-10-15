@@ -191,6 +191,7 @@ begin
         count(*) filter (
           where reconciliation_status in (
             'invoice_journal_mismatch',
+            'invoice_journal_reversed_or_missing',
             'overallocated'
           )
           or outstanding_amount < 0
@@ -231,6 +232,12 @@ begin
         and posted_payment.tenant_id = allocation.tenant_id
         and posted_payment.legal_entity_id = allocation.legal_entity_id
         and posted_payment.vendor_id = allocation.vendor_id
+      left join public.onexa_journal_headers payment_journal
+        on payment_journal.id = posted_payment.journal_id
+        and payment_journal.tenant_id = posted_payment.tenant_id
+        and payment_journal.legal_entity_id = posted_payment.legal_entity_id
+        and payment_journal.state = 'posted'
+        and payment_journal.reversal_journal_id is null
       left join public.onexa_business_documents payment_document
         on payment_document.id = posted_payment.document_id
         and payment_document.tenant_id = posted_payment.tenant_id
@@ -249,6 +256,7 @@ begin
         and invoice.document_type = 'purchase_invoice'
         and invoice.status = 'posted'
       where posted_payment.document_id is null
+         or payment_journal.id is null
          or payment_document.id is null
          or invoice.id is null
     $sql$ into _anomaly_count;
