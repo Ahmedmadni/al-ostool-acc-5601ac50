@@ -31,6 +31,27 @@ assert.match(mapping, /'2190'/);
 assert.match(mapping, /'5800'/);
 assert.match(postcheck, /direct_writes_denied/);
 assert.match(postcheck, /anon_can_post/);
+for (const marker of [
+  "onexa_journal_headers journal",
+  "journal_reversed_or_missing",
+  "journal_source_or_amount_mismatch",
+  "scope_entity_branch_mismatch",
+  "ONEXA_MAINTENANCE_JOURNAL_REVERSED_OR_MISSING",
+  "journal.state='posted' and journal.reversal_journal_id is null",
+  "account.category::text='liabilities'",
+  "account.category::text in ('assets','expenses','cost_of_revenue')",
+  "onexa_guard_approval_posting",
+]) assert.ok(sql.includes(marker), `Missing maintenance journal safeguard: ${marker}`);
+assert.match(postcheck, /tgenabled<>'D'/);
+assert.match(postcheck, /journal_source_or_amount_mismatch/);
+assert.match(postcheck, /scope_entity_branch_mismatch/);
+assert.match(sql, /ONEXA_MAINTENANCE_SCOPE_REASSIGNMENT_FORBIDDEN/);
+assert.match(sql, /onexa_maintenance_work_order_scopes\.tenant_id=excluded\.tenant_id/);
+assert.match(sql, /onexa_maintenance_work_order_scopes\.legal_entity_id=excluded\.legal_entity_id/);
+assert.match(sql, /onexa_maintenance_work_order_scopes\.branch_id=excluded\.branch_id/);
+assert.doesNotMatch(sql, /on conflict \(work_order_id\) do update set\s+tenant_id=excluded\.tenant_id/);
+assert.match(panel, /date\.getFullYear\(\)/);
+assert.doesNotMatch(panel, /new Date\(\)\.toISOString\(\)\.slice\(0, 10\)/);
 assert.match(smoke, /_retry:=public\.onexa_post_maintenance_work_order_cost/);
 assert.match(smoke, /rollback;/i);
 assert.match(service, /documentType: "maintenance_work_order_cost"/);

@@ -5,7 +5,12 @@ select check_name,status from (values
   ('save_scope_rpc',case when to_regprocedure('public.onexa_save_maintenance_work_order_scope(uuid,uuid)') is not null then 'READY' else 'MISSING' end),
   ('posting_rpc',case when to_regprocedure('public.onexa_post_maintenance_work_order_cost(uuid,text)') is not null then 'READY' else 'MISSING' end),
   ('reconciliation_view',case when to_regclass('public.onexa_maintenance_work_order_cost_reconciliation') is not null then 'READY' else 'MISSING' end),
-  ('gate64_guard',case when to_regprocedure('onexa_private.guard_approval_posting()') is not null then 'READY' else 'MISSING' end)
+  ('gate64_guard',case when to_regprocedure('onexa_private.guard_approval_posting()') is not null
+    and exists (select 1 from pg_trigger t
+      where t.tgname='onexa_guard_approval_posting'
+        and t.tgrelid=to_regclass('public.onexa_business_documents')
+        and t.tgenabled<>'D' and not t.tgisinternal)
+    then 'READY' else 'MISSING' end)
 ) checks(check_name,status) order by check_name;
 
 select c.relname,c.relrowsecurity as rls_enabled,
@@ -42,3 +47,11 @@ where center.id is null or work_order.id is null
 select tenant_id,document_number,reconciliation_status,gross_total,posted_amount
 from public.onexa_maintenance_work_order_cost_reconciliation
 where status='posted' and reconciliation_status<>'reconciled';
+
+-- Disaggregate ledger and project-scope exceptions for finance reconciliation.
+select reconciliation_status,count(*) as document_count
+from public.onexa_maintenance_work_order_cost_reconciliation
+where status='posted' and reconciliation_status in
+  ('journal_reversed_or_missing','journal_source_or_amount_mismatch',
+   'scope_entity_branch_mismatch','journal_mismatch','amount_mismatch')
+group by reconciliation_status order by reconciliation_status;
