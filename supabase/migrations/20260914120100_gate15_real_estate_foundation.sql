@@ -1,7 +1,22 @@
 BEGIN;
 
-DO $$
+DO $
 BEGIN
+  -- Defense in depth: executing the foundation directly without the prior
+  -- Gate 15 preflight must not bypass the ONEXA tenant-scope stop condition.
+  IF to_regclass('public.onexa_tenants') IS NOT NULL AND (
+    NOT EXISTS (SELECT 1 FROM information_schema.columns
+      WHERE table_schema='public' AND table_name='group_companies'
+        AND column_name='tenant_id')
+    OR NOT EXISTS (SELECT 1 FROM information_schema.columns
+      WHERE table_schema='public' AND table_name='group_user_module_access'
+        AND column_name='tenant_id')
+    OR NOT EXISTS (SELECT 1 FROM information_schema.columns
+      WHERE table_schema='public' AND table_name='ops_sites'
+        AND column_name='tenant_id')
+  ) THEN
+    RAISE EXCEPTION 'ONEXA_GATE15_SAAS_TENANT_SCOPE_REQUIRED: legacy company and operations records are not tenant partitioned';
+  END IF;
   IF to_regclass('public.group_companies') IS NULL
      OR to_regclass('public.group_modules') IS NULL
      OR to_regprocedure('public.group_has_module_access(text,text)') IS NULL THEN

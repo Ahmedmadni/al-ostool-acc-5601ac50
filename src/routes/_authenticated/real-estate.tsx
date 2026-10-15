@@ -125,7 +125,18 @@ async function loadRealEstateDashboard() {
   };
 }
 
+// Mount dashboard queries only after ModuleAccessGuard authorizes the company
+// and module. The legacy Gate 15 tables must never be queried during guard loading
+// or when access is denied.
 function RealEstateModuleLanding() {
+  return (
+    <ModuleAccessGuard companyCode="RE" moduleKey="real_estate">
+      <RealEstateModuleContent />
+    </ModuleAccessGuard>
+  );
+}
+
+function RealEstateModuleContent() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["real-estate-facilities-dashboard", ONEXA_LEASE_RECONCILIATION_ENABLED],
     queryFn: loadRealEstateDashboard,
@@ -134,8 +145,7 @@ function RealEstateModuleLanding() {
   const snapshot = data?.snapshot ?? {};
 
   return (
-    <ModuleAccessGuard companyCode="RE" moduleKey="real_estate">
-      <div className="space-y-6 p-4 md:p-6">
+    <div className="space-y-6 p-4 md:p-6">
         <div className="overflow-hidden rounded-3xl border border-border bg-card">
           <div className="grid gap-6 p-6 lg:grid-cols-[1.35fr_.65fr] lg:p-8">
             <div>
@@ -158,7 +168,7 @@ function RealEstateModuleLanding() {
 
         {error && (
           <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm leading-6 text-amber-800 dark:text-amber-200">
-            محرك العقارات والمرافق جاهز في الكود، لكن جداول Gate 15 غير مطبقة على قاعدة البيانات الحالية بعد. ستظل الواجهة في وضع آمن حتى اعتماد migrations وتطبيقها لاحقًا.
+            تعذر تحميل بيانات العقارات. قد يكون السبب عدم تثبيت مراحل الشركات والصيانة والعقارات (Gates 13–15)، أو عدم وجود صلاحية للقراءة. راجع جاهزية قاعدة البيانات والصلاحيات قبل التفعيل.
           </div>
         )}
 
@@ -241,8 +251,7 @@ function RealEstateModuleLanding() {
         </Card>
 
         <OnexaLeaseAccountingPanel />
-      </div>
-    </ModuleAccessGuard>
+    </div>
   );
 }
 

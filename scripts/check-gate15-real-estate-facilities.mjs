@@ -42,6 +42,9 @@ for (const dependency of [
 assert.ok(preflight.includes("v_expected constant integer := 16"), "full partial-application marker count missing");
 assert.ok(preflight.includes("re_portfolio_snapshot()"), "reporting-layer partial marker missing");
 assert.ok(preflight.includes("appears partially applied"), "partial-application stop missing");
+assert.ok(preflight.includes("ONEXA_GATE15_SAAS_TENANT_SCOPE_REQUIRED") &&
+  foundation.includes("ONEXA_GATE15_SAAS_TENANT_SCOPE_REQUIRED"),
+  "SaaS tenant-isolation guard must cover both preflight and foundation");
 assert.ok(foundation.includes("c.code='RE'") && foundation.includes("group_has_module_access(c.code,'real_estate')"), "RE/real_estate isolation missing");
 assert.match(foundation, /SECURITY DEFINER\s+SET search_path=''/s, "security-definer search_path hardening missing");
 assert.ok(foundation.includes("REVOKE INSERT,UPDATE,DELETE"), "authenticated direct-write revoke missing");
@@ -86,7 +89,13 @@ assert.ok(ui.includes('companyCode="RE"') && ui.includes('moduleKey="real_estate
 for (const table of ["re_properties","re_tenant_leases","re_master_leases","re_lease_schedules"]) {
   assert.ok(ui.includes(`from(\"${table}\")`), `dashboard integration missing: ${table}`);
 }
-assert.ok(ui.includes("محرك العقارات والمرافق جاهز في الكود"), "safe not-yet-migrated UI fallback missing");
+assert.ok(ui.includes("تعذر تحميل بيانات العقارات") &&
+  ui.includes("راجع جاهزية قاعدة البيانات والصلاحيات"),
+  "real-estate UI must state database or authorization failure without inventing the cause");
+assert.ok(ui.includes("function RealEstateModuleContent()") &&
+  ui.indexOf("function RealEstateModuleContent()") <
+    ui.indexOf("const { data, isLoading, error } = useQuery("),
+  "dashboard should query only after module authorization");
 
 for (const text of [foundation,runtime,hardening,reporting]) {
   assert.ok(!/GRANT\s+(?:ALL|EXECUTE|SELECT).*\sTO\s+anon\b/is.test(text), "anon must not receive Gate 15 grants");
