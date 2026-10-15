@@ -5,6 +5,13 @@ select check_name,status from (
     ('posting_rpc',case when to_regprocedure('public.onexa_post_inventory_document(uuid,text)') is not null then 'READY' else 'MISSING' end),
     ('reconciliation_view',case when to_regclass('public.onexa_inventory_document_reconciliation') is not null then 'READY' else 'MISSING' end),
     ('gate64_guard',case when to_regprocedure('onexa_private.guard_approval_posting()') is not null then 'READY' else 'MISSING' end),
+    ('inventory_reversal_guard',case when
+      to_regprocedure('public.onexa_guard_inventory_journal_reversal()') is not null
+      and exists (select 1 from pg_trigger t
+        where t.tgrelid=to_regclass('public.onexa_journal_headers')
+          and t.tgname='onexa_guard_inventory_journal_reversal'
+          and t.tgenabled <> 'D' and not t.tgisinternal)
+      then 'READY' else 'MISSING' end),
     ('inventory_balances',case when to_regclass('public.onexa_inventory_balances') is not null then 'READY' else 'MISSING' end)
 ) checks(check_name,status) order by check_name;
 
@@ -33,3 +40,14 @@ select tenant_id,document_number,document_type,reconciliation_status,
   posted_inventory_value,movement_inventory_value,expected_movement_count,actual_movement_count
 from public.onexa_inventory_document_reconciliation
 where status='posted' and reconciliation_status<>'reconciled';
+
+-- Reversed/missing GL journals must not be interpreted as valid stock valuation.
+-- Stock movement reversal is deliberately unavailable without compensation.
+select reconciliation_status,count(*) as document_count
+from public.onexa_inventory_document_reconciliation
+where status='posted'
+  and reconciliation_status in (
+    'journal_reversed_or_missing','journal_source_or_value_mismatch',
+    'movement_missing','inventory_value_mismatch'
+  )
+group by reconciliation_status order by reconciliation_status;
