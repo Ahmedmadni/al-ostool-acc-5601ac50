@@ -64,9 +64,20 @@ These represent configured mappings only; they do not prove a successful journal
 
 **Stop conditions:** incorrect customer DB, missing backup, partially installed contract, mismatched RPC signature, missing permissions or role mappings, nonzero reconciliation gaps, failed rollback smoke, or a failed cross-tenant negative test. Feature flags must stay disabled until verification and finance signoff.
 
-## CI observation
+## CI and merge status — updated 2026-10-15
 
-`Interface Readiness` on PR #48 completed as failure on both attempts before any runner steps (`steps=[]`, `runner_id=0`). We cannot attribute this to a code regression without GitHub's annotations or an actual executed job. Do not report `npm run verify`, `typecheck` or build as passing until executed. The PR stays unmerged pending a green run or separately documented equivalent acceptance.
+Initial Interface Readiness runs on Gates 68–70 and early PR #48 attempts failed before any runner steps started (empty `steps`, `runner_id=0`). These failures were **not** evidence of failed application tests. A later runner run executed full checks successfully.
+
+| PR | Code scope | Successful CI run | Merged commit on `main` |
+|---|---|---|---|
+| #48 | Gate 67–70 lease correctness and read-only activation audit | `38709284922` | `27005e4470a9dbf377ce21185a06564b0a66372c` |
+| #49 | Gate 40 supplier payment reversal/AR-AP safeguards | `38712600618` | `2190344904a61f24884523587ff8ecf84f57c07a` |
+| #50 | Gate 41 bank transfer and journal reconciliation | `38714504023` | `9361ba626f910c8f9fd0fef26607082363430418` |
+| #51 | Gate 42 project cost accrual and mapping safeguards | `38715042301` | `fd73a2b825822cd6766ef774fea7c3fe0a73e2a6` |
+| #52 | Gate 43 fleet trip GL reversal and accounting controls | `38715425568` | `ddbf4b2366735dd500a2625111d4e3128843b0d0` |
+| #53 | Gate 64 read-only dependency/patch review preflight | `38715887971` | `153ee9d9fe201ea8ea899e0bade602df7375f36e` |
+
+**Do not confuse successfully merged source files with customer database rollout.** The live customer inventory above was SELECT-only: G40–43 posting functions were still missing, the two accounting role mappings for G42 and the two for G43 were absent, and G64 and G65–70 remained blocked. Any deployment requires a fresh read-only inventory, reviewed backups, manually approved SQL, rollback smoke, maker/checker authorization and financial reconciliation. No production SQL migration was applied by these GitHub merges.
 
 ## Audit SQL and runbook paths
 
