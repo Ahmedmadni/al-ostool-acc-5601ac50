@@ -61,7 +61,10 @@ assert.match(sql, /roles\.account_role = 'accounts_payable' and account\.categor
 assert.match(sql, /roles\.account_role = 'cash_or_bank' and account\.category::text = 'assets'/);
 assert.match(postcheck, /payment_allocation_source_integrity/);
 assert.match(postcheck, /invalid_allocation_count/);
-assert.match(postcheck, /payment_journal\.state = 'posted'/);
+assert.match(postcheck, /payment_journal\.state = 'reversed'/);
+assert.match(postcheck, /reversed_allocation_count/);
+assert.match(sql, /-- A reversed payment journal must not consume the supplier invoice's/);
+assert.match(sql, /select coalesce\(sum\(allocation\.amount\), 0\) into _allocated/);
 assert.match(postcheck, /invoice_journal_reversed_or_missing/);
 assert.doesNotMatch(sql, /coalesce\(sum\(allocation\.amount\), 0\)::numeric\(20,4\) as paid_amount/,
   "Do not aggregate raw allocations as a posted payment balance");
