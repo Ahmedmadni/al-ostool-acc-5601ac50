@@ -12,7 +12,7 @@ select has_function_privilege('anon','public.onexa_lease_schedule_dashboard()','
  has_function_privilege('authenticated','public.onexa_lease_portfolio_snapshot()','EXECUTE') as authenticated_can_snapshot;
 
 select p.schedule_id,p.document_id,p.tenant_id,p.gross_amount,
- coalesce(sum(r.amount),0) as collected_amount,s.status as legacy_status,s.invoice_id as legacy_invoice_id
+ coalesce(sum(case when receipt_doc.id is not null and receipt_journal.id is not null then r.amount else 0 end),0) as collected_amount,s.status as legacy_status,s.invoice_id as legacy_invoice_id
 from public.onexa_lease_invoice_postings p
 join public.re_lease_schedules s on s.id=p.schedule_id
 left join public.onexa_lease_receipt_postings r on r.invoice_id=p.document_id and r.tenant_id=p.tenant_id
