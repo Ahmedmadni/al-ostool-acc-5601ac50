@@ -16,5 +16,10 @@ select p.schedule_id,p.document_id,p.tenant_id,p.gross_amount,
 from public.onexa_lease_invoice_postings p
 join public.re_lease_schedules s on s.id=p.schedule_id
 left join public.onexa_lease_receipt_postings r on r.invoice_id=p.document_id and r.tenant_id=p.tenant_id
+left join public.onexa_business_documents receipt_doc
+  on receipt_doc.id=r.document_id and receipt_doc.tenant_id=p.tenant_id
+  and receipt_doc.legal_entity_id=p.legal_entity_id
+  and receipt_doc.document_type='lease_receipt' and receipt_doc.status='posted'
+  and receipt_doc.posted_journal_id=r.journal_id
 group by p.schedule_id,p.document_id,p.tenant_id,p.gross_amount,s.status,s.invoice_id
-having s.invoice_id is not null or s.status<>'pending' or coalesce(sum(r.amount),0)>p.gross_amount;
+having s.invoice_id is not null or s.status<>'pending' or coalesce(sum(case when receipt_doc.id is not null then r.amount else 0 end),0)>p.gross_amount;
