@@ -17,7 +17,12 @@ export function OnexaPaymentsPanel() {
   const cache = useQueryClient();
   const [invoiceId, setInvoiceId] = useState("");
   const [amount, setAmount] = useState("");
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  // UTC ISO dates can shift the default accounting date around local midnight.
+  const [date, setDate] = useState(() => {
+    const today = new Date();
+    return [today.getFullYear(), String(today.getMonth() + 1).padStart(2, "0"),
+      String(today.getDate()).padStart(2, "0")].join("-");
+  });
   const payables = useQuery({ queryKey: ["onexa-payables"], queryFn: listOnexaPayables,
     enabled: ONEXA_SUPPLIER_PAYMENT_POSTING_ENABLED });
   const payments = useQuery({ queryKey: ["onexa-payments"], queryFn: listOnexaPayments,
