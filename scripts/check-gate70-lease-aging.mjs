@@ -21,6 +21,8 @@ for (const pattern of [
   /revoke all on function public\.onexa_lease_receivables_aging/,
 ]) assert.match(sql, pattern);
 assert.match(check, /anon_can_read/);
+assert.match(check, /receipt_doc\.status='posted'/);
+assert.match(check, /sum\(case when receipt_doc\.id is not null then r\.amount else 0 end\)/);
 assert.match(service, /onexa_lease_receivables_aging/);
 assert.match(flags, /ONEXA_LEASE_AGING_ENABLED/);
 assert.match(report, /OnexaLeaseAgingReport/);
