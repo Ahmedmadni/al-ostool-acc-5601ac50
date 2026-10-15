@@ -31,7 +31,12 @@ const STATUS_LABELS: Record<string, string> = {
   posted: "مرحّلة", rejected: "مرفوضة", cancelled: "ملغاة", reversed: "معكوسة",
 };
 
-const today = () => new Date().toISOString().slice(0, 10);
+// Use the operator's local accounting day rather than UTC around midnight.
+const today = () => {
+  const date = new Date();
+  return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0")].join("-");
+};
 
 export function OnexaMaintenanceCostsPanel() {
   const cache = useQueryClient();
