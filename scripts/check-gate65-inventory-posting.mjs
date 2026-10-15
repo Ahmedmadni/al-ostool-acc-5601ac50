@@ -48,6 +48,9 @@ for (const marker of [
   "account.category::text='assets'",
   "ONEXA_GATE64_APPROVAL_POSTING_BRIDGE_REQUIRED",
 ]) assert.ok(sql.includes(marker), `Missing inventory integrity control: ${marker}`);
+assert.match(sql, /max\(journal_id::text\)::uuid as movement_journal_id/);
+assert.doesNotMatch(sql, /min\(journal_id\)/,
+  "PostgreSQL has no built-in min(uuid) aggregate");
 assert.match(sql, /when \(old.state = 'posted' and new.state = 'reversed'\)/);
 assert.match(sql, /from public\.onexa_inventory_posting_runs posting/);
 assert.match(postcheck, /inventory_reversal_guard/);
