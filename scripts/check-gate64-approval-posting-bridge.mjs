@@ -36,6 +36,17 @@ for (const engine of [
 assert.ok(sql.includes("before update on public.onexa_business_documents"));
 assert.ok(sql.includes("after update on public.onexa_business_documents"));
 assert.ok(sql.includes("with (security_invoker = true)"));
+assert.match(sql, /regexp_count\(_definition, _pattern, 1, 'i'\)/);
+assert.match(sql, /regexp_count\(_definition, _policy_pattern, 1, 'i'\)/);
+assert.match(sql, /_legacy_guard_count <> 1/);
+assert.match(sql, /_policy_guard_count <> 0/);
+assert.match(sql, /ONEXA_GATE64_GUARD_DEFINITION_AMBIGUOUS/);
+assert.match(sql, /regexp_count\(_patched, _policy_pattern, 1, 'i'\) <> 1/);
+assert.match(postcheck, /inbox_security_invoker/);
+assert.match(postcheck, /tgenabled <> 'D'/);
+assert.match(postcheck, /regexp_count\(/);
+assert.doesNotMatch(sql, /if position\('onexa_approval_separation_required' in _definition\) > 0 then[\s\S]*?continue;/,
+  "Do not blindly skip on an approval policy marker");
 assert.ok(postcheck.includes("all_posting_engines_governed"));
 assert.ok(service.includes("can_current_user_post"));
 assert.ok(queue.includes("item.can_current_user_post"));
