@@ -6,6 +6,7 @@
 
 - A native `bank_transfer` document is considered `reconciled` only if its posting references the same document, tenant and legal entity, and the linked journal is still `posted` with `reversal_journal_id IS NULL`.
 - A posted transfer whose original B4 journal has been reversed (or cannot be accessed/found) receives `journal_reversed_or_missing`, **not** `reconciled`. This preserves historical documents while preventing a false operational success.
+- A journal whose source type/ID, debit, credit or currency differs from the transfer receives `journal_source_or_amount_mismatch`, not a false reconciled status.
 - A transfer whose source or destination account belongs to another legal entity or branch receives `account_scope_mismatch`, even when the account code exists.
 - An idempotent repeat call to `onexa_post_bank_transfer` must reject a reversed original journal with `ONEXA_BANK_TRANSFER_JOURNAL_REVERSED_OR_MISSING`. Reusing an old reversed document must never create a second journal.
 - The transfer posting RPC requires finance `post`, correct tenant identity, a second human poster, two **different** active detail asset accounts in the same AOA legal entity and branch, the accounting period, and a balanced debit/credit pair.
