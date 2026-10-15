@@ -22,7 +22,12 @@ import {
   saveLeaseAccountingScope,
 } from "@/lib/real-estate/lease-accounting-service";
 
-const today = () => new Date().toISOString().slice(0, 10);
+// Lease invoice/receipt accounting dates follow the local calendar day.
+const today = () => {
+  const date = new Date();
+  return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0")].join("-");
+};
 const STATUS: Record<string, string> = {
   draft: "مسودة", submitted: "بانتظار الاعتماد", approved: "معتمدة",
   posted: "مرحّلة", rejected: "مرفوضة", cancelled: "ملغاة", reversed: "معكوسة",
