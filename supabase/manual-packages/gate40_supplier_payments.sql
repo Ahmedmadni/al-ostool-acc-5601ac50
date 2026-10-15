@@ -6,6 +6,7 @@ do $$
 begin
   if to_regprocedure('public.onexa_post_journal(uuid,text,text,integer,text,jsonb,date,text,text,text,jsonb)') is null
     or to_regclass('public.onexa_purchase_posting_runs') is null
+    or to_regclass('public.onexa_journal_headers') is null
     or to_regclass('public.onexa_business_documents') is null
     or to_regclass('public.onexa_business_document_lines') is null
     or to_regclass('public.onexa_business_document_events') is null
@@ -70,12 +71,19 @@ select invoice.id as invoice_id, invoice.tenant_id, invoice.legal_entity_id,
   (invoice.gross_total - coalesce(paid.paid_amount, 0))::numeric(20,4) as outstanding_amount,
   case when invoice.status <> 'posted' then 'invoice_not_posted'
        when invoice.posted_journal_id is distinct from purchase_run.journal_id then 'invoice_journal_mismatch'
+       when invoice_journal.id is null then 'invoice_journal_reversed_or_missing'
        when coalesce(paid.paid_amount, 0) > invoice.gross_total + 0.01 then 'overallocated'
        else 'reconciled' end as reconciliation_status
 from public.onexa_business_documents invoice
 left join public.onexa_purchase_posting_runs purchase_run
   on purchase_run.document_id = invoice.id
  and purchase_run.tenant_id = invoice.tenant_id
+left join public.onexa_journal_headers invoice_journal
+  on invoice_journal.id = invoice.posted_journal_id
+ and invoice_journal.tenant_id = invoice.tenant_id
+ and invoice_journal.legal_entity_id = invoice.legal_entity_id
+ and invoice_journal.state = 'posted'
+ and invoice_journal.reversal_journal_id is null
 left join lateral (
   select coalesce(sum(allocation.amount), 0) as paid_amount
   from public.onexa_supplier_payment_allocations allocation
@@ -84,6 +92,12 @@ left join lateral (
    and posted_payment.tenant_id = allocation.tenant_id
    and posted_payment.legal_entity_id = allocation.legal_entity_id
    and posted_payment.vendor_id = allocation.vendor_id
+  join public.onexa_journal_headers payment_journal
+    on payment_journal.id = posted_payment.journal_id
+   and payment_journal.tenant_id = posted_payment.tenant_id
+   and payment_journal.legal_entity_id = posted_payment.legal_entity_id
+   and payment_journal.state = 'posted'
+   and payment_journal.reversal_journal_id is null
   join public.onexa_business_documents payment_document
     on payment_document.id = posted_payment.document_id
    and payment_document.tenant_id = posted_payment.tenant_id
@@ -147,6 +161,11 @@ begin
     if _journal is distinct from _payment.posted_journal_id then
       raise exception 'ONEXA_PAYMENT_RETRY_JOURNAL_MISMATCH';
     end if;
+    perform 1 from public.onexa_journal_headers
+      where id = _journal and tenant_id = _tenant
+        and legal_entity_id = _payment.legal_entity_id
+        and state = 'posted' and reversal_journal_id is null;
+    if not found then raise exception 'ONEXA_PAYMENT_POSTED_JOURNAL_REVERSED_OR_MISSING'; end if;
     return _journal;
   end if;
   if _payment.status <> 'approved' then raise exception 'ONEXA_DOCUMENT_MUST_BE_APPROVED'; end if;
@@ -205,6 +224,11 @@ begin
       where document_id = _invoice.id and tenant_id = _tenant
         and journal_id = _invoice.posted_journal_id;
     if not found then raise exception 'ONEXA_PAYMENT_INVOICE_LEDGER_MISSING'; end if;
+    perform 1 from public.onexa_journal_headers
+      where id = _invoice.posted_journal_id and tenant_id = _tenant
+        and legal_entity_id = _invoice.legal_entity_id
+        and state = 'posted' and reversal_journal_id is null;
+    if not found then raise exception 'ONEXA_PAYMENT_INVOICE_JOURNAL_REVERSED_OR_MISSING'; end if;
     select coalesce(sum(amount), 0) into _allocated
       from public.onexa_supplier_payment_allocations
       where tenant_id = _tenant and invoice_id = _invoice.id;
