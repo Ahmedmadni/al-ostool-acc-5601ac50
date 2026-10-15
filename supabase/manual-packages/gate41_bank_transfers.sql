@@ -6,6 +6,7 @@ do $$
 begin
   if to_regprocedure('public.onexa_post_journal(uuid,text,text,integer,text,jsonb,date,text,text,text,jsonb)') is null
     or to_regclass('public.onexa_business_documents') is null
+    or to_regclass('public.onexa_journal_headers') is null
     or to_regclass('public.chart_of_accounts') is null
     or to_regprocedure('onexa_private.has_module_action(uuid,text,text)') is null then
     raise exception 'ONEXA_GATE41_ACCOUNTING_FOUNDATION_REQUIRED';
@@ -88,12 +89,24 @@ select document.id as document_id, document.tenant_id, document.legal_entity_id,
   destination.account_code as destination_account_code,
   case when document.status <> 'posted' then 'not_posted'
        when document.posted_journal_id is distinct from posting.journal_id then 'journal_mismatch'
+       when journal.id is null then 'journal_reversed_or_missing'
        when document.gross_total is distinct from posting.amount then 'amount_mismatch'
        when source.account_code is null or destination.account_code is null then 'account_missing'
+       when source.legal_entity_id is distinct from document.legal_entity_id
+         or destination.legal_entity_id is distinct from document.legal_entity_id
+         or source.branch_id is distinct from document.branch_id
+         or destination.branch_id is distinct from document.branch_id then 'account_scope_mismatch'
        else 'reconciled' end as reconciliation_status
 from public.onexa_business_documents document
 left join public.onexa_bank_transfer_postings posting
   on posting.document_id = document.id and posting.tenant_id = document.tenant_id
+  and posting.legal_entity_id = document.legal_entity_id
+left join public.onexa_journal_headers journal
+  on journal.id = posting.journal_id
+ and journal.tenant_id = document.tenant_id
+ and journal.legal_entity_id = document.legal_entity_id
+ and journal.state = 'posted'
+ and journal.reversal_journal_id is null
 left join public.onexa_treasury_accounts source on source.id = posting.source_account_id
   and source.tenant_id = document.tenant_id
 left join public.onexa_treasury_accounts destination on destination.id = posting.destination_account_id
@@ -136,6 +149,11 @@ begin
     if _journal is distinct from _document.posted_journal_id then
       raise exception 'ONEXA_BANK_TRANSFER_RETRY_JOURNAL_MISMATCH';
     end if;
+    perform 1 from public.onexa_journal_headers
+      where id = _journal and tenant_id = _tenant
+        and legal_entity_id = _document.legal_entity_id
+        and state = 'posted' and reversal_journal_id is null;
+    if not found then raise exception 'ONEXA_BANK_TRANSFER_JOURNAL_REVERSED_OR_MISSING'; end if;
     return _journal;
   end if;
   if _document.status <> 'approved' then raise exception 'ONEXA_DOCUMENT_MUST_BE_APPROVED'; end if;
