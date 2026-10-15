@@ -24,7 +24,15 @@ for (const pattern of [
 ]) assert.match(sql, pattern);
 assert.match(check, /anon_can_read/);
 assert.match(check, /receipt_doc\.status='posted'/);
-assert.match(check, /sum\(case when receipt_doc\.id is not null then r\.amount else 0 end\)/);
+assert.match(check, /sum\(case when receipt_doc\.id is not null and receipt_journal\.id is not null then r\.amount else 0 end\)/);
+assert.match(sql, /invoice_journal\.state='posted'/);
+assert.match(sql, /invoice_journal\.state='reversed'/);
+assert.match(sql, /invoice_reversal\.accounting_date>_as_of/);
+assert.match(sql, /receipt_journal\.state='posted'/);
+assert.match(sql, /receipt_journal\.state='reversed'/);
+assert.match(sql, /receipt_reversal\.accounting_date>_as_of/);
+assert.match(sql, /receipt_journal\.source_document_id=r\.document_id::text/);
+assert.match(check, /receipt_journal\.state='posted'/);
 assert.match(service, /onexa_lease_receivables_aging/);
 assert.match(flags, /ONEXA_LEASE_AGING_ENABLED/);
 assert.match(report, /OnexaLeaseAgingReport/);
