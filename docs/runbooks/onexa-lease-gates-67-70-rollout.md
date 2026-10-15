@@ -32,6 +32,7 @@ Enable only the corresponding flag after every prerequisite is checked and a con
 - Issue one approved native lease invoice; verify its net amount, VAT, gross, journal reference and legal entity.
 - Confirm only the assigned authorized posting user can post; creator self-approval is rejected when policy requires segregation.
 - Post a partial native receipt and reconcile invoice outstanding with the AR ledger.
+- Gate 68 immutability smoke must FAIL when no posted lease invoice exists; never accept a skipped test as a pass.
 - A receipt that is draft, failed, or reversed must **not** reduce the dashboard/snapshot/aging balances. Gate 68 dashboard and Gate 70 anomaly check must follow the same posted-only convention as Gates 69 and 70 report services.
 - Use an accounting-date cut-off for Gate 69 and Gate 70: receipts posted after `as_of` must not decrease historical aging; buckets should sum to gross outstanding.
 - Verify an inaccessible tenant/property cannot read or alter these records even when an object UUID is known.
