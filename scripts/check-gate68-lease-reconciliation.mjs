@@ -27,6 +27,8 @@ assert.match(postcheck, /receipt_doc\.status='posted'/);
 assert.match(postcheck, /sum\(case when receipt_doc\.id is not null then r\.amount else 0 end\)/);
 assert.match(postcheck, /having s\.invoice_id is not null/);
 assert.match(smoke, /ONEXA_GATE68_SCHEDULE_GUARD_FAILED/);
+assert.match(smoke, /ONEXA_GATE68_POSTED_LEASE_INVOICE_REQUIRED/);
+assert.doesNotMatch(smoke, /immutability test deferred/);
 assert.match(smoke, /rollback;/i);
 assert.match(flags, /ONEXA_LEASE_RECONCILIATION_ENABLED/);
 assert.match(route, /ONEXA_LEASE_RECONCILIATION_ENABLED/);
