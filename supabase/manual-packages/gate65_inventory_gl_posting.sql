@@ -83,7 +83,7 @@ with movement_totals as (
     count(*)::integer as movement_count,
     count(distinct journal_id)::integer as distinct_journal_count,
     count(*) filter (where journal_id is null)::integer as missing_journal_count,
-    min(journal_id) as movement_journal_id,
+    max(journal_id::text)::uuid as movement_journal_id,
     round(sum(abs(value_delta)),4) as movement_value
   from public.onexa_inventory_movements
   where movement_type in ('receipt','adjustment_out')
