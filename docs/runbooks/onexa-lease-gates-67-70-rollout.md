@@ -25,7 +25,7 @@ This inventory performs **no DDL or DML** and does not execute protected busines
 
 Enable only the corresponding flag after every prerequisite is checked and a controlled acceptance scenario passes. The top-level posting switch `VITE_ENABLE_ONEXA_POSTING` must already have passed B4 acceptance. Existing accounting rows and legacy `payments`/`invoices` must never be reposted.
 
-**IMPORTANT change in this package:** Gate 68's upcoming SQL definition filters receipt allocations using the *posted native receipt business document and matching journal*. Deploying new repository SQL is not equivalent to updating an already-installed function. If Gate 68 is installed, review its live function definition first; plan a controlled `CREATE OR REPLACE` rollout with rechecks rather than assuming source code changes production.
+**IMPORTANT change in this package:** Gate 68's upcoming SQL definition filters receipt allocations using the *posted native receipt business document, matching journal and actual B4 journal lifecycle*. Deploying new repository SQL is not equivalent to updating an already-installed function. If Gate 68 is installed, review its live function definition first; plan a controlled `CREATE OR REPLACE` rollout with rechecks rather than assuming source code changes production.
 
 ## 3 — Accounting acceptance (controlled test tenant/data)
 
@@ -33,7 +33,8 @@ Enable only the corresponding flag after every prerequisite is checked and a con
 - Confirm only the assigned authorized posting user can post; creator self-approval is rejected when policy requires segregation.
 - Post a partial native receipt and reconcile invoice outstanding with the AR ledger.
 - Gate 68 immutability smoke must FAIL when no posted lease invoice exists; never accept a skipped test as a pass.
-- A receipt that is draft, failed, or reversed must **not** reduce the dashboard/snapshot/aging balances. Gate 68 dashboard and Gate 70 anomaly check must follow the same posted-only convention as Gates 69 and 70 report services.
+- A receipt that is draft, failed, or reversed must **not** reduce the dashboard/snapshot/current receivables. The Gate 68 dashboard and Gate 70 anomaly check now require the actual **posted, unreversed B4 journal**, not just a document marked posted. A reversed invoice journal is likewise excluded from the current lease schedule as an active invoice.
+- **As-of financial reporting (Gates 69–70):** an original journal that is still posted is effective; a subsequently reversed original is effective *historically* only when the matching posted reversal journal has an `accounting_date` strictly later than the requested `_to` or `_as_of`. A reversal dated on the cut-off day reduces the balance on that day. Both invoice and receipt filters must apply this logic, with matching `reversal_of_id`, tenant and entity.
 - Use an accounting-date cut-off for Gate 69 and Gate 70: receipts posted after `as_of` must not decrease historical aging; buckets should sum to gross outstanding.
 - Verify an inaccessible tenant/property cannot read or alter these records even when an object UUID is known.
 - Confirm reversal/idempotency, schedule immutability, tax mapping, and no direct ledger mutation. Inspect returned rows of every postcheck and rollback smoke.
@@ -45,7 +46,7 @@ Enable only the corresponding flag after every prerequisite is checked and a con
 
 - Run `npm run check:gate68-lease-reconciliation` and `npm run check:gate70-lease-aging`, then `npm run typecheck`, `npm run build`, and `npm run verify`.
 - Static Gate checks assert repository contracts; **they do not validate live PostgreSQL function compilation or accounting execution**. Run each SQL against a disposable clone or controlled transaction before production.
-- Previous GitHub Actions runs for Gates 68–70 failed. The failure reason could not be reconstructed from the API logs; do not treat these runs as a passing deployment.
+- The original Gates 68–70 PR runs included runner-allocation failures with no executed steps; later GitHub Actions `38709284922` executed and passed the full pipeline, and PR #48 was merged. These source checks **are not** SQL deployment evidence. Re-check the CI run of every subsequent SQL/report patch and retain its exact URL.
 - Save the preflight output, postcheck tables, audit events, accounting report reconciliation and GitHub Actions URLs in the change record.
 
 ## 5 — Next product work
