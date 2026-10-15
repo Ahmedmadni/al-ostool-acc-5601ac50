@@ -89,7 +89,13 @@ assert.ok(ui.includes('companyCode="RE"') && ui.includes('moduleKey="real_estate
 for (const table of ["re_properties","re_tenant_leases","re_master_leases","re_lease_schedules"]) {
   assert.ok(ui.includes(`from(\"${table}\")`), `dashboard integration missing: ${table}`);
 }
-assert.ok(ui.includes("محرك العقارات والمرافق جاهز في الكود"), "safe not-yet-migrated UI fallback missing");
+assert.ok(ui.includes("تعذر تحميل بيانات العقارات") &&
+  ui.includes("راجع جاهزية قاعدة البيانات والصلاحيات"),
+  "real-estate UI must state database or authorization failure without inventing the cause");
+assert.ok(ui.includes("function RealEstateModuleContent()") &&
+  ui.indexOf("function RealEstateModuleContent()") <
+    ui.indexOf("const { data, isLoading, error } = useQuery("),
+  "dashboard should query only after module authorization");
 
 for (const text of [foundation,runtime,hardening,reporting]) {
   assert.ok(!/GRANT\s+(?:ALL|EXECUTE|SELECT).*\sTO\s+anon\b/is.test(text), "anon must not receive Gate 15 grants");
