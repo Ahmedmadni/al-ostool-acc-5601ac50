@@ -48,6 +48,6 @@ from public.onexa_inventory_document_reconciliation
 where status='posted'
   and reconciliation_status in (
     'journal_reversed_or_missing','journal_source_or_value_mismatch',
-    'movement_missing','inventory_value_mismatch'
+    'movement_missing','movement_journal_mismatch','inventory_value_mismatch'
   )
 group by reconciliation_status order by reconciliation_status;
