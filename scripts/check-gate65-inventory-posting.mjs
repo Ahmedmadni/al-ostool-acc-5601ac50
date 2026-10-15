@@ -34,6 +34,28 @@ assert.match(mapping, /'2120'/);
 assert.match(mapping, /'5700'/);
 assert.match(postcheck, /direct_writes_denied/);
 assert.match(postcheck, /anon_can_execute/);
+for (const marker of [
+  "onexa_guard_inventory_journal_reversal",
+  "ONEXA_INVENTORY_STOCK_COMPENSATION_REQUIRED",
+  "ONEXA_INVENTORY_JOURNAL_REVERSED_OR_MISSING",
+  "journal_reversed_or_missing",
+  "journal_source_or_value_mismatch",
+  "movement_journal_mismatch",
+  "distinct_journal_count",
+  "missing_journal_count",
+  "journal.state='posted' and journal.reversal_journal_id is null",
+  "account.category::text='liabilities'",
+  "account.category::text='assets'",
+  "ONEXA_GATE64_APPROVAL_POSTING_BRIDGE_REQUIRED",
+]) assert.ok(sql.includes(marker), `Missing inventory integrity control: ${marker}`);
+assert.match(sql, /max\(journal_id::text\)::uuid as movement_journal_id/);
+assert.doesNotMatch(sql, /min\(journal_id\)/,
+  "PostgreSQL has no built-in min(uuid) aggregate");
+assert.match(sql, /when \(old.state = 'posted' and new.state = 'reversed'\)/);
+assert.match(sql, /from public\.onexa_inventory_posting_runs posting/);
+assert.match(postcheck, /inventory_reversal_guard/);
+assert.match(postcheck, /movement_journal_mismatch/);
+assert.match(postcheck, /journal_source_or_value_mismatch/);
 assert.match(smoke, /_retry:=public\.onexa_post_inventory_document/);
 assert.match(smoke, /rollback;/i);
 assert.match(service, /documentType: input\.kind === "receipt" \? "inventory_receipt" : "inventory_issue"/);
