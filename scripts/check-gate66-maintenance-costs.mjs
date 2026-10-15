@@ -45,6 +45,11 @@ for (const marker of [
 assert.match(postcheck, /tgenabled<>'D'/);
 assert.match(postcheck, /journal_source_or_amount_mismatch/);
 assert.match(postcheck, /scope_entity_branch_mismatch/);
+assert.match(sql, /ONEXA_MAINTENANCE_SCOPE_REASSIGNMENT_FORBIDDEN/);
+assert.match(sql, /onexa_maintenance_work_order_scopes\.tenant_id=excluded\.tenant_id/);
+assert.match(sql, /onexa_maintenance_work_order_scopes\.legal_entity_id=excluded\.legal_entity_id/);
+assert.match(sql, /onexa_maintenance_work_order_scopes\.branch_id=excluded\.branch_id/);
+assert.doesNotMatch(sql, /on conflict \(work_order_id\) do update set\s+tenant_id=excluded\.tenant_id/);
 assert.match(panel, /date\.getFullYear\(\)/);
 assert.doesNotMatch(panel, /new Date\(\)\.toISOString\(\)\.slice\(0, 10\)/);
 assert.match(smoke, /_retry:=public\.onexa_post_maintenance_work_order_cost/);
