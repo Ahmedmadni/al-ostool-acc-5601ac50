@@ -7,13 +7,18 @@ do $preflight$
 begin
   if to_regprocedure('public.onexa_post_journal(uuid,text,text,integer,text,jsonb,date,text,text,text,jsonb)') is null
      or to_regclass('public.onexa_business_documents') is null
+     or to_regclass('public.onexa_journal_headers') is null
      or to_regclass('public.onexa_project_cost_centers') is null
      or to_regclass('public.ops_work_orders') is null
      or to_regprocedure('public.ops_has_company_access(uuid)') is null then
     raise exception 'ONEXA_GATE66_FOUNDATION_REQUIRED';
   end if;
   if to_regprocedure('public.onexa_approval_separation_required(text,text)') is null
-     or to_regprocedure('onexa_private.guard_approval_posting()') is null then
+     or to_regprocedure('onexa_private.guard_approval_posting()') is null
+     or not exists (select 1 from pg_trigger
+       where tgname='onexa_guard_approval_posting'
+         and tgrelid=to_regclass('public.onexa_business_documents')
+         and tgenabled<>'D' and not tgisinternal) then
     raise exception 'ONEXA_GATE64_APPROVAL_POSTING_BRIDGE_REQUIRED';
   end if;
 end;
@@ -140,12 +145,29 @@ select document.id as document_id,document.tenant_id,document.legal_entity_id,
   work_order.work_order_no,center.project_code,center.cost_center_code,
   case when document.status<>'posted' then 'not_posted'
     when posting.journal_id is distinct from document.posted_journal_id then 'journal_mismatch'
+    when journal.id is null then 'journal_reversed_or_missing'
+    when journal.source_document_type is distinct from 'maintenance_work_order_cost'
+      or journal.source_document_id is distinct from document.id::text
+      or journal.total_debit is distinct from document.gross_total
+      or journal.total_credit is distinct from document.gross_total
+      or journal.currency is distinct from document.currency
+      then 'journal_source_or_amount_mismatch'
     when posting.amount is distinct from document.gross_total then 'amount_mismatch'
     when scope.id is null or work_order.id is null or center.id is null then 'scope_missing'
+    when scope.legal_entity_id is distinct from document.legal_entity_id
+      or scope.branch_id is distinct from document.branch_id
+      or center.legal_entity_id is distinct from document.legal_entity_id
+      or center.branch_id is distinct from document.branch_id
+      then 'scope_entity_branch_mismatch'
     else 'reconciled' end as reconciliation_status
 from public.onexa_business_documents document
 left join public.onexa_maintenance_work_order_cost_postings posting
   on posting.document_id=document.id and posting.tenant_id=document.tenant_id
+  and posting.legal_entity_id=document.legal_entity_id
+left join public.onexa_journal_headers journal
+  on journal.id=posting.journal_id and journal.tenant_id=document.tenant_id
+ and journal.legal_entity_id=document.legal_entity_id
+ and journal.state='posted' and journal.reversal_journal_id is null
 left join public.onexa_maintenance_work_order_scopes scope
   on scope.id=posting.scope_id and scope.tenant_id=document.tenant_id
 left join public.ops_work_orders work_order on work_order.id=posting.work_order_id
@@ -164,7 +186,14 @@ from public.onexa_legal_entities entity cross join required_roles required
 left join public.onexa_account_role_mappings mapping
   on mapping.tenant_id=entity.tenant_id and mapping.legal_entity_id=entity.id
  and mapping.account_role=required.account_role and mapping.is_active
-where entity.is_active and mapping.id is null;
+left join public.chart_of_accounts account
+  on account.tenant_id=mapping.tenant_id and account.code=mapping.account_code
+ and account.is_active and account.account_type::text='detail'
+ and ((required.account_role='maintenance_project_cost'
+       and account.category::text in ('assets','expenses','cost_of_revenue'))
+   or (required.account_role<>'maintenance_project_cost'
+       and account.category::text='liabilities'))
+where entity.is_active and (mapping.id is null or account.code is null);
 
 create or replace function public.onexa_post_maintenance_work_order_cost(
   _document_id uuid,
@@ -202,6 +231,11 @@ begin
   if _document.status='posted' then
     if _document.posted_journal_id is not null
        and _posting.journal_id is not distinct from _document.posted_journal_id then
+      perform 1 from public.onexa_journal_headers journal
+        where journal.id=_document.posted_journal_id and journal.tenant_id=_tenant
+          and journal.legal_entity_id=_document.legal_entity_id
+          and journal.state='posted' and journal.reversal_journal_id is null;
+      if not found then raise exception 'ONEXA_MAINTENANCE_JOURNAL_REVERSED_OR_MISSING'; end if;
       return _document.posted_journal_id;
     end if;
     raise exception 'ONEXA_MAINTENANCE_COST_RETRY_STATE_INVALID';
@@ -248,6 +282,8 @@ begin
   where id=_scope.project_cost_center_id and tenant_id=_tenant and is_active for update;
   select * into _work_order from public.ops_work_orders where id=_scope.work_order_id for update;
   if _center.id is null or _work_order.id is null
+    or _center.legal_entity_id is distinct from _scope.legal_entity_id
+    or _center.branch_id is distinct from _scope.branch_id
     or not public.ops_has_company_access(_work_order.company_id)
     or _work_order.status not in ('completed','accepted')
     or _document.source_snapshot->>'work_order_id' is distinct from _work_order.id::text
