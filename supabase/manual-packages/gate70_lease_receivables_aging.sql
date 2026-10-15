@@ -5,7 +5,8 @@ do $preflight$
 begin
   if to_regprocedure('public.onexa_lease_property_financial_report(uuid,date,date)') is null
     or to_regclass('public.onexa_lease_invoice_postings') is null
-    or to_regclass('public.onexa_lease_receipt_postings') is null then
+    or to_regclass('public.onexa_lease_receipt_postings') is null
+    or to_regclass('public.onexa_journal_headers') is null then
     raise exception 'ONEXA_GATE69_LEASE_PROPERTY_REPORT_REQUIRED';
   end if;
 end $preflight$;
@@ -41,6 +42,21 @@ begin
     join public.onexa_business_documents d on d.id=p.document_id and d.tenant_id=_tenant
       and d.legal_entity_id=p.legal_entity_id and d.document_type='lease_invoice'
       and d.status='posted' and d.posted_journal_id=p.journal_id
+      and d.party_id=p.customer_id
+    join public.onexa_journal_headers invoice_journal
+      on invoice_journal.id=p.journal_id and invoice_journal.tenant_id=p.tenant_id
+     and invoice_journal.legal_entity_id=p.legal_entity_id
+     and invoice_journal.source_document_type='lease_invoice'
+     and invoice_journal.source_document_id=p.document_id::text
+     and invoice_journal.currency=d.currency
+     and invoice_journal.total_debit=p.gross_amount
+     and invoice_journal.total_credit=p.gross_amount
+    left join public.onexa_journal_headers invoice_reversal
+      on invoice_reversal.id=invoice_journal.reversal_journal_id
+     and invoice_reversal.tenant_id=invoice_journal.tenant_id
+     and invoice_reversal.legal_entity_id=invoice_journal.legal_entity_id
+     and invoice_reversal.state='posted'
+     and invoice_reversal.reversal_of_id=invoice_journal.id
     left join lateral (
       select sum(r.amount) as collected
       from public.onexa_lease_receipt_postings r
@@ -48,10 +64,32 @@ begin
         and receipt.tenant_id=_tenant and receipt.legal_entity_id=p.legal_entity_id
         and receipt.document_type='lease_receipt' and receipt.status='posted'
         and receipt.posted_journal_id=r.journal_id and receipt.accounting_date<=_as_of
+        and receipt.party_id=r.customer_id
+      join public.onexa_journal_headers receipt_journal
+        on receipt_journal.id=r.journal_id and receipt_journal.tenant_id=r.tenant_id
+       and receipt_journal.legal_entity_id=r.legal_entity_id
+       and receipt_journal.source_document_type='lease_receipt'
+       and receipt_journal.source_document_id=r.document_id::text
+       and receipt_journal.currency=receipt.currency
+       and receipt_journal.total_debit=r.amount
+       and receipt_journal.total_credit=r.amount
+      left join public.onexa_journal_headers receipt_reversal
+        on receipt_reversal.id=receipt_journal.reversal_journal_id
+       and receipt_reversal.tenant_id=receipt_journal.tenant_id
+       and receipt_reversal.legal_entity_id=receipt_journal.legal_entity_id
+       and receipt_reversal.state='posted'
+       and receipt_reversal.reversal_of_id=receipt_journal.id
       where r.tenant_id=_tenant and r.invoice_id=p.document_id
         and r.legal_entity_id=p.legal_entity_id and r.property_id=_property_id
+        and r.customer_id=p.customer_id
+        and (receipt_journal.state='posted' and receipt_journal.reversal_journal_id is null
+          or receipt_journal.state='reversed'
+            and receipt_reversal.accounting_date>_as_of)
     ) allocation on true
     where p.tenant_id=_tenant and p.property_id=_property_id and d.accounting_date<=_as_of
+      and (invoice_journal.state='posted' and invoice_journal.reversal_journal_id is null
+        or invoice_journal.state='reversed'
+          and invoice_reversal.accounting_date>_as_of)
   ), open_invoices as (
     select * from invoice_balances where outstanding>0
   ), customers as (
