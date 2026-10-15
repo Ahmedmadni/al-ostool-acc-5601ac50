@@ -6,13 +6,18 @@ do $preflight$
 begin
   if to_regprocedure('public.onexa_post_journal(uuid,text,text,integer,text,jsonb,date,text,text,text,jsonb)') is null
      or to_regclass('public.onexa_business_documents') is null
+     or to_regclass('public.onexa_journal_headers') is null
      or to_regclass('public.re_tenant_leases') is null
      or to_regclass('public.re_lease_schedules') is null
      or to_regprocedure('public.re_has_company_access(uuid)') is null then
     raise exception 'ONEXA_GATE67_FOUNDATION_REQUIRED';
   end if;
   if to_regprocedure('public.onexa_approval_separation_required(text,text)') is null
-     or to_regprocedure('onexa_private.guard_approval_posting()') is null then
+     or to_regprocedure('onexa_private.guard_approval_posting()') is null
+     or not exists (select 1 from pg_trigger
+       where tgname='onexa_guard_approval_posting'
+         and tgrelid=to_regclass('public.onexa_business_documents')
+         and tgenabled<>'D' and not tgisinternal) then
     raise exception 'ONEXA_GATE64_APPROVAL_POSTING_BRIDGE_REQUIRED';
   end if;
 end;
@@ -141,12 +146,16 @@ begin
   insert into public.onexa_lease_accounting_scopes
     (tenant_id,legal_entity_id,branch_id,tenant_lease_id,property_id,created_by)
   values (_tenant,_entity,_branch_id,_lease.id,_property,_actor)
-  on conflict (tenant_lease_id) do update set tenant_id=excluded.tenant_id,
-    legal_entity_id=excluded.legal_entity_id,branch_id=excluded.branch_id,
-    property_id=excluded.property_id,is_active=true,updated_at=now()
+  -- Do not silently transfer an established lease scope to a different legal
+  -- entity, branch, tenant or property before any accounting entry exists.
+  on conflict (tenant_lease_id) do update set
+    is_active=true,updated_at=now()
   where public.onexa_lease_accounting_scopes.tenant_id=excluded.tenant_id
+    and public.onexa_lease_accounting_scopes.legal_entity_id=excluded.legal_entity_id
+    and public.onexa_lease_accounting_scopes.branch_id=excluded.branch_id
+    and public.onexa_lease_accounting_scopes.property_id=excluded.property_id
   returning id into _scope;
-  if _scope is null then raise exception 'ONEXA_LEASE_ALREADY_SCOPED_TO_ANOTHER_TENANT'; end if;
+  if _scope is null then raise exception 'ONEXA_LEASE_SCOPE_REASSIGNMENT_FORBIDDEN'; end if;
   return _scope;
 end;
 $$;
@@ -176,25 +185,54 @@ where schedule.status='pending' and schedule.invoice_id is null and schedule.amo
   and not exists (select 1 from public.onexa_lease_invoice_postings posted
     where posted.schedule_id=schedule.id and posted.tenant_id=detail.tenant_id);
 
+-- Only effective, journal-backed receipts reduce AR. Reversed journal entries
+-- remain in the immutable audit trail but cannot suppress outstanding debt.
 create or replace view public.onexa_lease_receivables_reconciliation with (security_invoker=true) as
 select invoice.id as invoice_id,invoice.tenant_id,invoice.legal_entity_id,invoice.branch_id,
   invoice.party_id as customer_id,invoice.party_name_snapshot as customer_name,
   invoice.document_number,invoice.currency,invoice.due_date,posting.property_id,
   property.property_code,invoice.gross_total::numeric(20,4) as invoiced_amount,
-  coalesce(sum(receipt.amount),0)::numeric(20,4) as collected_amount,
-  (invoice.gross_total-coalesce(sum(receipt.amount),0))::numeric(20,4) as outstanding_amount,
+  coalesce(collected.amount,0)::numeric(20,4) as collected_amount,
+  (invoice.gross_total-coalesce(collected.amount,0))::numeric(20,4) as outstanding_amount,
   case when invoice.status<>'posted' then 'invoice_not_posted'
     when invoice.posted_journal_id is distinct from posting.journal_id then 'invoice_journal_mismatch'
-    when coalesce(sum(receipt.amount),0)>invoice.gross_total then 'overallocated'
+    when invoice_journal.id is null then 'invoice_journal_reversed_or_missing'
+    when coalesce(collected.amount,0)>invoice.gross_total then 'overallocated'
     else 'reconciled' end as reconciliation_status
 from public.onexa_business_documents invoice
 join public.onexa_lease_invoice_postings posting on posting.document_id=invoice.id
-  and posting.tenant_id=invoice.tenant_id
+  and posting.tenant_id=invoice.tenant_id and posting.legal_entity_id=invoice.legal_entity_id
 join public.re_properties property on property.id=posting.property_id
-left join public.onexa_lease_receipt_postings receipt on receipt.invoice_id=invoice.id
-  and receipt.tenant_id=invoice.tenant_id
-where invoice.document_type='lease_invoice'
-group by invoice.id,posting.property_id,posting.journal_id,property.property_code;
+left join public.onexa_journal_headers invoice_journal
+  on invoice_journal.id=posting.journal_id
+ and invoice_journal.tenant_id=invoice.tenant_id
+ and invoice_journal.legal_entity_id=invoice.legal_entity_id
+ and invoice_journal.state='posted' and invoice_journal.reversal_journal_id is null
+left join lateral (
+  select coalesce(sum(receipt.amount),0)::numeric(20,4) as amount
+  from public.onexa_lease_receipt_postings receipt
+  join public.onexa_business_documents receipt_document
+    on receipt_document.id=receipt.document_id
+   and receipt_document.tenant_id=receipt.tenant_id
+   and receipt_document.legal_entity_id=receipt.legal_entity_id
+   and receipt_document.document_type='lease_receipt'
+   and receipt_document.module_key='facilities'
+   and receipt_document.party_type='customer'
+   and receipt_document.party_id=receipt.customer_id
+   and receipt_document.status='posted'
+   and receipt_document.posted_journal_id=receipt.journal_id
+  join public.onexa_journal_headers receipt_journal
+    on receipt_journal.id=receipt.journal_id
+   and receipt_journal.tenant_id=receipt.tenant_id
+   and receipt_journal.legal_entity_id=receipt.legal_entity_id
+   and receipt_journal.state='posted' and receipt_journal.reversal_journal_id is null
+  where receipt.invoice_id=invoice.id
+    and receipt.tenant_id=invoice.tenant_id
+    and receipt.legal_entity_id=invoice.legal_entity_id
+    and receipt.customer_id=invoice.party_id
+    and receipt.property_id=posting.property_id
+) collected on true
+where invoice.document_type='lease_invoice';
 
 create or replace view public.onexa_lease_accounting_reconciliation with (security_invoker=true) as
 select document.id as document_id,document.tenant_id,document.document_type,
@@ -202,10 +240,28 @@ select document.id as document_id,document.tenant_id,document.document_type,
   coalesce(invoice_posting.journal_id,receipt_posting.journal_id) as run_journal_id,
   case when document.status<>'posted' then 'not_posted'
     when document.posted_journal_id is distinct from coalesce(invoice_posting.journal_id,receipt_posting.journal_id) then 'journal_mismatch'
+    when journal.id is null then 'journal_reversed_or_missing'
+    when journal.source_document_type is distinct from document.document_type
+      or journal.source_document_id is distinct from document.id::text
+      or journal.currency is distinct from document.currency
+      or journal.total_debit is distinct from document.gross_total
+      or journal.total_credit is distinct from document.gross_total
+      then 'journal_source_or_amount_mismatch'
     else 'reconciled' end as reconciliation_status
 from public.onexa_business_documents document
-left join public.onexa_lease_invoice_postings invoice_posting on invoice_posting.document_id=document.id
-left join public.onexa_lease_receipt_postings receipt_posting on receipt_posting.document_id=document.id
+left join public.onexa_lease_invoice_postings invoice_posting
+  on invoice_posting.document_id=document.id
+ and invoice_posting.tenant_id=document.tenant_id
+ and invoice_posting.legal_entity_id=document.legal_entity_id
+left join public.onexa_lease_receipt_postings receipt_posting
+  on receipt_posting.document_id=document.id
+ and receipt_posting.tenant_id=document.tenant_id
+ and receipt_posting.legal_entity_id=document.legal_entity_id
+left join public.onexa_journal_headers journal
+  on journal.id=coalesce(invoice_posting.journal_id,receipt_posting.journal_id)
+ and journal.tenant_id=document.tenant_id
+ and journal.legal_entity_id=document.legal_entity_id
+ and journal.state='posted' and journal.reversal_journal_id is null
 where document.document_type in ('lease_invoice','lease_receipt');
 
 create or replace view public.onexa_lease_posting_configuration_gaps with (security_invoker=true) as
@@ -215,7 +271,13 @@ select entity.tenant_id,entity.id as legal_entity_id,entity.code as legal_entity
 from public.onexa_legal_entities entity cross join roles
 left join public.onexa_account_role_mappings mapping on mapping.tenant_id=entity.tenant_id
  and mapping.legal_entity_id=entity.id and mapping.account_role=roles.account_role and mapping.is_active
-where entity.is_active and mapping.id is null;
+left join public.chart_of_accounts account on account.tenant_id=mapping.tenant_id
+ and account.code=mapping.account_code and account.is_active
+ and account.account_type::text='detail'
+ and ((roles.account_role in ('accounts_receivable','cash_or_bank') and account.category::text='assets')
+   or (roles.account_role='output_vat' and account.category::text='liabilities')
+   or (roles.account_role='rental_revenue' and account.category::text='revenue'))
+where entity.is_active and (mapping.id is null or account.code is null);
 
 create or replace function public.onexa_post_lease_invoice(_document_id uuid,_period_code text)
 returns uuid language plpgsql security definer set search_path=pg_catalog,public as $$
@@ -235,7 +297,14 @@ begin
   if not found then raise exception 'ONEXA_DOCUMENT_NOT_FOUND'; end if;
   select * into _posting from public.onexa_lease_invoice_postings where document_id=_document.id and tenant_id=_tenant;
   if _document.status='posted' then
-    if _document.posted_journal_id is not null and _posting.journal_id is not distinct from _document.posted_journal_id then return _document.posted_journal_id; end if;
+    if _document.posted_journal_id is not null and _posting.journal_id is not distinct from _document.posted_journal_id then
+      perform 1 from public.onexa_journal_headers
+        where id=_document.posted_journal_id and tenant_id=_tenant
+          and legal_entity_id=_document.legal_entity_id
+          and state='posted' and reversal_journal_id is null;
+      if not found then raise exception 'ONEXA_LEASE_INVOICE_JOURNAL_REVERSED_OR_MISSING'; end if;
+      return _document.posted_journal_id;
+    end if;
     raise exception 'ONEXA_LEASE_INVOICE_RETRY_STATE_INVALID';
   end if;
   if _document.document_type<>'lease_invoice' or _document.module_key<>'facilities' then raise exception 'ONEXA_LEASE_INVOICE_REQUIRED'; end if;
@@ -327,7 +396,14 @@ begin
   if not found then raise exception 'ONEXA_DOCUMENT_NOT_FOUND'; end if;
   select * into _run from public.onexa_lease_receipt_postings where document_id=_receipt.id and tenant_id=_tenant;
   if _receipt.status='posted' then
-    if _receipt.posted_journal_id is not null and _run.journal_id is not distinct from _receipt.posted_journal_id then return _receipt.posted_journal_id; end if;
+    if _receipt.posted_journal_id is not null and _run.journal_id is not distinct from _receipt.posted_journal_id then
+      perform 1 from public.onexa_journal_headers
+        where id=_receipt.posted_journal_id and tenant_id=_tenant
+          and legal_entity_id=_receipt.legal_entity_id
+          and state='posted' and reversal_journal_id is null;
+      if not found then raise exception 'ONEXA_LEASE_RECEIPT_JOURNAL_REVERSED_OR_MISSING'; end if;
+      return _receipt.posted_journal_id;
+    end if;
     raise exception 'ONEXA_LEASE_RECEIPT_RETRY_STATE_INVALID';
   end if;
   if _receipt.document_type<>'lease_receipt' or _receipt.module_key<>'facilities' then raise exception 'ONEXA_LEASE_RECEIPT_REQUIRED'; end if;
@@ -350,7 +426,37 @@ begin
     or _invoice.currency is distinct from _receipt.currency
     or _receipt.dimensions->>'property' is distinct from _invoice_run.property_id::text
     or _receipt.dimensions->>'customer' is distinct from _invoice_run.customer_id::text then raise exception 'ONEXA_LEASE_RECEIPT_INVOICE_MISMATCH'; end if;
-  select coalesce(sum(amount),0) into _allocated from public.onexa_lease_receipt_postings where tenant_id=_tenant and invoice_id=_invoice.id;
+  -- Locking the invoice serializes competing collections; only posted,
+  -- unreversed matching receipt journals consume its remaining balance.
+  perform 1 from public.onexa_journal_headers original_journal
+    where original_journal.id=_invoice.posted_journal_id
+      and original_journal.tenant_id=_tenant
+      and original_journal.legal_entity_id=_invoice.legal_entity_id
+      and original_journal.state='posted'
+      and original_journal.reversal_journal_id is null;
+  if not found then raise exception 'ONEXA_LEASE_INVOICE_JOURNAL_REVERSED_OR_MISSING'; end if;
+  select coalesce(sum(posting.amount),0) into _allocated
+  from public.onexa_lease_receipt_postings posting
+  join public.onexa_business_documents receipt_document
+    on receipt_document.id=posting.document_id
+   and receipt_document.tenant_id=posting.tenant_id
+   and receipt_document.legal_entity_id=posting.legal_entity_id
+   and receipt_document.document_type='lease_receipt'
+   and receipt_document.module_key='facilities'
+   and receipt_document.party_type='customer'
+   and receipt_document.party_id=posting.customer_id
+   and receipt_document.status='posted'
+   and receipt_document.posted_journal_id=posting.journal_id
+  join public.onexa_journal_headers posted_journal
+    on posted_journal.id=posting.journal_id
+   and posted_journal.tenant_id=posting.tenant_id
+   and posted_journal.legal_entity_id=posting.legal_entity_id
+   and posted_journal.state='posted'
+   and posted_journal.reversal_journal_id is null
+  where posting.tenant_id=_tenant and posting.invoice_id=_invoice.id
+    and posting.legal_entity_id=_invoice.legal_entity_id
+    and posting.customer_id=_invoice.party_id
+    and posting.property_id=_invoice_run.property_id;
   if _allocated+_receipt.gross_total>_invoice.gross_total then raise exception 'ONEXA_LEASE_RECEIPT_OVERPAYMENT'; end if;
   _reference:=nullif(btrim(_receipt.external_reference),'');
   if _reference is null then raise exception 'ONEXA_LEASE_RECEIPT_EXTERNAL_REFERENCE_REQUIRED'; end if;
