@@ -24,7 +24,7 @@ with required(gate_code, capability, object_kind, object_signature) as (
     ('G63', 'Approval inbox', 'view', 'public.onexa_approval_task_inbox'),
     ('G64', 'Approved posting bridge', 'procedure', 'onexa_private.guard_approval_posting()'),
     ('G65', 'Inventory document posting', 'procedure', 'public.onexa_post_inventory_document(uuid,text)'),
-    ('G66', 'Maintenance foundation', 'table', 'public.maintenance_work_orders'),
+    ('G66', 'Maintenance foundation', 'table', 'public.ops_work_orders'),
     ('G66', 'Maintenance cost posting', 'procedure', 'public.onexa_post_maintenance_work_order_cost(uuid,text)'),
     ('G15', 'Real estate properties', 'table', 'public.re_properties'),
     ('G15', 'Rent schedules', 'table', 'public.re_lease_schedules'),
