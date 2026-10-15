@@ -22,6 +22,16 @@ for (const pattern of [
 ]) assert.match(sql, pattern);
 assert.match(postcheck, /anon_can_report/);
 assert.match(postcheck, /RECEIPT_SOURCE_MISMATCH/);
+assert.match(sql, /invoice_journal\.state='posted'/);
+assert.match(sql, /invoice_journal\.state='reversed'/);
+assert.match(sql, /invoice_reversal\.accounting_date>_to/);
+assert.match(sql, /receipt_journal\.state='posted'/);
+assert.match(sql, /receipt_journal\.state='reversed'/);
+assert.match(sql, /receipt_reversal\.accounting_date>_to/);
+assert.match(sql, /invoice_reversal\.reversal_of_id=invoice_journal\.id/);
+assert.match(sql, /receipt_reversal\.reversal_of_id=receipt_journal\.id/);
+assert.match(postcheck, /INVOICE_GL_LINEAGE_INVALID/);
+assert.match(postcheck, /RECEIPT_GL_LINEAGE_INVALID/);
 assert.match(flags, /ONEXA_LEASE_PROPERTY_REPORT_ENABLED/);
 assert.match(service, /onexa_lease_property_financial_report/);
 assert.match(panel, /OnexaLeasePropertyReport/);
