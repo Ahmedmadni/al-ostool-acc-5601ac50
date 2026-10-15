@@ -8,6 +8,8 @@ const service = read("src/lib/real-estate/lease-accounting-service.ts");
 const report = read("src/components/real-estate/onexa-lease-property-report.tsx");
 const aging = read("src/components/real-estate/onexa-lease-aging-report.tsx");
 const flags = read("src/lib/runtime-flags.ts");
+const preflight = read("supabase/manual-packages/lease_gates_67_70_readonly_preflight.sql");
+const rollout = read("docs/runbooks/onexa-lease-gates-67-70-rollout.md");
 
 for (const pattern of [
   /ONEXA_GATE69_LEASE_PROPERTY_REPORT_REQUIRED/,
@@ -27,4 +29,13 @@ assert.match(service, /onexa_lease_receivables_aging/);
 assert.match(flags, /ONEXA_LEASE_AGING_ENABLED/);
 assert.match(report, /OnexaLeaseAgingReport/);
 assert.match(aging, /أعمار مديونيات الإيجار/);
+for (const stage of ["67", "68", "69", "70"]) {
+  assert.match(preflight, new RegExp("\\('" + stage + "'"), "Lease preflight must inventory Gate " + stage);
+}
+for (const signature of ["onexa_post_lease_invoice(uuid,text)", "onexa_lease_schedule_dashboard()", "onexa_lease_property_financial_report(uuid,date,date)", "onexa_lease_receivables_aging(uuid,date)"]) {
+  assert.ok(preflight.includes(signature), "Lease preflight missing " + signature);
+}
+assert.doesNotMatch(preflight, /^\\s*(?:begin|commit|create|alter|drop|truncate|insert|update|delete|grant|revoke|do|call)\\b/im);
+assert.match(rollout, /VITE_ENABLE_ONEXA_LEASE_AGING/);
+assert.match(rollout, /NOT VERIFIED/);
 console.log("Gate 70 lease receivables aging checks passed");
