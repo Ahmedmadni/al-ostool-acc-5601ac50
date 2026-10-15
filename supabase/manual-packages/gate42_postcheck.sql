@@ -16,6 +16,15 @@ select m.tenant_id,m.legal_entity_id,m.account_role,m.account_code,
 from public.onexa_account_role_mappings m
 left join public.chart_of_accounts a on a.tenant_id=m.tenant_id and a.code=m.account_code
 where m.account_role in ('project_wip_or_expense','cost_source_or_clearing');
+-- Any posted source whose original B4 journal has been reversed cannot be
+-- treated as a recognized project cost in the operational reconciliation.
 select tenant_id,document_number,reconciliation_status,gross_total,posted_amount
 from public.onexa_project_cost_reconciliation
 where status='posted' and reconciliation_status<>'reconciled';
+
+select reconciliation_status,count(*) as document_count
+from public.onexa_project_cost_reconciliation
+where status='posted' and reconciliation_status in
+  ('journal_reversed_or_missing','journal_source_or_amount_mismatch',
+   'project_scope_mismatch','journal_mismatch','amount_mismatch')
+group by reconciliation_status order by reconciliation_status;
