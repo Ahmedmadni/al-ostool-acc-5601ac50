@@ -235,9 +235,34 @@ begin
         and legal_entity_id = _invoice.legal_entity_id
         and state = 'posted' and reversal_journal_id is null;
     if not found then raise exception 'ONEXA_PAYMENT_INVOICE_JOURNAL_REVERSED_OR_MISSING'; end if;
-    select coalesce(sum(amount), 0) into _allocated
-      from public.onexa_supplier_payment_allocations
-      where tenant_id = _tenant and invoice_id = _invoice.id;
+    -- A reversed payment journal must not consume the supplier invoice's
+    -- outstanding balance. Keep historic allocations for audit, but do not
+    -- prevent a new approved settlement after a legitimate reversal.
+    select coalesce(sum(allocation.amount), 0) into _allocated
+      from public.onexa_supplier_payment_allocations allocation
+      join public.onexa_supplier_payment_postings posted_payment
+        on posted_payment.document_id = allocation.payment_id
+       and posted_payment.tenant_id = allocation.tenant_id
+       and posted_payment.legal_entity_id = allocation.legal_entity_id
+       and posted_payment.vendor_id = allocation.vendor_id
+      join public.onexa_business_documents payment_document
+        on payment_document.id = posted_payment.document_id
+       and payment_document.tenant_id = posted_payment.tenant_id
+       and payment_document.legal_entity_id = posted_payment.legal_entity_id
+       and payment_document.party_id = posted_payment.vendor_id
+       and payment_document.document_type = 'supplier_payment'
+       and payment_document.status = 'posted'
+       and payment_document.posted_journal_id = posted_payment.journal_id
+      join public.onexa_journal_headers payment_journal
+        on payment_journal.id = posted_payment.journal_id
+       and payment_journal.tenant_id = posted_payment.tenant_id
+       and payment_journal.legal_entity_id = posted_payment.legal_entity_id
+       and payment_journal.state = 'posted'
+       and payment_journal.reversal_journal_id is null
+      where allocation.tenant_id = _tenant
+        and allocation.invoice_id = _invoice.id
+        and allocation.legal_entity_id = _invoice.legal_entity_id
+        and allocation.vendor_id = _invoice.party_id;
     if _allocated + _allocation.amount > _invoice.gross_total then
       raise exception 'ONEXA_PAYMENT_INVOICE_OVERPAYMENT';
     end if;
