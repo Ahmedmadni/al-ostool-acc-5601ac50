@@ -29,3 +29,47 @@ where p.document_id is null or p.tenant_id is distinct from r.tenant_id
   or d.legal_entity_id is distinct from r.legal_entity_id
   or d.status is distinct from 'posted'
   or d.posted_journal_id is distinct from r.journal_id;
+
+-- Reversed journals may legitimately remain in historical invoice/receipt
+-- posting rows. Only broken lineage/invalid reversal links are anomalies.
+select p.document_id,p.tenant_id,p.property_id,
+  'INVOICE_GL_LINEAGE_INVALID' as anomaly
+from public.onexa_lease_invoice_postings p
+left join public.onexa_journal_headers journal
+  on journal.id=p.journal_id and journal.tenant_id=p.tenant_id
+ and journal.legal_entity_id=p.legal_entity_id
+left join public.onexa_journal_headers reversal
+  on reversal.id=journal.reversal_journal_id
+ and reversal.tenant_id=journal.tenant_id
+ and reversal.legal_entity_id=journal.legal_entity_id
+ and reversal.reversal_of_id=journal.id
+ and reversal.state='posted'
+where journal.id is null
+ or journal.source_document_type is distinct from 'lease_invoice'
+ or journal.source_document_id is distinct from p.document_id::text
+ or journal.total_debit is distinct from p.gross_amount
+ or journal.total_credit is distinct from p.gross_amount
+ or (journal.state='posted' and journal.reversal_journal_id is not null)
+ or (journal.state='reversed' and reversal.id is null)
+ or journal.state not in ('posted','reversed');
+
+select r.document_id,r.tenant_id,r.property_id,
+  'RECEIPT_GL_LINEAGE_INVALID' as anomaly
+from public.onexa_lease_receipt_postings r
+left join public.onexa_journal_headers journal
+  on journal.id=r.journal_id and journal.tenant_id=r.tenant_id
+ and journal.legal_entity_id=r.legal_entity_id
+left join public.onexa_journal_headers reversal
+  on reversal.id=journal.reversal_journal_id
+ and reversal.tenant_id=journal.tenant_id
+ and reversal.legal_entity_id=journal.legal_entity_id
+ and reversal.reversal_of_id=journal.id
+ and reversal.state='posted'
+where journal.id is null
+ or journal.source_document_type is distinct from 'lease_receipt'
+ or journal.source_document_id is distinct from r.document_id::text
+ or journal.total_debit is distinct from r.amount
+ or journal.total_credit is distinct from r.amount
+ or (journal.state='posted' and journal.reversal_journal_id is not null)
+ or (journal.state='reversed' and reversal.id is null)
+ or journal.state not in ('posted','reversed');

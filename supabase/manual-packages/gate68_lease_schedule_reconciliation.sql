@@ -6,6 +6,7 @@ begin
   if to_regclass('public.onexa_lease_invoice_postings') is null
     or to_regclass('public.onexa_lease_receipt_postings') is null
     or to_regclass('public.onexa_lease_accounting_scopes') is null
+    or to_regclass('public.onexa_journal_headers') is null
     or to_regprocedure('public.re_portfolio_snapshot()') is null then
     raise exception 'ONEXA_GATE67_LEASE_ACCOUNTING_REQUIRED';
   end if;
@@ -60,14 +61,37 @@ begin
   left join public.onexa_lease_accounting_scopes scope on scope.tenant_lease_id=l.id
   left join public.onexa_lease_invoice_postings p on p.schedule_id=s.id
     and p.tenant_id=_tenant and p.scope_id=scope.id
+    and exists (
+      select 1 from public.onexa_business_documents invoice
+      join public.onexa_journal_headers invoice_journal
+        on invoice_journal.id=p.journal_id
+       and invoice_journal.tenant_id=p.tenant_id
+       and invoice_journal.legal_entity_id=p.legal_entity_id
+       and invoice_journal.state='posted'
+       and invoice_journal.reversal_journal_id is null
+      where invoice.id=p.document_id and invoice.tenant_id=p.tenant_id
+        and invoice.legal_entity_id=p.legal_entity_id
+        and invoice.document_type='lease_invoice' and invoice.status='posted'
+        and invoice.posted_journal_id=p.journal_id
+    )
   left join lateral (
     select coalesce(sum(receipt.amount),0) as collected
     from public.onexa_lease_receipt_postings receipt
     join public.onexa_business_documents receipt_doc
       on receipt_doc.id=receipt.document_id and receipt_doc.tenant_id=_tenant
       and receipt_doc.legal_entity_id=p.legal_entity_id
-      and receipt_doc.document_type='lease_receipt' and receipt_doc.status='posted'
+      and receipt_doc.document_type='lease_receipt'
+      and receipt_doc.module_key='facilities'
+      and receipt_doc.party_type='customer'
+      and receipt_doc.party_id=receipt.customer_id
+      and receipt_doc.status='posted'
       and receipt_doc.posted_journal_id=receipt.journal_id
+    join public.onexa_journal_headers receipt_journal
+      on receipt_journal.id=receipt.journal_id
+     and receipt_journal.tenant_id=receipt.tenant_id
+     and receipt_journal.legal_entity_id=receipt.legal_entity_id
+     and receipt_journal.state='posted'
+     and receipt_journal.reversal_journal_id is null
     where receipt.invoice_id=p.document_id and receipt.tenant_id=_tenant
       and receipt.legal_entity_id=p.legal_entity_id and receipt.property_id=scope.property_id
   ) r on p.document_id is not null
@@ -98,14 +122,37 @@ begin
   left join public.onexa_lease_accounting_scopes scope on scope.tenant_lease_id=l.id
   left join public.onexa_lease_invoice_postings p on p.schedule_id=s.id
     and p.tenant_id=_tenant and p.scope_id=scope.id
+    and exists (
+      select 1 from public.onexa_business_documents invoice
+      join public.onexa_journal_headers invoice_journal
+        on invoice_journal.id=p.journal_id
+       and invoice_journal.tenant_id=p.tenant_id
+       and invoice_journal.legal_entity_id=p.legal_entity_id
+       and invoice_journal.state='posted'
+       and invoice_journal.reversal_journal_id is null
+      where invoice.id=p.document_id and invoice.tenant_id=p.tenant_id
+        and invoice.legal_entity_id=p.legal_entity_id
+        and invoice.document_type='lease_invoice' and invoice.status='posted'
+        and invoice.posted_journal_id=p.journal_id
+    )
   left join lateral (
     select coalesce(sum(receipt.amount),0) as collected
     from public.onexa_lease_receipt_postings receipt
     join public.onexa_business_documents receipt_doc
       on receipt_doc.id=receipt.document_id and receipt_doc.tenant_id=_tenant
       and receipt_doc.legal_entity_id=p.legal_entity_id
-      and receipt_doc.document_type='lease_receipt' and receipt_doc.status='posted'
+      and receipt_doc.document_type='lease_receipt'
+      and receipt_doc.module_key='facilities'
+      and receipt_doc.party_type='customer'
+      and receipt_doc.party_id=receipt.customer_id
+      and receipt_doc.status='posted'
       and receipt_doc.posted_journal_id=receipt.journal_id
+    join public.onexa_journal_headers receipt_journal
+      on receipt_journal.id=receipt.journal_id
+     and receipt_journal.tenant_id=receipt.tenant_id
+     and receipt_journal.legal_entity_id=receipt.legal_entity_id
+     and receipt_journal.state='posted'
+     and receipt_journal.reversal_journal_id is null
     where receipt.invoice_id=p.document_id and receipt.tenant_id=_tenant
       and receipt.legal_entity_id=p.legal_entity_id and receipt.property_id=scope.property_id
   ) r on p.document_id is not null
