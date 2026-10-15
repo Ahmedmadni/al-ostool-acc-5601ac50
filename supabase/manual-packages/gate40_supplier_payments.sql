@@ -58,25 +58,48 @@ create policy onexa_supplier_payment_allocations_read on public.onexa_supplier_p
     and onexa_private.has_module_action(auth.uid(), 'procurement', 'read')
   );
 
+-- Liability reduction must have an immutable posted payment source and a
+-- matching B4 journal. A stray allocation or unposted payment cannot suppress AP.
+-- The lateral aggregate also avoids multiplying invoices by unrelated allocations.
 create or replace view public.onexa_supplier_payables_reconciliation
 with (security_invoker = true) as
 select invoice.id as invoice_id, invoice.tenant_id, invoice.legal_entity_id,
   invoice.branch_id, invoice.party_id as vendor_id, invoice.document_number,
   invoice.currency, invoice.due_date, invoice.gross_total as invoiced_amount,
-  coalesce(sum(allocation.amount), 0)::numeric(20,4) as paid_amount,
-  (invoice.gross_total - coalesce(sum(allocation.amount), 0))::numeric(20,4) as outstanding_amount,
+  coalesce(paid.paid_amount, 0)::numeric(20,4) as paid_amount,
+  (invoice.gross_total - coalesce(paid.paid_amount, 0))::numeric(20,4) as outstanding_amount,
   case when invoice.status <> 'posted' then 'invoice_not_posted'
        when invoice.posted_journal_id is distinct from purchase_run.journal_id then 'invoice_journal_mismatch'
-       when coalesce(sum(allocation.amount), 0) > invoice.gross_total + 0.01 then 'overallocated'
+       when coalesce(paid.paid_amount, 0) > invoice.gross_total + 0.01 then 'overallocated'
        else 'reconciled' end as reconciliation_status
 from public.onexa_business_documents invoice
 left join public.onexa_purchase_posting_runs purchase_run
   on purchase_run.document_id = invoice.id
  and purchase_run.tenant_id = invoice.tenant_id
-left join public.onexa_supplier_payment_allocations allocation on allocation.invoice_id = invoice.id
-  and allocation.tenant_id = invoice.tenant_id
-where invoice.document_type = 'purchase_invoice'
-group by invoice.id, purchase_run.journal_id;
+left join lateral (
+  select coalesce(sum(allocation.amount), 0) as paid_amount
+  from public.onexa_supplier_payment_allocations allocation
+  join public.onexa_supplier_payment_postings posted_payment
+    on posted_payment.document_id = allocation.payment_id
+   and posted_payment.tenant_id = allocation.tenant_id
+   and posted_payment.legal_entity_id = allocation.legal_entity_id
+   and posted_payment.vendor_id = allocation.vendor_id
+  join public.onexa_business_documents payment_document
+    on payment_document.id = posted_payment.document_id
+   and payment_document.tenant_id = posted_payment.tenant_id
+   and payment_document.legal_entity_id = posted_payment.legal_entity_id
+   and payment_document.party_type = 'vendor'
+   and payment_document.party_id = posted_payment.vendor_id
+   and payment_document.document_type = 'supplier_payment'
+   and payment_document.module_key = 'procurement'
+   and payment_document.status = 'posted'
+   and payment_document.posted_journal_id = posted_payment.journal_id
+  where allocation.invoice_id = invoice.id
+    and allocation.tenant_id = invoice.tenant_id
+    and allocation.legal_entity_id = invoice.legal_entity_id
+    and allocation.vendor_id = invoice.party_id
+) paid on true
+where invoice.document_type = 'purchase_invoice';
 
 create or replace view public.onexa_supplier_payment_configuration_gaps
 with (security_invoker = true) as
