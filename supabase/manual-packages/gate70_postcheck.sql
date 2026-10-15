@@ -7,7 +7,7 @@ select has_function_privilege('anon','public.onexa_lease_receivables_aging(uuid,
  has_function_privilege('authenticated','public.onexa_lease_receivables_aging(uuid,date)','EXECUTE') as authenticated_can_read;
 
 select p.document_id,p.tenant_id,p.property_id,p.gross_amount,
- coalesce(sum(r.amount),0) as collected_amount
+ coalesce(sum(case when receipt_doc.id is not null and receipt_journal.id is not null then r.amount else 0 end),0) as collected_amount
 from public.onexa_lease_invoice_postings p
 left join public.onexa_lease_receipt_postings r on r.invoice_id=p.document_id and r.tenant_id=p.tenant_id
 left join public.onexa_business_documents receipt_doc
