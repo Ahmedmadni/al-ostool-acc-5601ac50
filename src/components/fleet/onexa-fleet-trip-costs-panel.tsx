@@ -15,7 +15,12 @@ export function OnexaFleetTripCostsPanel() {
   const [amount,setAmount]=useState("");
   const [reference,setReference]=useState("");
   const [description,setDescription]=useState("");
-  const [date,setDate]=useState(()=>new Date().toISOString().slice(0,10));
+  // The local day, not UTC, determines the default accrual accounting date.
+  const [date,setDate]=useState(()=>{
+    const today=new Date();
+    return [today.getFullYear(),String(today.getMonth()+1).padStart(2,"0"),
+      String(today.getDate()).padStart(2,"0")].join("-");
+  });
   const scopes=useQuery({queryKey:["onexa-fleet-trip-scopes"],queryFn:listFleetTripScopes,
     enabled:ONEXA_FLEET_TRIP_COST_POSTING_ENABLED});
   const documents=useQuery({queryKey:["onexa-fleet-trip-costs"],queryFn:listOnexaFleetTripCosts,
