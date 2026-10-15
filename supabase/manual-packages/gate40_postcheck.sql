@@ -225,7 +225,20 @@ begin
     values ('reconciliation', 'payment_allocation_source_integrity', '{}'::jsonb, 'MISSING');
   else
     execute $sql$
-      select count(*)
+      select count(*) filter (
+        where posted_payment.document_id is null
+           or payment_journal.id is null
+           or payment_document.id is null
+           or invoice.id is null
+           or (payment_journal.state = 'posted' and payment_journal.reversal_journal_id is not null)
+           or (payment_journal.state = 'reversed' and payment_journal.reversal_journal_id is null)
+           or (payment_journal.id is not null and payment_journal.state not in ('posted','reversed'))
+      ), count(*) filter (
+        where payment_journal.state = 'reversed'
+          and payment_journal.reversal_journal_id is not null
+          and posted_payment.document_id is not null
+          and payment_document.id is not null and invoice.id is not null
+      )
       from public.onexa_supplier_payment_allocations allocation
       left join public.onexa_supplier_payment_postings posted_payment
         on posted_payment.document_id = allocation.payment_id
@@ -236,8 +249,6 @@ begin
         on payment_journal.id = posted_payment.journal_id
         and payment_journal.tenant_id = posted_payment.tenant_id
         and payment_journal.legal_entity_id = posted_payment.legal_entity_id
-        and payment_journal.state = 'posted'
-        and payment_journal.reversal_journal_id is null
       left join public.onexa_business_documents payment_document
         on payment_document.id = posted_payment.document_id
         and payment_document.tenant_id = posted_payment.tenant_id
@@ -255,17 +266,14 @@ begin
         and invoice.party_id = allocation.vendor_id
         and invoice.document_type = 'purchase_invoice'
         and invoice.status = 'posted'
-      where posted_payment.document_id is null
-         or payment_journal.id is null
-         or payment_document.id is null
-         or invoice.id is null
-    $sql$ into _anomaly_count;
+    $sql$ into _anomaly_count, _pending_count;
 
     insert into onexa_gate40_postcheck_results
       (check_group, check_name, details, status)
     values (
       'reconciliation', 'payment_allocation_source_integrity',
-      jsonb_build_object('invalid_allocation_count', _anomaly_count),
+      jsonb_build_object('invalid_allocation_count', _anomaly_count,
+        'reversed_allocation_count', _pending_count),
       case when _anomaly_count = 0 then 'READY' else 'REVIEW_REQUIRED' end
     );
   end if;
