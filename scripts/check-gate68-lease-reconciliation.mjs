@@ -22,9 +22,15 @@ for (const pattern of [
 ]) assert.match(sql, pattern);
 assert.equal((sql.match(/receipt_doc\.status='posted'/g) ?? []).length, 2, "Both lease dashboard and snapshot must count only posted receipts");
 assert.match(sql, /receipt_doc\.posted_journal_id=receipt\.journal_id/);
+assert.equal((sql.match(/invoice_journal\.state='posted'/g) ?? []).length, 2,
+  "Both schedule and snapshot must ignore reversed invoice journals");
+assert.equal((sql.match(/receipt_journal\.state='posted'/g) ?? []).length, 2,
+  "Both schedule and snapshot must ignore reversed receipt journals");
+assert.equal((sql.match(/receipt_journal\.reversal_journal_id is null/g) ?? []).length, 2);
 assert.match(postcheck, /authenticated_can_snapshot/);
 assert.match(postcheck, /receipt_doc\.status='posted'/);
-assert.match(postcheck, /sum\(case when receipt_doc\.id is not null then r\.amount else 0 end\)/);
+assert.match(postcheck, /sum\(case when receipt_doc\.id is not null and receipt_journal\.id is not null then r\.amount else 0 end\)/);
+assert.match(postcheck, /receipt_journal\.state='posted'/);
 assert.match(postcheck, /having s\.invoice_id is not null/);
 assert.match(smoke, /ONEXA_GATE68_SCHEDULE_GUARD_FAILED/);
 assert.match(smoke, /ONEXA_GATE68_POSTED_LEASE_INVOICE_REQUIRED/);
