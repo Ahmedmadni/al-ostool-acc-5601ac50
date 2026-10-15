@@ -15,7 +15,12 @@ export function OnexaProjectCostsPanel() {
   const [amount, setAmount] = useState("");
   const [reference, setReference] = useState("");
   const [description, setDescription] = useState("");
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  // The accounting date should be the local day, not UTC near midnight.
+  const [date, setDate] = useState(() => {
+    const today = new Date();
+    return [today.getFullYear(), String(today.getMonth() + 1).padStart(2, "0"),
+      String(today.getDate()).padStart(2, "0")].join("-");
+  });
   const centers = useQuery({ queryKey: ["onexa-project-cost-centers"],
     queryFn: listProjectCostCenters, enabled: ONEXA_PROJECT_COST_POSTING_ENABLED });
   const documents = useQuery({ queryKey: ["onexa-project-costs"],

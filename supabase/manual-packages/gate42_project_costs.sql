@@ -5,6 +5,7 @@ begin;
 do $$ begin
   if to_regprocedure('public.onexa_post_journal(uuid,text,text,integer,text,jsonb,date,text,text,text,jsonb)') is null
     or to_regclass('public.onexa_business_documents') is null
+    or to_regclass('public.onexa_journal_headers') is null
     or to_regclass('public.onexa_account_role_mappings') is null
     or to_regprocedure('onexa_private.has_module_action(uuid,text,text)') is null then
     raise exception 'ONEXA_GATE42_FOUNDATION_REQUIRED';
@@ -72,11 +73,23 @@ select d.id as document_id, d.tenant_id, d.legal_entity_id, d.document_number,
   c.project_code, c.cost_center_code,
   case when d.status <> 'posted' then 'not_posted'
     when p.journal_id is distinct from d.posted_journal_id then 'journal_mismatch'
+    when j.id is null then 'journal_reversed_or_missing'
+    when j.source_document_type is distinct from 'project_cost'
+      or j.source_document_id is distinct from d.id::text
+      or j.total_debit is distinct from d.gross_total
+      or j.total_credit is distinct from d.gross_total
+      or j.currency is distinct from d.currency then 'journal_source_or_amount_mismatch'
     when p.amount is distinct from d.gross_total then 'amount_mismatch'
     when c.id is null then 'project_missing'
+    when c.legal_entity_id is distinct from d.legal_entity_id
+      or c.branch_id is distinct from d.branch_id then 'project_scope_mismatch'
     else 'reconciled' end as reconciliation_status
 from public.onexa_business_documents d
 left join public.onexa_project_cost_postings p on p.document_id = d.id and p.tenant_id = d.tenant_id
+  and p.legal_entity_id = d.legal_entity_id
+left join public.onexa_journal_headers j on j.id = p.journal_id
+  and j.tenant_id = d.tenant_id and j.legal_entity_id = d.legal_entity_id
+  and j.state = 'posted' and j.reversal_journal_id is null
 left join public.onexa_project_cost_centers c on c.id = p.project_cost_center_id and c.tenant_id = d.tenant_id
 where d.document_type = 'project_cost';
 
@@ -109,6 +122,11 @@ begin
       where document_id = _document.id and tenant_id = _tenant;
     if _journal is distinct from _document.posted_journal_id then
       raise exception 'ONEXA_PROJECT_COST_RETRY_JOURNAL_MISMATCH'; end if;
+    perform 1 from public.onexa_journal_headers
+      where id = _journal and tenant_id = _tenant
+        and legal_entity_id = _document.legal_entity_id
+        and state = 'posted' and reversal_journal_id is null;
+    if not found then raise exception 'ONEXA_PROJECT_COST_JOURNAL_REVERSED_OR_MISSING'; end if;
     return _journal;
   end if;
   if _document.status <> 'approved' then raise exception 'ONEXA_DOCUMENT_MUST_BE_APPROVED'; end if;
