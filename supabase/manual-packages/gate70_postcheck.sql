@@ -10,5 +10,10 @@ select p.document_id,p.tenant_id,p.property_id,p.gross_amount,
  coalesce(sum(r.amount),0) as collected_amount
 from public.onexa_lease_invoice_postings p
 left join public.onexa_lease_receipt_postings r on r.invoice_id=p.document_id and r.tenant_id=p.tenant_id
+left join public.onexa_business_documents receipt_doc
+  on receipt_doc.id=r.document_id and receipt_doc.tenant_id=p.tenant_id
+  and receipt_doc.legal_entity_id=p.legal_entity_id
+  and receipt_doc.document_type='lease_receipt' and receipt_doc.status='posted'
+  and receipt_doc.posted_journal_id=r.journal_id
 group by p.document_id,p.tenant_id,p.property_id,p.gross_amount
-having coalesce(sum(r.amount),0)>p.gross_amount;
+having coalesce(sum(case when receipt_doc.id is not null then r.amount else 0 end),0)>p.gross_amount;
