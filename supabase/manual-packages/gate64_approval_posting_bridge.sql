@@ -39,7 +39,10 @@ declare
   _definition text;
   _patched text;
   _pattern text;
+  _policy_pattern text;
   _replacement text;
+  _legacy_guard_count integer;
+  _policy_guard_count integer;
 begin
   for _target in
     select * from (values
@@ -55,22 +58,40 @@ begin
     _oid := to_regprocedure(_target.signature)::oid;
     _definition := pg_get_functiondef(_oid);
 
-    if position('onexa_approval_separation_required' in _definition) > 0 then
-      continue;
-    end if;
-
     _pattern := format(
       'if[[:space:]]+(_actor[[:space:]]*=[[:space:]]*%1$s\.created_by|%1$s\.created_by[[:space:]]*=[[:space:]]*_actor)[[:space:]]+then[[:space:]]+raise exception[[:space:]]+''ONEXA_POSTER_MUST_DIFFER_FROM_CREATOR'';[[:space:]]+end if;',
       _target.record_name
     );
+    _policy_pattern := format(
+      'if[[:space:]]+_actor[[:space:]]*=[[:space:]]*%1$s\.created_by[[:space:]]+and[[:space:]]+public\.onexa_approval_separation_required\([[:space:]]*%1$s\.document_type,[[:space:]]*''post''[[:space:]]*\)[[:space:]]+then[[:space:]]+raise exception[[:space:]]+''ONEXA_POSTER_MUST_DIFFER_FROM_CREATOR'';[[:space:]]+end if;',
+      _target.record_name
+    );
+    _legacy_guard_count := regexp_count(_definition, _pattern, 1, 'i');
+    _policy_guard_count := regexp_count(_definition, _policy_pattern, 1, 'i');
+
+    -- Never skip a legacy unconditional guard merely because a policy name
+    -- happens to be mentioned elsewhere (including in a comment).
+    if _legacy_guard_count = 0
+      and _policy_guard_count = 1 then
+      continue; -- Idempotent exact policy-aware guard.
+    end if;
+    if _legacy_guard_count <> 1
+      or _policy_guard_count <> 0
+      or position('onexa_approval_separation_required' in _definition) > 0 then
+      raise exception 'ONEXA_GATE64_GUARD_DEFINITION_AMBIGUOUS: % (legacy=%, policy=%)',
+        _target.signature, _legacy_guard_count, _policy_guard_count;
+    end if;
+
     _replacement := format(
       E'if _actor = %1$s.created_by\n     and public.onexa_approval_separation_required(%1$s.document_type, ''post'') then\n    raise exception ''ONEXA_POSTER_MUST_DIFFER_FROM_CREATOR'';\n  end if;',
       _target.record_name
     );
     _patched := regexp_replace(_definition, _pattern, _replacement, 'i');
-
-    if _patched = _definition then
-      raise exception 'ONEXA_GATE64_SEPARATION_GUARD_PATCH_FAILED: %', _target.signature;
+    if _patched = _definition
+      or regexp_count(_patched, _pattern, 1, 'i') <> 0
+      or regexp_count(_patched, _policy_pattern, 1, 'i') <> 1 then
+      raise exception 'ONEXA_GATE64_SEPARATION_GUARD_PATCH_FAILED: %',
+        _target.signature;
     end if;
     execute _patched;
   end loop;
