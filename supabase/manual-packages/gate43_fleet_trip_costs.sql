@@ -7,6 +7,7 @@ do $$ begin
     or to_regclass('public.fleet_trips') is null
     or to_regclass('public.fleet_vehicles') is null
     or to_regclass('public.onexa_business_documents') is null
+    or to_regclass('public.onexa_journal_headers') is null
     or to_regprocedure('onexa_private.has_module_action(uuid,text,text)') is null then
     raise exception 'ONEXA_GATE43_FOUNDATION_REQUIRED';
   end if;
@@ -76,11 +77,23 @@ select d.id as document_id,d.tenant_id,d.legal_entity_id,d.document_number,
   d.status,d.gross_total,p.journal_id,p.amount as posted_amount,s.trip_label,s.vehicle_label,
   case when d.status<>'posted' then 'not_posted'
     when p.journal_id is distinct from d.posted_journal_id then 'journal_mismatch'
+    when j.id is null then 'journal_reversed_or_missing'
+    when j.source_document_type is distinct from 'fleet_trip_cost'
+      or j.source_document_id is distinct from d.id::text
+      or j.total_debit is distinct from d.gross_total
+      or j.total_credit is distinct from d.gross_total
+      or j.currency is distinct from d.currency then 'journal_source_or_amount_mismatch'
     when p.amount is distinct from d.gross_total then 'amount_mismatch'
     when s.trip_id is null then 'trip_missing'
+    when s.legal_entity_id is distinct from d.legal_entity_id
+      or s.branch_id is distinct from d.branch_id then 'trip_scope_mismatch'
     else 'reconciled' end as reconciliation_status
 from public.onexa_business_documents d
-left join public.onexa_fleet_trip_cost_postings p on p.document_id=d.id and p.tenant_id=d.tenant_id
+left join public.onexa_fleet_trip_cost_postings p on p.document_id=d.id
+  and p.tenant_id=d.tenant_id and p.legal_entity_id=d.legal_entity_id
+left join public.onexa_journal_headers j on j.id=p.journal_id
+  and j.tenant_id=d.tenant_id and j.legal_entity_id=d.legal_entity_id
+  and j.state='posted' and j.reversal_journal_id is null
 left join public.onexa_fleet_trip_scopes s on s.trip_id=p.trip_id and s.tenant_id=d.tenant_id
 where d.document_type='fleet_trip_cost';
 
@@ -115,6 +128,11 @@ begin
       where document_id=_document.id and tenant_id=_tenant;
     if _journal is distinct from _document.posted_journal_id then
       raise exception 'ONEXA_FLEET_TRIP_RETRY_JOURNAL_MISMATCH'; end if;
+    perform 1 from public.onexa_journal_headers
+      where id=_journal and tenant_id=_tenant
+        and legal_entity_id=_document.legal_entity_id
+        and state='posted' and reversal_journal_id is null;
+    if not found then raise exception 'ONEXA_FLEET_TRIP_JOURNAL_REVERSED_OR_MISSING'; end if;
     return _journal;
   end if;
   if _document.status<>'approved' then raise exception 'ONEXA_DOCUMENT_MUST_BE_APPROVED'; end if;
