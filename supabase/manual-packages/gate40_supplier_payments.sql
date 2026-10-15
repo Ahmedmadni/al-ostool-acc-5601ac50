@@ -124,7 +124,13 @@ from public.onexa_legal_entities entity cross join roles
 left join public.onexa_account_role_mappings mapping
   on mapping.tenant_id = entity.tenant_id and mapping.legal_entity_id = entity.id
  and mapping.account_role = roles.account_role and mapping.is_active = true
-where entity.is_active = true and mapping.id is null;
+left join public.chart_of_accounts account
+  on account.tenant_id = mapping.tenant_id
+ and account.code = mapping.account_code
+ and account.is_active = true and account.account_type::text = 'detail'
+ and ((roles.account_role = 'accounts_payable' and account.category::text = 'liabilities')
+   or (roles.account_role = 'cash_or_bank' and account.category::text = 'assets'))
+where entity.is_active = true and (mapping.id is null or account.code is null);
 
 create or replace function public.onexa_post_supplier_payment(_document_id uuid, _period_code text)
 returns uuid language plpgsql security definer set search_path = pg_catalog, public as $$
