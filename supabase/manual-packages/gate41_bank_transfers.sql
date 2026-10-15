@@ -90,6 +90,12 @@ select document.id as document_id, document.tenant_id, document.legal_entity_id,
   case when document.status <> 'posted' then 'not_posted'
        when document.posted_journal_id is distinct from posting.journal_id then 'journal_mismatch'
        when journal.id is null then 'journal_reversed_or_missing'
+       when journal.source_document_type is distinct from 'bank_transfer'
+         or journal.source_document_id is distinct from document.id::text
+         or journal.total_debit is distinct from document.gross_total
+         or journal.total_credit is distinct from document.gross_total
+         or journal.currency is distinct from document.currency
+         then 'journal_source_or_amount_mismatch'
        when document.gross_total is distinct from posting.amount then 'amount_mismatch'
        when source.account_code is null or destination.account_code is null then 'account_missing'
        when source.legal_entity_id is distinct from document.legal_entity_id
