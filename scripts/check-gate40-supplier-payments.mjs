@@ -34,6 +34,10 @@ assert.match(smoke.trim(), /rollback;$/);
 assert.ok(!smoke.includes("commit;"));
 assert.ok(service.includes("createBusinessDocument") && service.includes("onexa_post_supplier_payment"));
 assert.ok(panel.includes("approveOnexaPayment") && route.includes("OnexaPaymentsPanel"));
+assert.match(panel, /today\.getFullYear\(\)/);
+assert.match(panel, /today\.getMonth\(\)/);
+assert.doesNotMatch(panel, /new Date\(\)\.toISOString\(\)\.slice\(0, 10\)/,
+  "The default accounting date must follow the local calendar day, not UTC");
 assert.ok(flags.includes("ONEXA_SUPPLIER_PAYMENT_POSTING_ENABLED"));
 assert.ok(env.includes('VITE_ENABLE_ONEXA_SUPPLIER_PAYMENT_POSTING=""'));
 assert.ok(pkg.scripts.verify.includes("check:gate40-supplier-payments"));
