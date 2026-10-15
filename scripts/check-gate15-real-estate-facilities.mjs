@@ -42,6 +42,9 @@ for (const dependency of [
 assert.ok(preflight.includes("v_expected constant integer := 16"), "full partial-application marker count missing");
 assert.ok(preflight.includes("re_portfolio_snapshot()"), "reporting-layer partial marker missing");
 assert.ok(preflight.includes("appears partially applied"), "partial-application stop missing");
+assert.ok(preflight.includes("ONEXA_GATE15_SAAS_TENANT_SCOPE_REQUIRED") &&
+  foundation.includes("ONEXA_GATE15_SAAS_TENANT_SCOPE_REQUIRED"),
+  "SaaS tenant-isolation guard must cover both preflight and foundation");
 assert.ok(foundation.includes("c.code='RE'") && foundation.includes("group_has_module_access(c.code,'real_estate')"), "RE/real_estate isolation missing");
 assert.match(foundation, /SECURITY DEFINER\s+SET search_path=''/s, "security-definer search_path hardening missing");
 assert.ok(foundation.includes("REVOKE INSERT,UPDATE,DELETE"), "authenticated direct-write revoke missing");
