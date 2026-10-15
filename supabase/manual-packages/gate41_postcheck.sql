@@ -37,5 +37,5 @@ where status = 'posted' and reconciliation_status <> 'reconciled';
 select reconciliation_status, count(*) as document_count
 from public.onexa_bank_transfer_reconciliation
 where status = 'posted'
-  and reconciliation_status in ('journal_reversed_or_missing','account_scope_mismatch','journal_mismatch','amount_mismatch')
+  and reconciliation_status in ('journal_reversed_or_missing','journal_source_or_amount_mismatch','account_scope_mismatch','journal_mismatch','amount_mismatch')
 group by reconciliation_status order by reconciliation_status;
