@@ -117,10 +117,15 @@ begin
     (tenant_id,legal_entity_id,branch_id,work_order_id,project_cost_center_id,created_by)
   values (_tenant,_center.legal_entity_id,_center.branch_id,_work_order.id,_center.id,_actor)
   on conflict (work_order_id) do update set
-    tenant_id=excluded.tenant_id,legal_entity_id=excluded.legal_entity_id,
-    branch_id=excluded.branch_id,project_cost_center_id=excluded.project_cost_center_id,
+    project_cost_center_id=excluded.project_cost_center_id,
     is_active=true,updated_at=now()
+  where onexa_maintenance_work_order_scopes.tenant_id=excluded.tenant_id
+    and onexa_maintenance_work_order_scopes.legal_entity_id=excluded.legal_entity_id
+    and onexa_maintenance_work_order_scopes.branch_id=excluded.branch_id
   returning id into _scope_id;
+  if _scope_id is null then
+    raise exception 'ONEXA_MAINTENANCE_SCOPE_REASSIGNMENT_FORBIDDEN';
+  end if;
   return _scope_id;
 end;
 $$;
