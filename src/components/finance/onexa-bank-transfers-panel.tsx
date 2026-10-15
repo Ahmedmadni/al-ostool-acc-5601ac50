@@ -18,7 +18,12 @@ export function OnexaBankTransfersPanel() {
   const [sourceId, setSourceId] = useState("");
   const [destinationId, setDestinationId] = useState("");
   const [amount, setAmount] = useState("");
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  // ISO-UTC can fall on a different accounting day near local midnight.
+  const [date, setDate] = useState(() => {
+    const today = new Date();
+    return [today.getFullYear(), String(today.getMonth() + 1).padStart(2, "0"),
+      String(today.getDate()).padStart(2, "0")].join("-");
+  });
   const accounts = useQuery({ queryKey: ["onexa-treasury-accounts"], queryFn: listTreasuryAccounts,
     enabled: ONEXA_BANK_TRANSFER_POSTING_ENABLED });
   const transfers = useQuery({ queryKey: ["onexa-bank-transfers"], queryFn: listOnexaBankTransfers,

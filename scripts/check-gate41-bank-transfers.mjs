@@ -37,4 +37,18 @@ assert.ok(panel.includes("approveOnexaBankTransfer") && route.includes("OnexaBan
 assert.ok(flags.includes("ONEXA_BANK_TRANSFER_POSTING_ENABLED"));
 assert.ok(env.includes('VITE_ENABLE_ONEXA_BANK_TRANSFER_POSTING=""'));
 assert.ok(pkg.scripts.verify.includes("check:gate41-bank-transfers"));
+assert.match(sql, /journal\.state = 'posted'/);
+assert.match(sql, /journal\.reversal_journal_id is null/);
+assert.match(sql, /journal_reversed_or_missing/);
+assert.match(sql, /journal_source_or_amount_mismatch/);
+assert.match(sql, /journal\.source_document_type is distinct from 'bank_transfer'/);
+assert.match(sql, /journal\.total_debit is distinct from document\.gross_total/);
+assert.match(sql, /journal\.total_credit is distinct from document\.gross_total/);
+assert.match(sql, /ONEXA_BANK_TRANSFER_JOURNAL_REVERSED_OR_MISSING/);
+assert.match(sql, /posting\.legal_entity_id = document\.legal_entity_id/);
+assert.match(sql, /account_scope_mismatch/);
+assert.match(panel, /today\.getFullYear\(\)/);
+assert.match(panel, /today\.getMonth\(\)/);
+assert.doesNotMatch(panel, /new Date\(\)\.toISOString\(\)\.slice\(0, 10\)/);
+assert.match(postcheck, /journal_reversed_or_missing/);
 console.log("Gate 41 bank transfer package checks passed");
