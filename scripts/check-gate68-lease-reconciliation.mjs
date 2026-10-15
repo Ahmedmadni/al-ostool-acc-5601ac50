@@ -20,9 +20,15 @@ for (const pattern of [
   /has_module_action\(auth\.uid\(\),'facilities','read'\)/,
   /revoke all on function/,
 ]) assert.match(sql, pattern);
+assert.equal((sql.match(/receipt_doc\.status='posted'/g) ?? []).length, 2, "Both lease dashboard and snapshot must count only posted receipts");
+assert.match(sql, /receipt_doc\.posted_journal_id=receipt\.journal_id/);
 assert.match(postcheck, /authenticated_can_snapshot/);
+assert.match(postcheck, /receipt_doc\.status='posted'/);
+assert.match(postcheck, /sum\(case when receipt_doc\.id is not null then r\.amount else 0 end\)/);
 assert.match(postcheck, /having s\.invoice_id is not null/);
 assert.match(smoke, /ONEXA_GATE68_SCHEDULE_GUARD_FAILED/);
+assert.match(smoke, /ONEXA_GATE68_POSTED_LEASE_INVOICE_REQUIRED/);
+assert.doesNotMatch(smoke, /immutability test deferred/);
 assert.match(smoke, /rollback;/i);
 assert.match(flags, /ONEXA_LEASE_RECONCILIATION_ENABLED/);
 assert.match(route, /ONEXA_LEASE_RECONCILIATION_ENABLED/);
