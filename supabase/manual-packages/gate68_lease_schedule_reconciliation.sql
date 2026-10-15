@@ -63,7 +63,13 @@ begin
   left join lateral (
     select coalesce(sum(receipt.amount),0) as collected
     from public.onexa_lease_receipt_postings receipt
+    join public.onexa_business_documents receipt_doc
+      on receipt_doc.id=receipt.document_id and receipt_doc.tenant_id=_tenant
+      and receipt_doc.legal_entity_id=p.legal_entity_id
+      and receipt_doc.document_type='lease_receipt' and receipt_doc.status='posted'
+      and receipt_doc.posted_journal_id=receipt.journal_id
     where receipt.invoice_id=p.document_id and receipt.tenant_id=_tenant
+      and receipt.legal_entity_id=p.legal_entity_id and receipt.property_id=scope.property_id
   ) r on p.document_id is not null
   where s.due_date>=current_date and (scope.id is null or scope.tenant_id=_tenant)
     and (case when p.document_id is not null then p.gross_amount>coalesce(r.collected,0)
@@ -95,7 +101,13 @@ begin
   left join lateral (
     select coalesce(sum(receipt.amount),0) as collected
     from public.onexa_lease_receipt_postings receipt
+    join public.onexa_business_documents receipt_doc
+      on receipt_doc.id=receipt.document_id and receipt_doc.tenant_id=_tenant
+      and receipt_doc.legal_entity_id=p.legal_entity_id
+      and receipt_doc.document_type='lease_receipt' and receipt_doc.status='posted'
+      and receipt_doc.posted_journal_id=receipt.journal_id
     where receipt.invoice_id=p.document_id and receipt.tenant_id=_tenant
+      and receipt.legal_entity_id=p.legal_entity_id and receipt.property_id=scope.property_id
   ) r on p.document_id is not null
   where s.due_date<=current_date+90 and (scope.id is null or scope.tenant_id=_tenant);
   return jsonb_set(_snapshot,'{receivables_90_days}',to_jsonb(round(_outstanding,2)),true);
