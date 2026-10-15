@@ -8,7 +8,12 @@ select check_name,status from (values
   ('invoice_rpc',case when to_regprocedure('public.onexa_post_lease_invoice(uuid,text)') is not null then 'READY' else 'MISSING' end),
   ('receipt_rpc',case when to_regprocedure('public.onexa_post_lease_receipt(uuid,text)') is not null then 'READY' else 'MISSING' end),
   ('reconciliation_view',case when to_regclass('public.onexa_lease_accounting_reconciliation') is not null then 'READY' else 'MISSING' end),
-  ('gate64_guard',case when to_regprocedure('onexa_private.guard_approval_posting()') is not null then 'READY' else 'MISSING' end)
+  ('gate64_guard',case when to_regprocedure('onexa_private.guard_approval_posting()') is not null
+    and exists (select 1 from pg_trigger t
+      where t.tgname='onexa_guard_approval_posting'
+        and t.tgrelid=to_regclass('public.onexa_business_documents')
+        and t.tgenabled<>'D' and not t.tgisinternal)
+    then 'READY' else 'MISSING' end)
 ) checks(check_name,status) order by check_name;
 
 select c.relname,c.relrowsecurity as rls_enabled,
@@ -54,3 +59,18 @@ where status='posted' and reconciliation_status<>'reconciled';
 select tenant_id,document_number,reconciliation_status,invoiced_amount,collected_amount,outstanding_amount
 from public.onexa_lease_receivables_reconciliation
 where reconciliation_status<>'reconciled';
+
+-- Posted documents with a reversed/missing GL source or mismatched posting
+-- are not reconciled; investigate the original invoice and receipt separately.
+select reconciliation_status,count(*) as affected_documents
+from public.onexa_lease_accounting_reconciliation
+where status='posted'
+  and reconciliation_status in
+    ('journal_reversed_or_missing','journal_source_or_amount_mismatch','journal_mismatch')
+group by reconciliation_status order by reconciliation_status;
+
+select reconciliation_status,count(*) as affected_invoices
+from public.onexa_lease_receivables_reconciliation
+where reconciliation_status in
+    ('invoice_journal_reversed_or_missing','invoice_journal_mismatch','overallocated')
+group by reconciliation_status order by reconciliation_status;
