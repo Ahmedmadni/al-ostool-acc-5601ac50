@@ -30,12 +30,12 @@ assert.match(flags, /ONEXA_LEASE_AGING_ENABLED/);
 assert.match(report, /OnexaLeaseAgingReport/);
 assert.match(aging, /أعمار مديونيات الإيجار/);
 for (const stage of ["67", "68", "69", "70"]) {
-  assert.match(preflight, new RegExp("\\('" + stage + "'"), "Lease preflight must inventory Gate " + stage);
+  assert.ok(preflight.includes("('" + stage + "'"), "Lease preflight must inventory Gate " + stage);
 }
 for (const signature of ["onexa_post_lease_invoice(uuid,text)", "onexa_lease_schedule_dashboard()", "onexa_lease_property_financial_report(uuid,date,date)", "onexa_lease_receivables_aging(uuid,date)"]) {
   assert.ok(preflight.includes(signature), "Lease preflight missing " + signature);
 }
-assert.doesNotMatch(preflight, /^\\s*(?:begin|commit|create|alter|drop|truncate|insert|update|delete|grant|revoke|do|call)\\b/im);
+assert.doesNotMatch(preflight, /^\s*(?:begin|commit|create|alter|drop|truncate|insert|update|delete|grant|revoke|do|call)\b/im);
 assert.match(rollout, /VITE_ENABLE_ONEXA_LEASE_AGING/);
 assert.match(rollout, /NOT VERIFIED/);
 console.log("Gate 70 lease receivables aging checks passed");
