@@ -15,7 +15,11 @@ begin
     raise exception 'ONEXA_GATE35_INVENTORY_FOUNDATION_REQUIRED';
   end if;
   if to_regprocedure('public.onexa_approval_separation_required(text,text)') is null
-     or to_regprocedure('onexa_private.guard_approval_posting()') is null then
+     or to_regprocedure('onexa_private.guard_approval_posting()') is null
+     or not exists (select 1 from pg_trigger
+       where tgname='onexa_guard_approval_posting'
+         and tgrelid=to_regclass('public.onexa_business_documents')
+         and tgenabled<>'D' and not tgisinternal) then
     raise exception 'ONEXA_GATE64_APPROVAL_POSTING_BRIDGE_REQUIRED';
   end if;
 end;
@@ -77,6 +81,9 @@ as
 with movement_totals as (
   select tenant_id, legal_entity_id, source_document_id,
     count(*)::integer as movement_count,
+    count(distinct journal_id)::integer as distinct_journal_count,
+    count(*) filter (where journal_id is null)::integer as missing_journal_count,
+    min(journal_id) as movement_journal_id,
     round(sum(abs(value_delta)),4) as movement_value
   from public.onexa_inventory_movements
   where movement_type in ('receipt','adjustment_out')
@@ -108,6 +115,10 @@ select document.id as document_id, document.tenant_id, document.legal_entity_id,
       or journal.currency is distinct from document.currency
       then 'journal_source_or_value_mismatch'
     when coalesce(expected.expected_movement_count,0) <> coalesce(movement.movement_count,0) then 'movement_missing'
+    when coalesce(movement.distinct_journal_count,0) <> 1
+      or coalesce(movement.missing_journal_count,0) <> 0
+      or movement.movement_journal_id is distinct from run.journal_id
+      then 'movement_journal_mismatch'
     when abs(coalesce(run.inventory_value,0)-coalesce(movement.movement_value,0)) > 0.01 then 'inventory_value_mismatch'
     else 'reconciled'
   end as reconciliation_status
