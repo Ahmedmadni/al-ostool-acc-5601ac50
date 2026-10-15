@@ -18,8 +18,15 @@ for (const signature of [
 ]) assert.ok(sql.includes(signature), "Missing Gate 64 prerequisite: " + signature);
 
 assert.match(sql, /to_regprocedure\(function_signature\)/);
-assert.match(sql, /pg_get_functiondef\(to_regprocedure\(function_signature\)\)/);
-assert.match(sql, /MANUAL_DEFINITION_REVIEW_REQUIRED/);
+assert.match(sql, /pg_get_functiondef\(routine_oid\)/);
+assert.match(sql, /regexp_count\(function_source,legacy_guard_pattern,1,'i'\)/);
+assert.match(sql, /regexp_count\(function_source,policy_guard_pattern,1,'i'\)/);
+assert.match(sql, /ONE_GUARD_PATCHABLE/);
+assert.match(sql, /ALREADY_POLICY_AWARE/);
+assert.match(sql, /GUARD_MISMATCH_REVIEW_REQUIRED/);
+assert.match(sql, /VIEW_PREFIX_MISMATCH/);
+assert.match(sql, /VIEW_EXTRA_COLUMN_BLOCKS_REPLACE/);
+assert.match(sql, /APPENDABLE/);
 assert.match(sql, /DATABASE_ACCEPTANCE_NOT_VERIFIED/);
 assert.doesNotMatch(sql, /^\s*(?:begin|commit|create|alter|drop|truncate|insert|update|delete|grant|revoke|do|call)\b/im);
 assert.match(runbook, /NO PRODUCTION SQL/);
