@@ -6,6 +6,11 @@ const sql = read("supabase/manual-packages/gate72_onexa_native_operations_sites_
 const postcheck = read("supabase/manual-packages/gate72_postcheck.sql");
 const runbook = read("docs/runbooks/onexa-gate72-native-operations-acceptance.md");
 const pkg = JSON.parse(read("package.json"));
+assert.doesNotMatch(sql, /^\$;\s*$/m, "Invalid one-dollar PL/pgSQL terminator");
+assert.equal((sql.match(/\$\$;/g) ?? []).length, 4,
+  "Both native operations guard and create function definitions must close with $;");
+assert.equal((sql.match(/set search_path=pg_catalog,public as \$\$/g) ?? []).length, 4,
+  "Expected two trigger functions and two creation RPCs");
 
 for (const name of ["onexa_operations_sites","onexa_operations_assets"]) {
   assert.match(sql,new RegExp("create table public\\."+name));
