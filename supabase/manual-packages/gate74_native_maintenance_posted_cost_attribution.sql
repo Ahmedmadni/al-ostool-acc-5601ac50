@@ -273,7 +273,7 @@ begin
   select * into _document from public.onexa_business_documents
     where id=_document_id and tenant_id=_tenant for update;
   if _document.id is null or _document.document_type<>'project_cost'
-    or _document.module_key<>'projects'
+    or _document.module_key<>'projects' or _document.origin<>'native'
     or _document.status<>'posted' or _document.posted_journal_id is null
     or _document.legal_entity_id is distinct from _work.legal_entity_id
     or _document.branch_id is distinct from _work.branch_id
@@ -350,10 +350,14 @@ select a.id as attribution_id,a.tenant_id,a.legal_entity_id,a.branch_id,
       then 'scope_missing_or_mismatched'
     when center.id is null or not center.is_active then 'cost_center_inactive_or_missing'
     when d.id is null or d.status<>'posted' or d.document_type<>'project_cost'
-      then 'document_not_posted_project_cost'
+      or d.module_key<>'projects' or d.origin<>'native'
+      or d.source_snapshot->>'source_kind' is distinct from 'unpaid_direct_cost'
+      or d.currency<>'SAR' then 'document_not_posted_project_cost'
     when p.document_id is null or p.journal_id is distinct from a.journal_id
       or p.amount is distinct from a.amount
-      or p.source_revision is distinct from a.source_revision then 'project_posting_mismatch'
+      or p.source_revision is distinct from a.source_revision
+      or p.project_cost_center_id is distinct from a.project_cost_center_id
+      then 'project_posting_mismatch'
     when j.id is null or j.state<>'posted' or j.reversal_journal_id is not null
       or j.reversal_of_id is not null then 'journal_reversed_or_missing'
     when j.source_document_type is distinct from 'project_cost'
