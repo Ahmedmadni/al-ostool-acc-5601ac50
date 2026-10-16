@@ -46,7 +46,7 @@ create index if not exists onexa_inventory_posting_runs_lookup_idx
 -- compensating receipt/issue reversal workflow is approved.
 create or replace function public.onexa_guard_inventory_journal_reversal()
 returns trigger language plpgsql security definer
-set search_path = pg_catalog, public as $
+set search_path = pg_catalog, public as $$
 begin
   if old.source_document_type in ('inventory_receipt','inventory_issue')
      and exists (
@@ -59,7 +59,7 @@ begin
   end if;
   return new;
 end;
-$;
+$$;
 drop trigger if exists onexa_guard_inventory_journal_reversal on public.onexa_journal_headers;
 create trigger onexa_guard_inventory_journal_reversal
 before update on public.onexa_journal_headers for each row
