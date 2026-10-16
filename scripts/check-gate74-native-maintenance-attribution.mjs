@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 const sql = read("supabase/manual-packages/gate74_native_maintenance_posted_cost_attribution.sql");
 const postcheck = read("supabase/manual-packages/gate74_postcheck.sql");
+const legacyGate66 = read("supabase/manual-packages/gate66_maintenance_work_order_costs.sql");
 const runbook = read("docs/runbooks/onexa-gate74-native-maintenance-cost-acceptance.md");
 const panel = read("src/components/maintenance/onexa-native-cost-attribution-panel.tsx");
 const route = read("src/routes/_authenticated/maintenance.tsx");
@@ -82,6 +83,8 @@ for (const field of [
 assert.doesNotMatch(postcheck,/^\s*(?:begin|commit|create|alter|drop|truncate|insert|update|delete|grant|revoke|call)\b/im,
   "Postcheck must be read only");
 
+assert.match(legacyGate66,/ONEXA_GATE66_LEGACY_WORK_ORDERS_NOT_SUPPORTED_ON_SAAS/);
+assert.match(legacyGate66,/to_regclass\('public\.onexa_tenants'\) is not null/);
 assert.match(runbook,/does not recognize new unpaid maintenance costs/i);
 assert.match(runbook,/two \*independent test tenants\*/);
 assert.match(runbook,/Gate 66 legacy/i);
