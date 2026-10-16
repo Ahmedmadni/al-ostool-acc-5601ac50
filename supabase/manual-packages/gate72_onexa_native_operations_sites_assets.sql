@@ -141,34 +141,58 @@ create function onexa_private.guard_native_operations_site_identity()
 returns trigger language plpgsql security definer
 set search_path=pg_catalog,public as $$
 begin
-  if row(new.tenant_id,new.legal_entity_id,new.branch_id,new.company_scope_id)
-    is distinct from
-    row(old.tenant_id,old.legal_entity_id,old.branch_id,old.company_scope_id) then
+  if tg_op='UPDATE' and
+     row(new.tenant_id,new.legal_entity_id,new.branch_id,new.company_scope_id)
+       is distinct from
+     row(old.tenant_id,old.legal_entity_id,old.branch_id,old.company_scope_id) then
     raise exception 'ONEXA_OPERATIONS_SITE_SCOPE_IMMUTABLE';
+  end if;
+  if not exists (
+    select 1 from public.onexa_company_module_scopes scope
+    join public.onexa_legal_entities entity
+      on entity.id=scope.legal_entity_id and entity.tenant_id=scope.tenant_id
+    join public.onexa_branches branch
+      on branch.id=new.branch_id and branch.tenant_id=scope.tenant_id
+     and branch.legal_entity_id=scope.legal_entity_id
+    where scope.id=new.company_scope_id and scope.tenant_id=new.tenant_id
+      and scope.legal_entity_id=new.legal_entity_id
+      and scope.legacy_company_code='OM' and scope.module_key='projects'
+      and scope.is_active and entity.is_active and branch.is_active
+  ) then
+    raise exception 'ONEXA_OPERATIONS_SITE_SCOPE_INVALID';
   end if;
   return new;
 end;
-$$;
+$;
 
 create trigger onexa_guard_native_operations_site_identity
-before update on public.onexa_operations_sites for each row
+before insert or update on public.onexa_operations_sites for each row
 execute function onexa_private.guard_native_operations_site_identity();
 
 create function onexa_private.guard_native_operations_asset_identity()
 returns trigger language plpgsql security definer
 set search_path=pg_catalog,public as $$
 begin
-  if row(new.tenant_id,new.legal_entity_id,new.branch_id,new.site_id)
-    is distinct from
-    row(old.tenant_id,old.legal_entity_id,old.branch_id,old.site_id) then
+  if tg_op='UPDATE' and
+     row(new.tenant_id,new.legal_entity_id,new.branch_id,new.site_id)
+       is distinct from
+     row(old.tenant_id,old.legal_entity_id,old.branch_id,old.site_id) then
     raise exception 'ONEXA_OPERATIONS_ASSET_SCOPE_IMMUTABLE';
+  end if;
+  if not exists (
+    select 1 from public.onexa_operations_sites site
+    where site.id=new.site_id and site.tenant_id=new.tenant_id
+      and site.legal_entity_id=new.legal_entity_id
+      and site.branch_id=new.branch_id and site.is_active
+  ) then
+    raise exception 'ONEXA_OPERATIONS_ASSET_PARENT_SITE_INVALID';
   end if;
   return new;
 end;
-$$;
+$;
 
 create trigger onexa_guard_native_operations_asset_identity
-before update on public.onexa_operations_assets for each row
+before insert or update on public.onexa_operations_assets for each row
 execute function onexa_private.guard_native_operations_asset_identity();
 
 create function public.onexa_create_operations_site(
