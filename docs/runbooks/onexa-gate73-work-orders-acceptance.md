@@ -25,6 +25,12 @@ All transitions require a nonempty reason. Completing stores the responsible act
 
 Tenant-scope RLS is enforced in `onexa_operations_work_orders` and its events table; only active workspace members with `projects.read`, plus an authorized active OM legal-entity/branch/site scope, can see orders. This does **not** implement narrower within-tenant per-branch assignee-only restrictions; these require separately authorized branch-access policies if desired.
 
+## Dashboard behavior (feature-flag OFF by default)
+
+The existing maintenance route is wrapped by `ModuleAccessGuard` **before** its data-query component mounts. On an ONEXA tenant, legacy `ops_*` requests are never made. Until Gate71/72/73 are fully accepted and both `VITE_ENABLE_ONEXA_TENANT_COMPANY_SCOPES` and `VITE_ENABLE_ONEXA_NATIVE_WORK_ORDERS` are explicitly enabled, the new dashboard stays read-disabled and presents a not-activated notice rather than a fake empty deployment. When enabled, it reads native work orders and assets under server-side RLS, and the legacy Gate66 cost widget is hidden. The original legacy-mode dashboard remains available only on a separately authorized non-tenant legacy installation.
+
+This read-only native dashboard is a first step: create, assign, approve and complete **buttons** are not enabled in the UI until staged tests establish the RPC contract and specific user roles. The backend workflow SQL is not production-ready solely because the UI displays it.
+
 ## Explicit scope exclusion
 
 There is **no GL journal**, cost recognition, inventory issue, payroll, approval workflow engine (G62–64), service-level agreement timer, push-notification trigger, full technician availability engine, or work-order UI in Gate 73. In particular, Gate66's existing legacy `ops_work_orders` cost bridge is **not** compatible with native `onexa_operations_work_orders`; it must be redesigned and approved as a separate accounting gate. No automatic migration/copy from the old legacy work-order schema is safe.
