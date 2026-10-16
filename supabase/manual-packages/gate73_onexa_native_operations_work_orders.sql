@@ -110,6 +110,9 @@ create table public.onexa_operations_work_orders (
       or assigned_to is not null)
 );
 
+create unique index onexa_work_order_tenant_id_uq
+  on public.onexa_operations_work_orders(tenant_id,id);
+
 create index onexa_wo_tenant_branch_status_idx
   on public.onexa_operations_work_orders
   (tenant_id,legal_entity_id,branch_id,status,created_at desc);
@@ -132,8 +135,6 @@ create table public.onexa_operations_work_order_events (
     references public.onexa_operations_work_orders(tenant_id,id) on delete restrict
 );
 
-create unique index onexa_work_order_tenant_id_uq
-  on public.onexa_operations_work_orders(tenant_id,id);
 create index onexa_wo_events_tenant_order_at_idx
   on public.onexa_operations_work_order_events(tenant_id,work_order_id,changed_at desc);
 
@@ -186,13 +187,13 @@ begin
           old.created_by,old.created_at) then
       raise exception 'ONEXA_WORK_ORDER_IDENTITY_IMMUTABLE';
     end if;
-    if new.status is distinct from old.status
-       and coalesce(current_setting('onexa.wo_transition_authorized',true),'')<>'true' then
-      raise exception 'ONEXA_WORK_ORDER_TRANSITION_RPC_REQUIRED';
-    end if;
     if old.status in ('accepted','cancelled')
        and new is distinct from old then
       raise exception 'ONEXA_WORK_ORDER_TERMINAL_IMMUTABLE';
+    end if;
+    if new is distinct from old
+       and coalesce(current_setting('onexa.wo_transition_authorized',true),'')<>'true' then
+      raise exception 'ONEXA_WORK_ORDER_TRANSITION_RPC_REQUIRED';
     end if;
   end if;
   return new;
