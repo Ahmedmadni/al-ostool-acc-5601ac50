@@ -38,7 +38,7 @@ for (const str of [
   "onexa_private.has_module_action(_actor,'projects','approve')",
   "onexa_private.has_module_action(_actor,'finance','read')",
   "public.onexa_has_company_module_access('OM','maintenance')",
-  "and _document.origin<>'native'",
+  "or _document.origin<>'native'",
   "_document.source_snapshot->>'source_kind' is distinct from 'unpaid_direct_cost'",
   "_posting.project_cost_center_id is distinct from _scope.project_cost_center_id",
   "_posting.journal_id is distinct from _document.posted_journal_id",
