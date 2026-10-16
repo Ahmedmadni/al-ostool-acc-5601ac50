@@ -1,0 +1,60 @@
+name: Native ONEXA SQL (Disposable PostgreSQL)
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-onexa-pg-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native-postgres-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: disposable_only
+          POSTGRES_USER: postgres
+          POSTGRES_DB: onexa_gate_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d onexa_gate_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 8
+    env:
+      PGHOST: localhost
+      PGPORT: "5432"
+      PGUSER: postgres
+      PGPASSWORD: disposable_only
+      PGDATABASE: onexa_gate_test
+      PGOPTIONS: "-c client_min_messages=warning"
+    steps:
+      - name: Check out commit
+        uses: actions/checkout@v4
+      - name: Confirm isolated database is empty
+        run: |
+          psql -X -v ON_ERROR_STOP=1 -Atc "SELECT current_database(), current_user"
+          test "$(psql -X -v ON_ERROR_STOP=1 -Atc "SELECT count(*) FROM pg_class WHERE relname = 'onexa_tenants'")" = "0"
+      - name: Install synthetic parent tables and test tenants
+        run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/native-maintenance-parent-schema.sql
+      - name: Compile actual Gate 71 SQL
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/manual-packages/gate71_onexa_tenant_company_module_scopes.sql
+      - name: Compile actual Gate 72 SQL
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/manual-packages/gate72_onexa_native_operations_sites_assets.sql
+      - name: Compile actual Gate 73 SQL
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/manual-packages/gate73_onexa_native_operations_work_orders.sql
+      - name: Compile actual Gate 74 SQL
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/manual-packages/gate74_native_maintenance_posted_cost_attribution.sql
+      - name: Compile actual Gate 75 SQL
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/manual-packages/gate75_native_maintenance_unpaid_source_review.sql
+      - name: Reject cross-tenant access and duplicate GL in synthetic UAT
+        run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/native-maintenance-two-tenant-smoke.sql
