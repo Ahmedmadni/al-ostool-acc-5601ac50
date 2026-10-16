@@ -15,7 +15,7 @@ Gate 74 adds:
 - `onexa_attribute_posted_project_cost(uuid,uuid)` — requires active current-tenant membership, `projects.approve`, `finance.read`, active OM alias, accepted work order, independent actor (neither work-order creator/completer nor original G42 poster), and currently posted/unreversed matching B4 journal. It locks records before inserting and checks for existing attribution of the same document; no `onexa_post_journal` calls
 - `onexa_native_maintenance_cost_reconciliation` and `onexa_native_maintenance_work_order_cost_totals` — security-invoker read-only reporting. Counts and totals include only currently reconciled journal-backed attributions, with anomalies separate
 
-Direct authenticated writes to mapping tables are denied; immutable SQL triggers block update/delete even from service-role DML. Reporting and base-table SELECT honor ONEXA tenant claim and role-based RLS. The existing **Gate 66 legacy cost posting package is incompatible with native Gate 73**, is not invoked, and must remain disabled in this workflow.
+Direct authenticated writes to mapping tables are denied; immutable SQL triggers block update/delete even from service-role DML. Reporting and base-table SELECT honor ONEXA tenant claim and role-based RLS. The existing **Gate 66 legacy cost posting package is incompatible with native Gate 73**. The original `gate66_maintenance_work_order_costs.sql` now fails at preflight when `onexa_tenants` exists, preventing a tenant-aware deployment from installing the unsafe legacy posting route. It is not invoked and must remain disabled in this workflow.
 
 ## Connected database findings (2026-10-16, SELECT only)
 
