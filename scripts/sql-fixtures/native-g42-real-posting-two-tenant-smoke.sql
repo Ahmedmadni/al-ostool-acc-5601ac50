@@ -243,7 +243,20 @@ reset role;
 -- Accounting reversals must change current reconciliation without
 -- editing/deleting historic source claims or introducing a second journal.
 update public.onexa_journal_headers set state='reversed'
-where id='a0000000-0000-4000-8000-000000000020';
+where id=(
+  select posted_journal_id from public.onexa_business_documents
+  where id='a0000000-0000-4000-8000-000000000021'
+);
+do $verify_actual_reversal$
+begin
+  if not exists (
+    select 1 from public.onexa_journal_headers j
+    join public.onexa_business_documents d on d.posted_journal_id=j.id
+    where d.id='a0000000-0000-4000-8000-000000000021'
+      and j.state='reversed'
+  ) then raise exception 'SMOKE_ACTUAL_GATE42_JOURNAL_NOT_REVERSED'; end if;
+end;
+$verify_actual_reversal$;
 set local role authenticated;
 do $test_reversal$
 declare
