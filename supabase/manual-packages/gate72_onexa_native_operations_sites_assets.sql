@@ -103,7 +103,14 @@ create policy onexa_operations_sites_read
       where scope.id=company_scope_id and scope.tenant_id=onexa_operations_sites.tenant_id
         and scope.legal_entity_id=onexa_operations_sites.legal_entity_id
         and scope.legacy_company_code='OM' and scope.module_key='projects'
-        and scope.is_active));
+        and scope.is_active)
+    and exists (select 1 from public.onexa_branches branch
+      join public.onexa_legal_entities entity
+        on entity.id=branch.legal_entity_id and entity.tenant_id=branch.tenant_id
+      where branch.id=onexa_operations_sites.branch_id
+        and branch.tenant_id=onexa_operations_sites.tenant_id
+        and branch.legal_entity_id=onexa_operations_sites.legal_entity_id
+        and branch.is_active and entity.is_active));
 
 create policy onexa_operations_assets_read
   on public.onexa_operations_assets for select to authenticated
@@ -117,7 +124,14 @@ create policy onexa_operations_assets_read
        and scope.legal_entity_id=site.legal_entity_id
        and scope.legacy_company_code='OM' and scope.module_key='projects'
        and scope.is_active
-      where site.id=site_id and site.tenant_id=onexa_operations_assets.tenant_id
+      join public.onexa_branches branch
+        on branch.id=site.branch_id and branch.tenant_id=site.tenant_id
+       and branch.legal_entity_id=site.legal_entity_id and branch.is_active
+      join public.onexa_legal_entities entity
+        on entity.id=branch.legal_entity_id
+       and entity.tenant_id=branch.tenant_id and entity.is_active
+      where site.id=site_id and site.is_active
+        and site.tenant_id=onexa_operations_assets.tenant_id
         and site.legal_entity_id=onexa_operations_assets.legal_entity_id
         and site.branch_id=onexa_operations_assets.branch_id));
 
