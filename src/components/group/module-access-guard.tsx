@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CustomerServiceHub } from "@/components/customer-service/customer-service-hub";
 import { useTenantContext } from "@/hooks/use-tenant-context";
 import type { OnexaModuleKey } from "@/lib/onexa-product";
+import { ONEXA_TENANT_COMPANY_SCOPES_ENABLED } from "@/lib/runtime-flags";
 
 const legacyModuleMap: Record<string, OnexaModuleKey> = {
   maintenance: "projects",
