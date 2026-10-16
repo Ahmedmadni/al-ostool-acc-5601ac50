@@ -42,7 +42,11 @@ with required(gate_code, capability, object_kind, object_signature) as (
     ('G73', 'Tenant-native work orders', 'table', 'public.onexa_operations_work_orders'),
     ('G73', 'Work order append-only events', 'table', 'public.onexa_operations_work_order_events'),
     ('G73', 'Work order create RPC', 'procedure', 'public.onexa_create_operations_work_order(uuid,uuid,uuid,uuid,text,text)'),
-    ('G73', 'Work order transition RPC', 'procedure', 'public.onexa_transition_operations_work_order(uuid,text,uuid,text)')
+    ('G73', 'Work order transition RPC', 'procedure', 'public.onexa_transition_operations_work_order(uuid,text,uuid,text)'),
+    ('G74', 'Native work order cost scopes', 'table', 'public.onexa_native_maintenance_cost_scopes'),
+    ('G74', 'Posted project cost attribution', 'table', 'public.onexa_native_maintenance_cost_attributions'),
+    ('G74', 'Cost attribution reconciliation', 'view', 'public.onexa_native_maintenance_cost_reconciliation'),
+    ('G74', 'Cost attribution procedure', 'procedure', 'public.onexa_attribute_posted_project_cost(uuid,uuid)')
 ), checked as (
  select gate_code, capability, object_kind, object_signature,
    case
