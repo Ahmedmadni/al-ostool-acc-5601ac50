@@ -18,8 +18,9 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { OnexaMaintenanceCostsPanel } from "@/components/maintenance/onexa-maintenance-costs-panel";
 import { OnexaNativeCostAttributionPanel } from "@/components/maintenance/onexa-native-cost-attribution-panel";
+import { OnexaUnpaidMaintenanceSourcePanel } from "@/components/maintenance/onexa-unpaid-maintenance-source-panel";
 import { useTenantContext } from "@/hooks/use-tenant-context";
-import { ONEXA_NATIVE_WORK_ORDERS_ENABLED, ONEXA_NATIVE_COST_ATTRIBUTION_ENABLED } from "@/lib/runtime-flags";
+import { ONEXA_NATIVE_WORK_ORDERS_ENABLED, ONEXA_NATIVE_COST_ATTRIBUTION_ENABLED, ONEXA_NATIVE_UNPAID_SOURCES_ENABLED } from "@/lib/runtime-flags";
 
 export const Route = createFileRoute("/_authenticated/maintenance")({
   component: MaintenanceModuleLanding,
@@ -176,6 +177,7 @@ function MaintenanceModuleContent() {
 
         {legacy && <OnexaMaintenanceCostsPanel />}
         {native && ONEXA_NATIVE_COST_ATTRIBUTION_ENABLED && <OnexaNativeCostAttributionPanel />}
+        {native && ONEXA_NATIVE_UNPAID_SOURCES_ENABLED && <OnexaUnpaidMaintenanceSourcePanel />}
         {!legacy && !native && (
           <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm leading-6 text-amber-800 dark:text-amber-200">
             دورة أوامر العمل ONEXA (Gate 73) غير مفعلة بعد. يلزم اعتماد وترحيل Gates 71–73 واختبارات الصلاحيات قبل العرض أو الإنشاء.

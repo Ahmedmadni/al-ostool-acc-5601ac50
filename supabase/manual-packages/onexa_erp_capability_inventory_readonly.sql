@@ -46,7 +46,12 @@ with required(gate_code, capability, object_kind, object_signature) as (
     ('G74', 'Native work order cost scopes', 'table', 'public.onexa_native_maintenance_cost_scopes'),
     ('G74', 'Posted project cost attribution', 'table', 'public.onexa_native_maintenance_cost_attributions'),
     ('G74', 'Cost attribution reconciliation', 'view', 'public.onexa_native_maintenance_cost_reconciliation'),
-    ('G74', 'Cost attribution procedure', 'procedure', 'public.onexa_attribute_posted_project_cost(uuid,uuid)')
+    ('G74', 'Cost attribution procedure', 'procedure', 'public.onexa_attribute_posted_project_cost(uuid,uuid)'),
+    ('G75', 'Unpaid source evidence', 'table', 'public.onexa_native_maintenance_unpaid_sources'),
+    ('G75', 'Evidence reconciliation', 'view', 'public.onexa_native_maintenance_source_reconciliation'),
+    ('G75', 'Register source', 'procedure', 'public.onexa_register_native_unpaid_maintenance_source(uuid,text,text,numeric,text)'),
+    ('G75', 'Independent source review', 'procedure', 'public.onexa_review_native_unpaid_maintenance_source(uuid,boolean,text)'),
+    ('G75', 'Posted source link', 'procedure', 'public.onexa_link_native_unpaid_maintenance_source(uuid,uuid)')
 ), checked as (
  select gate_code, capability, object_kind, object_signature,
    case
