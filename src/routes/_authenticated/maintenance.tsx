@@ -17,6 +17,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { OnexaMaintenanceCostsPanel } from "@/components/maintenance/onexa-maintenance-costs-panel";
+import { useTenantContext } from "@/hooks/use-tenant-context";
+import { ONEXA_NATIVE_WORK_ORDERS_ENABLED } from "@/lib/runtime-flags";
 
 export const Route = createFileRoute("/_authenticated/maintenance")({
   component: MaintenanceModuleLanding,
@@ -71,8 +73,31 @@ const cards = [
   [Gauge, "SLA والأداء", "الاستجابة والتأخير والإنتاجية وربحية العقود ومؤشرات الجودة."],
 ] as const;
 
-async function loadOpsDashboard() {
+async function loadOpsDashboard(native: boolean) {
   const db = supabase as any;
+  if (native) {
+    const [workOrders, assets, assignments] = await Promise.all([
+      db.from("onexa_operations_work_orders")
+        .select("id,work_order_no,title,priority,status,created_at")
+        .order("created_at", { ascending: false }).limit(8),
+      db.from("onexa_operations_assets")
+        .select("id", { count: "exact", head: true }).eq("is_active", true),
+      db.from("onexa_operations_work_orders")
+        .select("id", { count: "exact", head: true })
+        .in("status", ["assigned", "in_progress", "on_hold"]),
+    ]);
+    const failure = [workOrders, assets, assignments].find((x) => x.error)?.error;
+    if (failure) throw failure;
+    return {
+      requests: [] as OpsRequest[],
+      workOrders: (workOrders.data ?? []) as WorkOrder[],
+      activeAssets: assets.count ?? 0,
+      preventivePlans: 0,
+      activeAssignments: assignments.count ?? 0,
+      overdue: 0,
+    };
+  }
+
   const [requests, workOrders, assets, preventive, assignments] = await Promise.all([
     db.from("ops_service_requests").select("id,request_no,title,priority,status,requested_at,response_due_at,resolution_due_at").order("requested_at", { ascending: false }).limit(8),
     db.from("ops_work_orders").select("id,work_order_no,title,priority,status,created_at").order("created_at", { ascending: false }).limit(8),
@@ -103,10 +128,23 @@ async function loadOpsDashboard() {
   };
 }
 
+// Do not mount useQuery until company authorization succeeds.
 function MaintenanceModuleLanding() {
+  return (
+    <ModuleAccessGuard companyCode="OM" moduleKey="maintenance">
+      <MaintenanceModuleContent />
+    </ModuleAccessGuard>
+  );
+}
+
+function MaintenanceModuleContent() {
+  const tenant = useTenantContext();
+  const native = tenant.mode === "tenant" && ONEXA_NATIVE_WORK_ORDERS_ENABLED;
+  const legacy = tenant.mode === "legacy";
   const { data, isLoading, error } = useQuery({
-    queryKey: ["maintenance-operations-dashboard"],
-    queryFn: loadOpsDashboard,
+    queryKey: ["maintenance-operations-dashboard", tenant.claims, native],
+    queryFn: () => loadOpsDashboard(native),
+    enabled: legacy || native,
     retry: false,
   });
 
@@ -114,8 +152,7 @@ function MaintenanceModuleLanding() {
   const activeWorkOrders = data?.workOrders.filter((w) => ["approved", "assigned", "in_progress", "on_hold"].includes(w.status)).length ?? 0;
 
   return (
-    <ModuleAccessGuard companyCode="OM" moduleKey="maintenance">
-      <div className="space-y-6 p-4 md:p-6">
+    <div className="space-y-6 p-4 md:p-6">
         <div className="overflow-hidden rounded-3xl border border-border bg-card">
           <div className="grid gap-6 p-6 lg:grid-cols-[1.4fr_.6fr] lg:p-8">
             <div>
@@ -136,11 +173,16 @@ function MaintenanceModuleLanding() {
           </div>
         </div>
 
-        <OnexaMaintenanceCostsPanel />
+        {legacy && <OnexaMaintenanceCostsPanel />}
+        {!legacy && !native && (
+          <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm leading-6 text-amber-800 dark:text-amber-200">
+            دورة أوامر العمل ONEXA (Gate 73) غير مفعلة بعد. يلزم اعتماد وترحيل Gates 71–73 واختبارات الصلاحيات قبل العرض أو الإنشاء.
+          </div>
+        )}
 
         {error && (
           <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm leading-6 text-amber-800 dark:text-amber-200">
-            محرك الصيانة جاهز في الكود، لكن بيانات التشغيل غير متاحة في قاعدة البيانات الحالية بعد. سيظل النظام مقفلاً وظيفيًا حتى تطبيق migrations الخاصة بـ Gate 14 بعد الاعتماد.
+            تعذر تحميل بيانات الصيانة. راجع جداول المرحلة المختارة وصلاحيات المستأجر واتصال قاعدة البيانات، ولا تفعّل Gate 73 قبل اجتياز فحوص التثبيت.
           </div>
         )}
 
@@ -204,8 +246,7 @@ function MaintenanceModuleLanding() {
             </div>
           </CardContent>
         </Card>
-      </div>
-    </ModuleAccessGuard>
+    </div>
   );
 }
 
