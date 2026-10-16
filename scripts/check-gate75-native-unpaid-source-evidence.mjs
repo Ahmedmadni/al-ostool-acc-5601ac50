@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 const read = (path) => readFileSync(new URL(`../${path}`,import.meta.url),"utf8");
 const sql = read("supabase/manual-packages/gate75_native_maintenance_unpaid_source_review.sql");
 const post = read("supabase/manual-packages/gate75_postcheck.sql");
+const runtimeSmoke = read("scripts/sql-fixtures/native-maintenance-two-tenant-smoke.sql");
 const doc = read("docs/runbooks/onexa-gate75-unpaid-maintenance-source-acceptance.md");
 const svc = read("src/lib/maintenance/native-unpaid-source-service.ts");
 const panel = read("src/components/maintenance/onexa-unpaid-maintenance-source-panel.tsx");
@@ -51,6 +52,11 @@ for (const item of [
 ]) assert.ok(sql.includes(item),"Missing G75 tenant-source/finance safeguard: "+item);
 
 assert.match(sql,/create trigger onexa_guard_native_unpaid_source_write[\s\S]*before insert or update or delete/);
+assert.match(sql,/ONEXA_GATE75_RESERVED_SOURCE_REFERENCE_REQUIRES_APPROVED_CLAIM/);
+assert.equal((sql.match(/pg_advisory_xact_lock\(hashtextextended\(/g) ?? []).length,2,
+  "Registration and document guard must share serialized tenant/entity/reference lock");
+assert.match(runtimeSmoke,/SMOKE_UNTAGGED_G42_REFERENCE_BYPASS_ALLOWED/);
+assert.match(runtimeSmoke,/ONEXA_GATE75_RESERVED_SOURCE_REFERENCE_REQUIRES_APPROVED_CLAIM/);
 assert.match(sql,/create trigger onexa_guard_native_claim_business_document[\s\S]*before insert or update of source_snapshot/);
 assert.equal((sql.match(/as \$\$/g)??[]).length,5,"Expected five guarded G75 PLpgSQL functions");
 assert.equal((sql.match(/^\$\$;$/gm)??[]).length,5,"Every G75 PLpgSQL function must close with $$;");

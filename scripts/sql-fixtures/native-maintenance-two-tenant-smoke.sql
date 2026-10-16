@@ -126,6 +126,35 @@ begin
 end;
 $native_creation$;
 
+-- A reserved maintenance source must not be bookable via a normal G42
+-- document that omits the reviewed Gate75 claim. Test as privileged insert to
+-- demonstrate that the SERVER trigger, not only UI/RLS, enforces this.
+reset role;
+do $reserved_reference$
+declare
+  _blocked boolean:=false;
+begin
+  begin
+    insert into public.onexa_business_documents
+      (id,tenant_id,legal_entity_id,branch_id,document_type,module_key,
+       status,origin,currency,source_snapshot,gross_total,subtotal,
+       external_reference,document_number)
+    values (
+      'a0000000-0000-4000-8000-000000000022','tenant-smoke-A',
+      'a0000000-0000-4000-8000-000000000001',
+      'a0000000-0000-4000-8000-000000000002',
+      'project_cost','projects','draft','native','SAR','{}'::jsonb,125,125,
+      'SMOKE-SUBCONTRACT-A','BYPASS-DOC'
+    );
+  exception when others then
+    if sqlerrm<>'ONEXA_GATE75_RESERVED_SOURCE_REFERENCE_REQUIRES_APPROVED_CLAIM'
+      then raise; end if;
+    _blocked:=true;
+  end;
+  if not _blocked then raise exception 'SMOKE_UNTAGGED_G42_REFERENCE_BYPASS_ALLOWED'; end if;
+end;
+$reserved_reference$;
+
 -- Use the fixture's superuser to simulate an already posted Gate42 document;
 -- the actual Gate42 approval, accounting and posting engine is NOT under test
 -- here. This row MUST pass the G75 original document guard.
