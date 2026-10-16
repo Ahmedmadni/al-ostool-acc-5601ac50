@@ -17,7 +17,13 @@
       "reset",
       "drop",
       "truncate"
-    ]
+    ],
+    "blocked_legacy_batches_on_onexa_saas": [
+      "03_holding",
+      "04_maintenance",
+      "05_real_estate"
+    ],
+    "blocked_legacy_reason": "Legacy global company (CORE/OM/RE) and operations tables are not ONEXA tenant partitioned. Gate 71 is a separate, manual native-scope foundation, not permission to replay Gates 13–15."
   },
   "batches": [
     {
@@ -48,7 +54,9 @@
       "risk": "medium",
       "migrations": [
         "supabase/migrations/20260914090000_gate13_holding_multicompany_foundation.sql"
-      ]
+      ],
+      "onexa_saas_status": "BLOCKED_UNPARTITIONED_LEGACY_SCHEMA",
+      "required_replacement": "Tenant-aware operations/real-estate schema, RLS + composite FKs + cross-tenant negative tests. Gate 71 alone is insufficient."
     },
     {
       "id": "04_maintenance",
@@ -60,7 +68,9 @@
         "supabase/migrations/20260914110100_gate14_maintenance_runtime.sql",
         "supabase/migrations/20260914110200_gate14_maintenance_authorization_hardening.sql",
         "supabase/migrations/20260914110300_gate14_maintenance_integrity_hardening.sql"
-      ]
+      ],
+      "onexa_saas_status": "BLOCKED_UNPARTITIONED_LEGACY_SCHEMA",
+      "required_replacement": "Tenant-aware operations/real-estate schema, RLS + composite FKs + cross-tenant negative tests. Gate 71 alone is insufficient."
     },
     {
       "id": "05_real_estate",
@@ -72,7 +82,9 @@
         "supabase/migrations/20260914120200_gate15_real_estate_runtime.sql",
         "supabase/migrations/20260914120300_gate15_real_estate_integrity_hardening.sql",
         "supabase/migrations/20260914120400_gate15_real_estate_reporting_billing.sql"
-      ]
+      ],
+      "onexa_saas_status": "BLOCKED_UNPARTITIONED_LEGACY_SCHEMA",
+      "required_replacement": "Tenant-aware operations/real-estate schema, RLS + composite FKs + cross-tenant negative tests. Gate 71 alone is insufficient."
     },
     {
       "id": "06_customer_service_it",
