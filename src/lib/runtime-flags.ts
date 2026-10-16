@@ -52,6 +52,10 @@ export const ONEXA_MAINTENANCE_COST_POSTING_ENABLED =
   ONEXA_PROJECT_COST_POSTING_ENABLED &&
   import.meta.env.VITE_ENABLE_ONEXA_MAINTENANCE_COST_POSTING === "true";
 
+// Disabled until Gate 71 schema, tenant-specific mappings and negative tests pass.
+export const ONEXA_TENANT_COMPANY_SCOPES_ENABLED =
+  import.meta.env.VITE_ENABLE_ONEXA_TENANT_COMPANY_SCOPES === "true";
+
 export const ONEXA_LEASE_ACCOUNTING_ENABLED =
   ONEXA_POSTING_ENABLED &&
   import.meta.env.VITE_ENABLE_ONEXA_LEASE_ACCOUNTING === "true";
@@ -84,6 +88,7 @@ export const ONEXA_RUNTIME_READINESS = {
   fleetTripCostPosting: ONEXA_FLEET_TRIP_COST_POSTING_ENABLED,
   inventoryPosting: ONEXA_INVENTORY_POSTING_ENABLED,
   maintenanceCostPosting: ONEXA_MAINTENANCE_COST_POSTING_ENABLED,
+  tenantCompanyScopes: ONEXA_TENANT_COMPANY_SCOPES_ENABLED,
   leaseAccounting: ONEXA_LEASE_ACCOUNTING_ENABLED,
   leaseReconciliation: ONEXA_LEASE_RECONCILIATION_ENABLED,
   leasePropertyReport: ONEXA_LEASE_PROPERTY_REPORT_ENABLED,
