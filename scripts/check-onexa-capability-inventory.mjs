@@ -34,6 +34,8 @@ for (const [gate, object] of [
   ["G70", "public.onexa_lease_receivables_aging("],
   ["G71", "public.onexa_company_module_scopes"],
   ["G71", "public.onexa_has_company_module_access("],
+  ["G72", "public.onexa_operations_sites"],
+  ["G72", "public.onexa_create_operations_site("],
 ]) {
   assert.ok(inventory.includes("'" + gate + "'") && inventory.includes(object),
     "Missing feature inventory checkpoint: " + gate + " " + object);
