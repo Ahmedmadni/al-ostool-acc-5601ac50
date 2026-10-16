@@ -56,6 +56,12 @@ export const ONEXA_MAINTENANCE_COST_POSTING_ENABLED =
 export const ONEXA_TENANT_COMPANY_SCOPES_ENABLED =
   import.meta.env.VITE_ENABLE_ONEXA_TENANT_COMPANY_SCOPES === "true";
 
+// Native work orders require the tenant/company RBAC bridge (Gate 71) and
+// separately accepted Gate 72/73 schemas. Blank flags remain fail-closed.
+export const ONEXA_NATIVE_WORK_ORDERS_ENABLED =
+  ONEXA_TENANT_COMPANY_SCOPES_ENABLED &&
+  import.meta.env.VITE_ENABLE_ONEXA_NATIVE_WORK_ORDERS === "true";
+
 export const ONEXA_LEASE_ACCOUNTING_ENABLED =
   ONEXA_POSTING_ENABLED &&
   import.meta.env.VITE_ENABLE_ONEXA_LEASE_ACCOUNTING === "true";
@@ -89,6 +95,7 @@ export const ONEXA_RUNTIME_READINESS = {
   inventoryPosting: ONEXA_INVENTORY_POSTING_ENABLED,
   maintenanceCostPosting: ONEXA_MAINTENANCE_COST_POSTING_ENABLED,
   tenantCompanyScopes: ONEXA_TENANT_COMPANY_SCOPES_ENABLED,
+  nativeWorkOrders: ONEXA_NATIVE_WORK_ORDERS_ENABLED,
   leaseAccounting: ONEXA_LEASE_ACCOUNTING_ENABLED,
   leaseReconciliation: ONEXA_LEASE_RECONCILIATION_ENABLED,
   leasePropertyReport: ONEXA_LEASE_PROPERTY_REPORT_ENABLED,
