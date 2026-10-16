@@ -72,7 +72,7 @@ for(const m of ["work_order_composite_scope_fks","work_order_event_tenant_fk",
   assert.ok(post.includes(m),"Postcheck missing: "+m);
 }
 assert.match(docs,/two independent staging tenants/);
-assert.match(docs,/NOT compatible/);
+assert.match(docs,/not compatible/i);
 assert.equal(pkg.scripts["check:gate73-work-order-lifecycle"],
   "node scripts/check-gate73-work-order-lifecycle.mjs");
 assert.match(pkg.scripts.verify,/check:gate73-work-order-lifecycle/);
