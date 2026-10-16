@@ -163,7 +163,7 @@ begin
   end if;
   return new;
 end;
-$;
+$$;
 
 create trigger onexa_guard_native_operations_site_identity
 before insert or update on public.onexa_operations_sites for each row
@@ -189,7 +189,7 @@ begin
   end if;
   return new;
 end;
-$;
+$$;
 
 create trigger onexa_guard_native_operations_asset_identity
 before insert or update on public.onexa_operations_assets for each row
