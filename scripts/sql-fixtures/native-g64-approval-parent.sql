@@ -251,6 +251,10 @@ create table public.onexa_approval_decisions(
  unique(tenant_id,instance_id,step_id,decision)
 );
 
+grant select on public.onexa_approval_instances,
+ public.onexa_approval_decisions,public.onexa_approval_workflow_steps,
+ public.onexa_approval_workflows to authenticated;
+
 create function public.onexa_approval_separation_required(_document_type text,_action text)
 returns boolean language sql stable as $$
  select _document_type='project_cost' and _action='post'
