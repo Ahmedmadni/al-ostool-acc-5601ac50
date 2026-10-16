@@ -3,6 +3,10 @@ import { readFileSync } from "node:fs";
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 const sql = read("supabase/manual-packages/gate65_inventory_gl_posting.sql");
+assert.doesNotMatch(sql, /^\$;\s*$/m, "Invalid PostgreSQL one-dollar PL/pgSQL terminator");
+assert.equal((sql.match(/as \$\$/g) ?? []).length, (sql.match(/^\$\$;$/gm) ?? []).length,
+  "Every PL/pgSQL dollar quote opening must have a correctly paired closure");
+assert.ok((sql.match(/as \$\$/g) ?? []).length >= 2, "Inventory guard and posting RPC both required");
 const mapping = read("supabase/manual-packages/gate65_aoa_inventory_mapping.sql");
 const postcheck = read("supabase/manual-packages/gate65_postcheck.sql");
 const smoke = read("supabase/manual-packages/gate65_inventory_smoke_test_rollback.sql");
