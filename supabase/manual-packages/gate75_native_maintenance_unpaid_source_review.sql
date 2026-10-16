@@ -37,6 +37,15 @@ $preflight$;
 create unique index if not exists onexa_bizdoc_tenant_entity_id_uq
  on public.onexa_business_documents(tenant_id,legal_entity_id,id);
 
+-- Reserve exactly one active G42 document per reviewed maintenance source.
+-- Existing business documents are left unchanged; verify index impact first.
+create unique index if not exists onexa_gate75_one_active_document_per_claim_uq
+on public.onexa_business_documents(
+  tenant_id, (source_snapshot->>'maintenance_source_claim_id'))
+where document_type='project_cost'
+  and status not in ('cancelled','rejected')
+  and source_snapshot->>'maintenance_source_claim_id' is not null;
+
 create table public.onexa_native_maintenance_unpaid_sources (
   id uuid primary key default gen_random_uuid(),
   tenant_id text not null references public.onexa_tenants(tenant_id) on delete restrict,
@@ -381,6 +390,47 @@ begin
 end;
 $$;
 
+-- Enforce evidence review BEFORE an ordinary Gate42 project-cost
+-- document can claim a new unpaid maintenance source. The G42 approval/post
+-- engine remains the sole authority for journal creation.
+create function onexa_private.guard_native_claim_business_document()
+returns trigger language plpgsql security definer set search_path=pg_catalog,public as $$
+declare
+  _claim_id text:=new.source_snapshot->>'maintenance_source_claim_id';
+  _old_claim_id text;
+  _claim public.onexa_native_maintenance_unpaid_sources%rowtype;
+begin
+  if tg_op='UPDATE' then
+    _old_claim_id:=old.source_snapshot->>'maintenance_source_claim_id';
+    if _old_claim_id is not null and _claim_id is distinct from _old_claim_id then
+      raise exception 'ONEXA_GATE75_BUSINESS_DOCUMENT_CLAIM_IMMUTABLE';
+    end if;
+  end if;
+  if _claim_id is null then return new; end if;
+  select * into _claim from public.onexa_native_maintenance_unpaid_sources
+  where id=_claim_id::uuid and tenant_id=new.tenant_id
+    and legal_entity_id=new.legal_entity_id;
+  if _claim.id is null or _claim.status not in ('approved','linked')
+    or (_claim.status='linked' and _claim.linked_document_id is distinct from new.id)
+    or new.document_type<>'project_cost' or new.module_key<>'projects'
+    or new.origin<>'native' or new.branch_id is distinct from _claim.branch_id
+    or new.currency<>'SAR' or new.gross_total is distinct from _claim.amount
+    or upper(btrim(new.external_reference)) is distinct from _claim.source_reference
+    or new.source_snapshot->>'source_kind' is distinct from 'unpaid_direct_cost'
+    or new.source_snapshot->>'project_cost_center_id'
+      is distinct from _claim.project_cost_center_id::text then
+    raise exception 'ONEXA_GATE75_UNAPPROVED_OR_MISMATCHED_BUSINESS_DOCUMENT';
+  end if;
+  return new;
+end;
+$$;
+
+create trigger onexa_guard_native_claim_business_document
+before insert or update of source_snapshot,external_reference,gross_total,
+  tenant_id,legal_entity_id,branch_id,document_type,module_key,currency,origin
+on public.onexa_business_documents
+for each row execute function onexa_private.guard_native_claim_business_document();
+
 -- Historical source claims persist after GL reversal; CURRENT reconciliation
 -- is recalculated against journal state and Gate74 attribution on each read.
 create view public.onexa_native_maintenance_source_reconciliation
@@ -447,6 +497,8 @@ grant execute on function public.onexa_register_native_unpaid_maintenance_source
   public.onexa_review_native_unpaid_maintenance_source(uuid,boolean,text),
   public.onexa_link_native_unpaid_maintenance_source(uuid,uuid) to authenticated;
 revoke all on function onexa_private.guard_native_unpaid_source_write()
+  from public,anon,authenticated;
+revoke all on function onexa_private.guard_native_claim_business_document()
   from public,anon,authenticated;
 
 commit;
