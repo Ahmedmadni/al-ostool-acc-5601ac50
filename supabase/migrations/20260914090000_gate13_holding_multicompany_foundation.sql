@@ -1,6 +1,15 @@
 BEGIN;
 
-DO $$
+-- Historical group-company codes are global, not tenant partitioned.
+-- Never install this legacy Gate 13 script on a tenant-aware ONEXA SaaS DB.
+DO $onexa_tenant_safety$
+BEGIN
+  IF to_regclass('public.onexa_tenants') IS NOT NULL THEN
+    RAISE EXCEPTION 'ONEXA_GATE13_GLOBAL_COMPANY_SCHEMA_FORBIDDEN: use tenant-native company module scopes';
+  END IF;
+END $onexa_tenant_safety$;
+
+DO $
 DECLARE
   v_found INTEGER := 0;
 BEGIN
