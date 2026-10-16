@@ -390,18 +390,33 @@ select s.id,s.tenant_id,s.legal_entity_id,s.branch_id,
   s.amount,s.status,s.reviewed_by,s.linked_document_id,
   case
     when s.status<>'linked' then s.status
-    when d.id is null or d.status<>'posted' or
-      d.external_reference is distinct from s.source_reference or
-      d.gross_total is distinct from s.amount or
-      d.source_snapshot->>'maintenance_source_claim_id' is distinct from s.id::text
+    when d.id is null or d.status<>'posted'
+      or d.document_type<>'project_cost' or d.module_key<>'projects'
+      or d.origin<>'native' or d.currency<>'SAR'
+      or upper(btrim(d.external_reference)) is distinct from s.source_reference
+      or d.gross_total is distinct from s.amount
+      or d.source_snapshot->>'source_kind' is distinct from 'unpaid_direct_cost'
+      or d.source_snapshot->>'maintenance_source_claim_id' is distinct from s.id::text
+      or d.source_snapshot->>'project_cost_center_id'
+          is distinct from s.project_cost_center_id::text
       then 'document_changed_or_missing'
     when p.document_id is null or p.journal_id is distinct from d.posted_journal_id
       or p.project_cost_center_id is distinct from s.project_cost_center_id
+      or p.source_revision is distinct from d.revision
       or p.amount is distinct from s.amount then 'posting_mismatch'
     when j.id is null or j.state<>'posted'
       or j.reversal_journal_id is not null or j.reversal_of_id is not null
       then 'original_journal_reversed_or_missing'
+    when j.source_document_type is distinct from 'project_cost'
+      or j.source_document_id is distinct from d.id::text
+      or j.source_revision is distinct from d.revision
+      or j.currency is distinct from 'SAR'
+      or j.total_debit is distinct from s.amount
+      or j.total_credit is distinct from s.amount
+      then 'original_journal_source_or_amount_mismatch'
     when a.id is null or a.work_order_id is distinct from s.work_order_id
+      or a.branch_id is distinct from s.branch_id
+      or a.project_cost_center_id is distinct from s.project_cost_center_id
       or a.journal_id is distinct from j.id
       or a.amount is distinct from s.amount then 'gate74_attribution_mismatch'
     else 'reconciled'
