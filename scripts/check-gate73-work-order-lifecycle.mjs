@@ -60,7 +60,7 @@ assert.equal((sql.match(/\$\$;/g)||[]).length,4,
   "Four trigger/RPC PLpgSQL definitions must close with $$;");
 assert.equal((sql.match(/set search_path=pg_catalog,public as \$\$/g)||[]).length,4);
 assert.match(sql, /create trigger onexa_guard_native_work_order_events\s+before insert or update or delete/i);
-assert.match(sql, /when _target_status='assigned'/);
+assert.match(sql, /if _target_status='assigned'/);
 assert.match(sql, /contract\.status::text='active'/);
 assert.match(sql, /and \(contract\.end_date is null or contract\.end_date>=current_date\)/);
 assert.doesNotMatch(sql, /onexa_post_journal\(/i,"Work order workflow must not post GL");
@@ -72,7 +72,7 @@ for(const m of ["work_order_composite_scope_fks","work_order_event_tenant_fk",
   assert.ok(post.includes(m),"Postcheck missing: "+m);
 }
 assert.match(docs,/two independent staging tenants/);
-assert.match(docs,/not compatible/i);
+assert.match(docs,/is \\*\\*not\\*\\* compatible/i);
 assert.equal(pkg.scripts["check:gate73-work-order-lifecycle"],
   "node scripts/check-gate73-work-order-lifecycle.mjs");
 assert.match(pkg.scripts.verify,/check:gate73-work-order-lifecycle/);
