@@ -38,7 +38,11 @@ with required(gate_code, capability, object_kind, object_signature) as (
     ('G71', 'Tenant-scoped company view', 'view', 'public.onexa_active_company_module_scopes'),
     ('G72', 'Tenant-native operations sites', 'table', 'public.onexa_operations_sites'),
     ('G72', 'Tenant-native operations assets', 'table', 'public.onexa_operations_assets'),
-    ('G72', 'Tenant-native site creation', 'procedure', 'public.onexa_create_operations_site(uuid,uuid,text,text)')
+    ('G72', 'Tenant-native site creation', 'procedure', 'public.onexa_create_operations_site(uuid,uuid,text,text)'),
+    ('G73', 'Tenant-native work orders', 'table', 'public.onexa_operations_work_orders'),
+    ('G73', 'Work order append-only events', 'table', 'public.onexa_operations_work_order_events'),
+    ('G73', 'Work order create RPC', 'procedure', 'public.onexa_create_operations_work_order(uuid,uuid,uuid,uuid,text,text)'),
+    ('G73', 'Work order transition RPC', 'procedure', 'public.onexa_transition_operations_work_order(uuid,text,uuid,text)')
 ), checked as (
  select gate_code, capability, object_kind, object_signature,
    case
