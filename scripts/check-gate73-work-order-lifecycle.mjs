@@ -5,6 +5,9 @@ const read = (p) => readFileSync(new URL(`../${p}`,import.meta.url),"utf8");
 const sql = read("supabase/manual-packages/gate73_onexa_native_operations_work_orders.sql");
 const post = read("supabase/manual-packages/gate73_postcheck.sql");
 const docs = read("docs/runbooks/onexa-gate73-work-orders-acceptance.md");
+const route = read("src/routes/_authenticated/maintenance.tsx");
+const flags = read("src/lib/runtime-flags.ts");
+const env = read(".env.example");
 const pkg = JSON.parse(read("package.json"));
 
 for(const name of ["onexa_operations_work_orders","onexa_operations_work_order_events"]) {
@@ -73,4 +76,19 @@ assert.match(docs,/NOT compatible/);
 assert.equal(pkg.scripts["check:gate73-work-order-lifecycle"],
   "node scripts/check-gate73-work-order-lifecycle.mjs");
 assert.match(pkg.scripts.verify,/check:gate73-work-order-lifecycle/);
+const wrapperAt = route.indexOf("function MaintenanceModuleLanding()");
+const innerAt = route.indexOf("function MaintenanceModuleContent()");
+const queryAt = route.indexOf("const { data, isLoading, error } = useQuery(",innerAt);
+assert.ok(wrapperAt>=0 && wrapperAt<innerAt && innerAt<queryAt,
+  "Maintenance queries must be mounted after ModuleAccessGuard");
+assert.match(route.slice(wrapperAt,innerAt), /<ModuleAccessGuard companyCode="OM" moduleKey="maintenance">/);
+assert.match(route.slice(wrapperAt,innerAt), /<MaintenanceModuleContent\s*\/>/);
+assert.match(route, /enabled: legacy \|\| native/);
+assert.match(route, /if \(native\) \{/);
+assert.match(route, /from\("onexa_operations_work_orders"\)/);
+assert.match(route, /from\("onexa_operations_assets"\)/);
+assert.match(route, /!legacy && !native/);
+assert.match(route, /legacy && <OnexaMaintenanceCostsPanel \/>/);
+assert.match(flags, /ONEXA_NATIVE_WORK_ORDERS_ENABLED\s*=\s*ONEXA_TENANT_COMPANY_SCOPES_ENABLED/);
+assert.match(env, /VITE_ENABLE_ONEXA_NATIVE_WORK_ORDERS=""/);
 console.log("Gate 73 native work order lifecycle source invariants passed");
