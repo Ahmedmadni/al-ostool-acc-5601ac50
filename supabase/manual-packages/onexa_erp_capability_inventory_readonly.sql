@@ -32,7 +32,10 @@ with required(gate_code, capability, object_kind, object_signature) as (
     ('G67', 'Lease receipt posting', 'procedure', 'public.onexa_post_lease_receipt(uuid,text)'),
     ('G68', 'Lease schedule reconciliation', 'procedure', 'public.onexa_lease_schedule_dashboard()'),
     ('G69', 'Lease property report', 'procedure', 'public.onexa_lease_property_financial_report(uuid,date,date)'),
-    ('G70', 'Lease receivables aging', 'procedure', 'public.onexa_lease_receivables_aging(uuid,date)')
+    ('G70', 'Lease receivables aging', 'procedure', 'public.onexa_lease_receivables_aging(uuid,date)'),
+    ('G71', 'Tenant company module scopes', 'table', 'public.onexa_company_module_scopes'),
+    ('G71', 'Tenant-scoped company access', 'procedure', 'public.onexa_has_company_module_access(text,text)'),
+    ('G71', 'Tenant-scoped company view', 'view', 'public.onexa_active_company_module_scopes')
 ), checked as (
  select gate_code, capability, object_kind, object_signature,
    case

@@ -1,6 +1,14 @@
 BEGIN;
 
-DO $$
+-- Legacy ops_* tables use a global group-company key, not ONEXA tenant_id.
+DO $onexa_tenant_safety$
+BEGIN
+  IF to_regclass('public.onexa_tenants') IS NOT NULL THEN
+    RAISE EXCEPTION 'ONEXA_GATE14_GLOBAL_OPERATIONS_SCHEMA_FORBIDDEN: tenant-native operations required';
+  END IF;
+END $onexa_tenant_safety$;
+
+DO $
 DECLARE
   v_found integer := 0;
   v_expected constant integer := 15;

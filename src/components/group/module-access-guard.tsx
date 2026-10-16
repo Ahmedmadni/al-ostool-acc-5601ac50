@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CustomerServiceHub } from "@/components/customer-service/customer-service-hub";
 import { useTenantContext } from "@/hooks/use-tenant-context";
 import type { OnexaModuleKey } from "@/lib/onexa-product";
+import { ONEXA_TENANT_COMPANY_SCOPES_ENABLED } from "@/lib/runtime-flags";
 
 const legacyModuleMap: Record<string, OnexaModuleKey> = {
   maintenance: "projects",
@@ -34,7 +35,28 @@ export function ModuleAccessGuard({
     }
 
     if (tenant.mode === "tenant") {
-      setState(tenant.canUseModule(subscriptionModule) ? "allowed" : "denied");
+      if (!tenant.canUseModule(subscriptionModule)) {
+        setState("denied");
+        return () => { active = false; };
+      }
+
+      // An opt-in, fail-closed SERVER authorization when Gate 71 is installed.
+      // A client-side module entitlement never substitutes for tenant + company
+      // scope and a real module action granted by the database.
+      if (ONEXA_TENANT_COMPANY_SCOPES_ENABLED) {
+        setState("loading");
+        void (async () => {
+          const { data, error } = await (supabase as any).rpc(
+            "onexa_has_company_module_access",
+            { _company_code: companyCode, _legacy_module_key: moduleKey },
+          );
+          if (!active) return;
+          setState(!error && data === true ? "allowed" : "denied");
+        })();
+        return () => { active = false; };
+      }
+
+      setState("allowed");
       return () => { active = false; };
     }
 

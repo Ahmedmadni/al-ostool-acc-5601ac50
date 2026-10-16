@@ -1,6 +1,14 @@
 BEGIN;
 
-DO $$
+-- Defense in depth when a DBA runs the foundation without Gate 14 preflight.
+DO $onexa_tenant_safety$
+BEGIN
+  IF to_regclass('public.onexa_tenants') IS NOT NULL THEN
+    RAISE EXCEPTION 'ONEXA_GATE14_GLOBAL_OPERATIONS_SCHEMA_FORBIDDEN: tenant-native operations required';
+  END IF;
+END $onexa_tenant_safety$;
+
+DO $
 DECLARE
   v_found integer := 0;
 BEGIN
