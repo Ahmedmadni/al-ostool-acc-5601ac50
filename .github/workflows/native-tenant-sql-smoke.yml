@@ -108,3 +108,55 @@ jobs:
           done
       - name: Execute actual Gate 42 posting with approval-separated source and reversal smoke
         run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/native-g42-real-posting-two-tenant-smoke.sql
+
+  real-g64-approval-posting-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: disposable_only
+          POSTGRES_USER: postgres
+          POSTGRES_DB: onexa_gate_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d onexa_gate_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 8
+    env:
+      PGHOST: localhost
+      PGPORT: "5432"
+      PGUSER: postgres
+      PGPASSWORD: disposable_only
+      PGDATABASE: onexa_gate_test
+      PGOPTIONS: "-c client_min_messages=warning"
+    steps:
+      - name: Check out commit
+        uses: actions/checkout@v4
+      - name: Confirm clean disposable PostgreSQL
+        run: |
+          test "$(psql -X -v ON_ERROR_STOP=1 -Atc "SELECT current_database()")" = "onexa_gate_test"
+          test "$(psql -X -v ON_ERROR_STOP=1 -Atc "SELECT count(*) FROM pg_class WHERE relname = 'onexa_tenants'")" = "0"
+      - name: Install synthetic finance parents and tenants (NOT G42 table mocks)
+        run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/native-g64-approval-parent.sql
+      - name: Compile ACTUAL Gate 42 project cost SQL
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/manual-packages/gate42_project_costs.sql
+      - name: Compile ACTUAL Gate 64 posting approval SQL
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/manual-packages/gate64_approval_posting_bridge.sql
+      - name: Seed fake project centers AFTER real Gate 42
+        run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/native-g42-real-posting-centers.sql
+      - name: Compile Gates 71 through 75
+        run: |
+          for gate in \
+            supabase/manual-packages/gate71_onexa_tenant_company_module_scopes.sql \
+            supabase/manual-packages/gate72_onexa_native_operations_sites_assets.sql \
+            supabase/manual-packages/gate73_onexa_native_operations_work_orders.sql \
+            supabase/manual-packages/gate74_native_maintenance_posted_cost_attribution.sql \
+            supabase/manual-packages/gate75_native_maintenance_unpaid_source_review.sql; do
+            psql -X -v ON_ERROR_STOP=1 -f "$gate"
+          done
+      - name: Validate actual Gate 64 approval post step around real Gate 42 accrual and reversal
+        run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/native-g64-real-approval-posting-smoke.sql
