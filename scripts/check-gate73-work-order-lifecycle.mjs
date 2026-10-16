@@ -72,7 +72,7 @@ for(const m of ["work_order_composite_scope_fks","work_order_event_tenant_fk",
   assert.ok(post.includes(m),"Postcheck missing: "+m);
 }
 assert.match(docs,/two independent staging tenants/);
-assert.match(docs,/is \\*\\*not\\*\\* compatible/i);
+assert.ok(docs.includes("is **not** compatible"), "Legacy Gate66 cost bridge must remain blocked");
 assert.equal(pkg.scripts["check:gate73-work-order-lifecycle"],
   "node scripts/check-gate73-work-order-lifecycle.mjs");
 assert.match(pkg.scripts.verify,/check:gate73-work-order-lifecycle/);
