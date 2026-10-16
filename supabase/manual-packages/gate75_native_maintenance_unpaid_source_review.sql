@@ -221,7 +221,12 @@ begin
     ) then
     raise exception 'ONEXA_GATE75_ACCEPTED_WORK_ORDER_AND_COST_CENTER_REQUIRED';
   end if;
-  -- Conservative reference collision check across all active modules, not
+  -- Serialize the reference claim with ALL business-document inserts/edits.
+  -- Without the shared xact lock, two concurrent transactions could both
+  -- pass independent existence checks and book a duplicate cost source.
+  perform pg_advisory_xact_lock(hashtextextended(
+    _tenant||':'||_work.legal_entity_id::text||':'||_normalized,0));
+  -- Conservative reference collision check across all modules, not
   -- just Gate42; retrying a rejected document still requires manual review.
   if exists (
     select 1 from public.onexa_business_documents d
@@ -404,6 +409,22 @@ begin
     _old_claim_id:=old.source_snapshot->>'maintenance_source_claim_id';
     if _old_claim_id is not null and _claim_id is distinct from _old_claim_id then
       raise exception 'ONEXA_GATE75_BUSINESS_DOCUMENT_CLAIM_IMMUTABLE';
+    end if;
+  end if;
+  -- A reserved source reference cannot bypass finance review by creating a
+  -- normal, untagged project-cost document. Use the SAME advisory lock key as
+  -- onexa_register_native_unpaid_maintenance_source, including on UPDATE.
+  if nullif(btrim(new.external_reference),'') is not null then
+    perform pg_advisory_xact_lock(hashtextextended(
+      new.tenant_id||':'||new.legal_entity_id::text||':'||
+      upper(btrim(new.external_reference)),0));
+    if _claim_id is null and exists (
+      select 1 from public.onexa_native_maintenance_unpaid_sources source
+      where source.tenant_id=new.tenant_id
+        and source.legal_entity_id=new.legal_entity_id
+        and source.source_reference=upper(btrim(new.external_reference))
+    ) then
+      raise exception 'ONEXA_GATE75_RESERVED_SOURCE_REFERENCE_REQUIRES_APPROVED_CLAIM';
     end if;
   end if;
   if _claim_id is null then return new; end if;
