@@ -74,6 +74,12 @@ from public.onexa_native_maintenance_source_reconciliation
 where status='linked' and current_reconciliation_status<>'reconciled'
 order by tenant_id,work_order_id,id;
 
+-- Specifically inspect sources whose original G42 journal was reversed.
+select tenant_id,work_order_id,id,linked_document_id,source_reference
+from public.onexa_native_maintenance_source_reconciliation
+where current_reconciliation_status='original_journal_reversed_or_missing'
+order by tenant_id,work_order_id,id;
+
 -- Approval completeness, for financial review, not automated approval.
 select id,tenant_id,source_reference,status,created_by,reviewed_by,linked_document_id
 from public.onexa_native_maintenance_unpaid_sources
