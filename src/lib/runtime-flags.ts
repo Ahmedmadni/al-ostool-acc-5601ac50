@@ -62,6 +62,12 @@ export const ONEXA_NATIVE_WORK_ORDERS_ENABLED =
   ONEXA_TENANT_COMPANY_SCOPES_ENABLED &&
   import.meta.env.VITE_ENABLE_ONEXA_NATIVE_WORK_ORDERS === "true";
 
+// Gate74 is READ-ONLY attribution of already posted Gate42 costs, never a
+// second maintenance accrual. Activate only after finance/UAT postchecks.
+export const ONEXA_NATIVE_COST_ATTRIBUTION_ENABLED =
+  ONEXA_NATIVE_WORK_ORDERS_ENABLED &&
+  import.meta.env.VITE_ENABLE_ONEXA_NATIVE_COST_ATTRIBUTION === "true";
+
 export const ONEXA_LEASE_ACCOUNTING_ENABLED =
   ONEXA_POSTING_ENABLED &&
   import.meta.env.VITE_ENABLE_ONEXA_LEASE_ACCOUNTING === "true";
@@ -96,6 +102,7 @@ export const ONEXA_RUNTIME_READINESS = {
   maintenanceCostPosting: ONEXA_MAINTENANCE_COST_POSTING_ENABLED,
   tenantCompanyScopes: ONEXA_TENANT_COMPANY_SCOPES_ENABLED,
   nativeWorkOrders: ONEXA_NATIVE_WORK_ORDERS_ENABLED,
+  nativeCostAttribution: ONEXA_NATIVE_COST_ATTRIBUTION_ENABLED,
   leaseAccounting: ONEXA_LEASE_ACCOUNTING_ENABLED,
   leaseReconciliation: ONEXA_LEASE_RECONCILIATION_ENABLED,
   leasePropertyReport: ONEXA_LEASE_PROPERTY_REPORT_ENABLED,

@@ -3,6 +3,18 @@
 -- must never be entered again through this accrual/clearing route.
 begin;
 
+-- Gate66 was designed around legacy tenant-unaware public.ops_work_orders.
+-- A native ONEXA Customer Data Plane MUST NOT install both the legacy
+-- maintenance posting engine and Gate73/74 native work-order attribution.
+-- This is a posting safety block, not a data migration or a replacement.
+do $native_guard$
+begin
+  if to_regclass('public.onexa_tenants') is not null then
+    raise exception 'ONEXA_GATE66_LEGACY_WORK_ORDERS_NOT_SUPPORTED_ON_SAAS: use native Gate73/74 attribution and separately approved accounting';
+  end if;
+end
+$native_guard$;
+
 do $preflight$
 begin
   if to_regprocedure('public.onexa_post_journal(uuid,text,text,integer,text,jsonb,date,text,text,text,jsonb)') is null
