@@ -44,3 +44,7 @@ The linked Supabase connector lists **one Free-plan organization**, `Ahmedmadni'
 The latest Lovable bot commit `e3562c204c2fdedfbee24bb70c4b4be123bafd52` touched five files: `package.json`, `bun.lock`, `src/integrations/supabase/previewAuthStorage.ts`, `src/integrations/supabase/types.ts` and `src/routeTree.gen.ts`. It is **not accurate** to describe it as changing package files only. The preview auth broker changes require login/logout testing inside a real Lovable preview. Generated files should not be edited manually without ownership of the generator.
 
 GitHub build/typecheck/source assertions provide protection for the current packages but cannot certify preview session behavior or project security on their own.
+
+### Generated types drift from the uninstalled Gate64 view
+
+The regenerated Supabase types correctly describe the **current production** `onexa_accounting_inbox`, which does **not** yet contain `approval_instance_id`, `posting_step_name` or `can_current_user_post`. These three computed columns are projected only by `gate64_approval_posting_bridge.sql`. The source-column checker now requires the exact Gate64 view expressions before treating them as deferred; unknown columns still fail CI. The actual `listAccountingInbox` runtime path reads only currently installed columns and returns `can_current_user_post=false` until the independent, off-by-default `VITE_ENABLE_ONEXA_APPROVAL_POSTING` flag is enabled after Gate64 installation and checks. No Supabase generated types, remote schema or account permissions were artificially modified.
