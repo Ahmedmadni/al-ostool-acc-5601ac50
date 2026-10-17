@@ -7,6 +7,11 @@ export const ONEXA_PROVISIONING_ENABLED =
   import.meta.env.VITE_ENABLE_ONEXA_PROVISIONING === "true";
 export const ONEXA_POSTING_ENABLED =
   import.meta.env.VITE_ENABLE_ONEXA_POSTING === "true";
+// The three extra accounting-inbox projection columns exist only after Gate64.
+export const ONEXA_APPROVAL_POSTING_ENABLED =
+  ONEXA_POSTING_ENABLED &&
+  import.meta.env.VITE_ENABLE_ONEXA_APPROVAL_POSTING === "true";
+
 export const ONEXA_MANUAL_JOURNALS_ENABLED =
   ONEXA_POSTING_ENABLED && import.meta.env.VITE_ENABLE_ONEXA_MANUAL_JOURNALS === "true";
 export const ONEXA_WORKSPACE_ACCOUNTANT_ACTIVATION_ENABLED =
@@ -94,6 +99,7 @@ export const ONEXA_LEASE_AGING_ENABLED =
 export const ONEXA_RUNTIME_READINESS = {
   provisioning: ONEXA_PROVISIONING_ENABLED,
   posting: ONEXA_POSTING_ENABLED,
+  approvalPosting: ONEXA_APPROVAL_POSTING_ENABLED,
   manualJournals: ONEXA_MANUAL_JOURNALS_ENABLED,
   workspaceAccountantActivation: ONEXA_WORKSPACE_ACCOUNTANT_ACTIVATION_ENABLED,
   salesPosting: ONEXA_SALES_POSTING_ENABLED,
