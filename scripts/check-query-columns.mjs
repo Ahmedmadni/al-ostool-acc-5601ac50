@@ -80,6 +80,26 @@ for (const [key, migration] of pendingSchema) {
 }
 
 
+// Gate64 defines these as computed view columns, not ALTER TABLE columns.
+// Lovable's regenerated types reflect the CURRENT (pre-G64) production view.
+// Do not mutate generated types or silently accept arbitrary unknown columns.
+const pendingViewColumns = new Map([
+  ["onexa_accounting_inbox.approval_instance_id", /\binstance\.id\s+as\s+approval_instance_id\b/i],
+  ["onexa_accounting_inbox.posting_step_name", /\bstep\.name_ar\s+as\s+posting_step_name\b/i],
+  ["onexa_accounting_inbox.can_current_user_post", /\bonexa_can_post_business_document\(document\.id\)\s+as\s+can_current_user_post\b/i],
+]);
+const pendingViewSqlPath = "supabase/manual-packages/gate64_approval_posting_bridge.sql";
+const pendingViewSql = readFileSync(join(ROOT, pendingViewSqlPath), "utf8");
+if (!/\bcreate\s+or\s+replace\s+view\s+public\.onexa_accounting_inbox\b/i.test(pendingViewSql)) {
+  throw new Error("Gate64 expected accounting-inbox view source is missing");
+}
+for (const [key, projection] of pendingViewColumns) {
+  if (!projection.test(pendingViewSql)) {
+    throw new Error("Gate64 pending computed column no longer declared: " + key);
+  }
+}
+
+
 function checkSelect(table, sel, where) {
   const cols = schema.get(table);
   if (!cols) {
@@ -105,6 +125,7 @@ function checkSelect(table, sel, where) {
     if (!cols.has(col)) {
       const key = `${table}.${col}`;
       if (pendingSchema.has(key)) deferred.add(`${key} (${pendingSchema.get(key)})`);
+      else if (pendingViewColumns.has(key)) deferred.add(`${key} (${pendingViewSqlPath})`);
       else errors.push(`${where}: العمود "${col}" غير موجود في جدول "${table}".`);
     }
   }

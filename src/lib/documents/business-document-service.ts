@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { ONEXA_APPROVAL_POSTING_ENABLED } from "@/lib/runtime-flags";
 import {
   getPostingContract,
   type AccountingDimension,
@@ -215,14 +216,34 @@ export async function listApprovalInbox(limit = 100): Promise<ApprovalInboxItem[
   return (data ?? []) as ApprovalInboxItem[];
 }
 
-/** Approved, unposted source documents waiting for the accountant. */
+/** Approved, unposted source documents waiting for the accountant.
+ * Gate64 adds three optional view projections only AFTER its SQL is installed.
+ * Never request absent columns or imply permission to post on a pre-G64 tenant.
+ */
 export async function listAccountingInbox(limit = 100): Promise<AccountingInboxItem[]> {
   const db = supabase as any;
+  const maxRows = Math.min(Math.max(limit, 1), 500);
+
+  if (!ONEXA_APPROVAL_POSTING_ENABLED) {
+    const { data, error } = await db
+      .from("onexa_accounting_inbox")
+      .select("id,legal_entity_id,branch_id,module_key,document_type,document_number,document_date,accounting_date,currency,party_name_snapshot,gross_total,approved_by,approved_at,revision")
+      .order("approved_at", { ascending: true })
+      .limit(maxRows);
+    if (error) throw new Error(error.message || "ONEXA_ACCOUNTING_INBOX_FAILED");
+    return (data ?? []).map((row: Record<string, unknown>) => ({
+      ...row,
+      approval_instance_id: null,
+      posting_step_name: null,
+      can_current_user_post: false,
+    })) as AccountingInboxItem[];
+  }
+
   const { data, error } = await db
     .from("onexa_accounting_inbox")
     .select("id,legal_entity_id,branch_id,module_key,document_type,document_number,document_date,accounting_date,currency,party_name_snapshot,gross_total,approved_by,approved_at,revision,approval_instance_id,posting_step_name,can_current_user_post")
     .order("approved_at", { ascending: true })
-    .limit(Math.min(Math.max(limit, 1), 500));
+    .limit(maxRows);
   if (error) throw new Error(error.message || "ONEXA_ACCOUNTING_INBOX_FAILED");
   return (data ?? []) as AccountingInboxItem[];
 }
