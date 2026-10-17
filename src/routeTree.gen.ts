@@ -72,11 +72,11 @@ import { Route as AuthenticatedRealEstateReportsRouteImport } from './routes/_au
 import { Route as AuthenticatedReportsIndexRouteImport } from './routes/_authenticated/reports/index'
 import { Route as AuthenticatedScenariosIndexRouteImport } from './routes/_authenticated/scenarios/index'
 import { Route as AuthenticatedSettingsApprovalsRouteImport } from './routes/_authenticated/settings/approvals'
-import { Route as AuthenticatedSettingsWorkflowsRouteImport } from './routes/_authenticated/settings/workflows'
 import { Route as AuthenticatedSettingsPermissionsRouteImport } from './routes/_authenticated/settings/permissions'
 import { Route as AuthenticatedSettingsPermissionsDashboardRouteImport } from './routes/_authenticated/settings/permissions-dashboard'
 import { Route as AuthenticatedSettingsRegionalRouteImport } from './routes/_authenticated/settings/regional'
 import { Route as AuthenticatedSettingsUsersRouteImport } from './routes/_authenticated/settings/users'
+import { Route as AuthenticatedSettingsWorkflowsRouteImport } from './routes/_authenticated/settings/workflows'
 import { Route as AuthenticatedTasksIndexRouteImport } from './routes/_authenticated/tasks/index'
 import { Route as AuthenticatedTasksIdRouteImport } from './routes/_authenticated/tasks/$id'
 import { Route as AuthenticatedTasksTeamRouteImport } from './routes/_authenticated/tasks/team'
@@ -489,12 +489,6 @@ const AuthenticatedSettingsApprovalsRoute =
     path: '/settings/approvals',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedSettingsWorkflowsRoute =
-  AuthenticatedSettingsWorkflowsRouteImport.update({
-    id: '/settings/workflows',
-    path: '/settings/workflows',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
 const AuthenticatedSettingsPermissionsRoute =
   AuthenticatedSettingsPermissionsRouteImport.update({
     id: '/settings/permissions',
@@ -517,6 +511,12 @@ const AuthenticatedSettingsUsersRoute =
   AuthenticatedSettingsUsersRouteImport.update({
     id: '/settings/users',
     path: '/settings/users',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSettingsWorkflowsRoute =
+  AuthenticatedSettingsWorkflowsRouteImport.update({
+    id: '/settings/workflows',
+    path: '/settings/workflows',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedTasksIndexRoute = AuthenticatedTasksIndexRouteImport.update({
@@ -895,11 +895,11 @@ export interface FileRoutesByFullPath {
   '/projects/reports': typeof AuthenticatedProjectsReportsRoute
   '/real-estate/reports': typeof AuthenticatedRealEstateReportsRoute
   '/settings/approvals': typeof AuthenticatedSettingsApprovalsRoute
-  '/settings/workflows': typeof AuthenticatedSettingsWorkflowsRoute
   '/settings/permissions': typeof AuthenticatedSettingsPermissionsRoute
   '/settings/permissions-dashboard': typeof AuthenticatedSettingsPermissionsDashboardRoute
   '/settings/regional': typeof AuthenticatedSettingsRegionalRoute
   '/settings/users': typeof AuthenticatedSettingsUsersRoute
+  '/settings/workflows': typeof AuthenticatedSettingsWorkflowsRoute
   '/tasks/$id': typeof AuthenticatedTasksIdRoute
   '/tasks/team': typeof AuthenticatedTasksTeamRoute
   '/treasury/forecast': typeof AuthenticatedTreasuryForecastRoute
@@ -1020,11 +1020,11 @@ export interface FileRoutesByTo {
   '/projects/reports': typeof AuthenticatedProjectsReportsRoute
   '/real-estate/reports': typeof AuthenticatedRealEstateReportsRoute
   '/settings/approvals': typeof AuthenticatedSettingsApprovalsRoute
-  '/settings/workflows': typeof AuthenticatedSettingsWorkflowsRoute
   '/settings/permissions': typeof AuthenticatedSettingsPermissionsRoute
   '/settings/permissions-dashboard': typeof AuthenticatedSettingsPermissionsDashboardRoute
   '/settings/regional': typeof AuthenticatedSettingsRegionalRoute
   '/settings/users': typeof AuthenticatedSettingsUsersRoute
+  '/settings/workflows': typeof AuthenticatedSettingsWorkflowsRoute
   '/tasks/$id': typeof AuthenticatedTasksIdRoute
   '/tasks/team': typeof AuthenticatedTasksTeamRoute
   '/treasury/forecast': typeof AuthenticatedTreasuryForecastRoute
@@ -1147,11 +1147,11 @@ export interface FileRoutesById {
   '/_authenticated/projects/reports': typeof AuthenticatedProjectsReportsRoute
   '/_authenticated/real-estate_/reports': typeof AuthenticatedRealEstateReportsRoute
   '/_authenticated/settings/approvals': typeof AuthenticatedSettingsApprovalsRoute
-  '/_authenticated/settings/workflows': typeof AuthenticatedSettingsWorkflowsRoute
   '/_authenticated/settings/permissions': typeof AuthenticatedSettingsPermissionsRoute
   '/_authenticated/settings/permissions-dashboard': typeof AuthenticatedSettingsPermissionsDashboardRoute
   '/_authenticated/settings/regional': typeof AuthenticatedSettingsRegionalRoute
   '/_authenticated/settings/users': typeof AuthenticatedSettingsUsersRoute
+  '/_authenticated/settings/workflows': typeof AuthenticatedSettingsWorkflowsRoute
   '/_authenticated/tasks/$id': typeof AuthenticatedTasksIdRoute
   '/_authenticated/tasks/team': typeof AuthenticatedTasksTeamRoute
   '/_authenticated/treasury/forecast': typeof AuthenticatedTreasuryForecastRoute
@@ -1274,11 +1274,11 @@ export interface FileRouteTypes {
     | '/projects/reports'
     | '/real-estate/reports'
     | '/settings/approvals'
-    | '/settings/workflows'
     | '/settings/permissions'
     | '/settings/permissions-dashboard'
     | '/settings/regional'
     | '/settings/users'
+    | '/settings/workflows'
     | '/tasks/$id'
     | '/tasks/team'
     | '/treasury/forecast'
@@ -1399,11 +1399,11 @@ export interface FileRouteTypes {
     | '/projects/reports'
     | '/real-estate/reports'
     | '/settings/approvals'
-    | '/settings/workflows'
     | '/settings/permissions'
     | '/settings/permissions-dashboard'
     | '/settings/regional'
     | '/settings/users'
+    | '/settings/workflows'
     | '/tasks/$id'
     | '/tasks/team'
     | '/treasury/forecast'
@@ -1525,11 +1525,11 @@ export interface FileRouteTypes {
     | '/_authenticated/projects/reports'
     | '/_authenticated/real-estate_/reports'
     | '/_authenticated/settings/approvals'
-    | '/_authenticated/settings/workflows'
     | '/_authenticated/settings/permissions'
     | '/_authenticated/settings/permissions-dashboard'
     | '/_authenticated/settings/regional'
     | '/_authenticated/settings/users'
+    | '/_authenticated/settings/workflows'
     | '/_authenticated/tasks/$id'
     | '/_authenticated/tasks/team'
     | '/_authenticated/treasury/forecast'
@@ -2067,13 +2067,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsApprovalsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/settings/workflows': {
-      id: '/_authenticated/settings/workflows'
-      path: '/settings/workflows'
-      fullPath: '/settings/workflows'
-      preLoaderRoute: typeof AuthenticatedSettingsWorkflowsRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/settings/permissions': {
       id: '/_authenticated/settings/permissions'
       path: '/settings/permissions'
@@ -2100,6 +2093,13 @@ declare module '@tanstack/react-router' {
       path: '/settings/users'
       fullPath: '/settings/users'
       preLoaderRoute: typeof AuthenticatedSettingsUsersRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/settings/workflows': {
+      id: '/_authenticated/settings/workflows'
+      path: '/settings/workflows'
+      fullPath: '/settings/workflows'
+      preLoaderRoute: typeof AuthenticatedSettingsWorkflowsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/tasks/': {
@@ -2532,11 +2532,11 @@ interface AuthenticatedRouteChildren {
   AuthenticatedProjectsReportsRoute: typeof AuthenticatedProjectsReportsRoute
   AuthenticatedRealEstateReportsRoute: typeof AuthenticatedRealEstateReportsRoute
   AuthenticatedSettingsApprovalsRoute: typeof AuthenticatedSettingsApprovalsRoute
-  AuthenticatedSettingsWorkflowsRoute: typeof AuthenticatedSettingsWorkflowsRoute
   AuthenticatedSettingsPermissionsRoute: typeof AuthenticatedSettingsPermissionsRoute
   AuthenticatedSettingsPermissionsDashboardRoute: typeof AuthenticatedSettingsPermissionsDashboardRoute
   AuthenticatedSettingsRegionalRoute: typeof AuthenticatedSettingsRegionalRoute
   AuthenticatedSettingsUsersRoute: typeof AuthenticatedSettingsUsersRoute
+  AuthenticatedSettingsWorkflowsRoute: typeof AuthenticatedSettingsWorkflowsRoute
   AuthenticatedTasksIdRoute: typeof AuthenticatedTasksIdRoute
   AuthenticatedTasksTeamRoute: typeof AuthenticatedTasksTeamRoute
   AuthenticatedTreasuryForecastRoute: typeof AuthenticatedTreasuryForecastRoute
@@ -2649,12 +2649,12 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedProjectsReportsRoute: AuthenticatedProjectsReportsRoute,
   AuthenticatedRealEstateReportsRoute: AuthenticatedRealEstateReportsRoute,
   AuthenticatedSettingsApprovalsRoute: AuthenticatedSettingsApprovalsRoute,
-  AuthenticatedSettingsWorkflowsRoute: AuthenticatedSettingsWorkflowsRoute,
   AuthenticatedSettingsPermissionsRoute: AuthenticatedSettingsPermissionsRoute,
   AuthenticatedSettingsPermissionsDashboardRoute:
     AuthenticatedSettingsPermissionsDashboardRoute,
   AuthenticatedSettingsRegionalRoute: AuthenticatedSettingsRegionalRoute,
   AuthenticatedSettingsUsersRoute: AuthenticatedSettingsUsersRoute,
+  AuthenticatedSettingsWorkflowsRoute: AuthenticatedSettingsWorkflowsRoute,
   AuthenticatedTasksIdRoute: AuthenticatedTasksIdRoute,
   AuthenticatedTasksTeamRoute: AuthenticatedTasksTeamRoute,
   AuthenticatedTreasuryForecastRoute: AuthenticatedTreasuryForecastRoute,

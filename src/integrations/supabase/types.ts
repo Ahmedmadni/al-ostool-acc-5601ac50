@@ -4901,8 +4901,22 @@ export type Database = {
             foreignKeyName: "onexa_account_role_mappings_legal_entity_id_fkey"
             columns: ["legal_entity_id"]
             isOneToOne: false
+            referencedRelation: "onexa_customer_receipt_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_account_role_mappings_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
             referencedRelation: "onexa_legal_entities"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_account_role_mappings_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_purchase_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
           },
           {
             foreignKeyName: "onexa_account_role_mappings_legal_entity_id_fkey"
@@ -4919,6 +4933,360 @@ export type Database = {
             referencedColumns: ["tenant_id"]
           },
         ]
+      }
+      onexa_approval_decisions: {
+        Row: {
+          actor_user_id: string
+          created_at: string
+          decision: string
+          document_id: string
+          id: number
+          instance_id: string
+          reason: string | null
+          step_id: string | null
+          step_order: number
+          step_snapshot: Json
+          tenant_id: string
+        }
+        Insert: {
+          actor_user_id: string
+          created_at?: string
+          decision: string
+          document_id: string
+          id?: never
+          instance_id: string
+          reason?: string | null
+          step_id?: string | null
+          step_order: number
+          step_snapshot: Json
+          tenant_id: string
+        }
+        Update: {
+          actor_user_id?: string
+          created_at?: string
+          decision?: string
+          document_id?: string
+          id?: never
+          instance_id?: string
+          reason?: string | null
+          step_id?: string | null
+          step_order?: number
+          step_snapshot?: Json
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_approval_decisions_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_accounting_inbox"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_approval_decisions_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_approval_task_inbox"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_approval_decisions_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_business_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_approval_decisions_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_customer_receivables_reconciliation"
+            referencedColumns: ["invoice_id"]
+          },
+          {
+            foreignKeyName: "onexa_approval_decisions_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_purchase_inventory_reconciliation"
+            referencedColumns: ["document_id"]
+          },
+          {
+            foreignKeyName: "onexa_approval_decisions_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_sales_inventory_reconciliation"
+            referencedColumns: ["document_id"]
+          },
+          {
+            foreignKeyName: "onexa_approval_decisions_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_approval_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_approval_decisions_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_approval_task_inbox"
+            referencedColumns: ["approval_instance_id"]
+          },
+          {
+            foreignKeyName: "onexa_approval_decisions_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_approval_workflow_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      onexa_approval_instances: {
+        Row: {
+          completed_at: string | null
+          current_step_id: string | null
+          current_step_order: number | null
+          document_id: string
+          id: string
+          started_at: string
+          started_by: string
+          status: string
+          tenant_id: string
+          updated_at: string
+          workflow_id: string
+          workflow_snapshot: Json
+          workflow_version: number
+        }
+        Insert: {
+          completed_at?: string | null
+          current_step_id?: string | null
+          current_step_order?: number | null
+          document_id: string
+          id?: string
+          started_at?: string
+          started_by: string
+          status?: string
+          tenant_id: string
+          updated_at?: string
+          workflow_id: string
+          workflow_snapshot: Json
+          workflow_version: number
+        }
+        Update: {
+          completed_at?: string | null
+          current_step_id?: string | null
+          current_step_order?: number | null
+          document_id?: string
+          id?: string
+          started_at?: string
+          started_by?: string
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+          workflow_id?: string
+          workflow_snapshot?: Json
+          workflow_version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_approval_instances_current_step_id_fkey"
+            columns: ["current_step_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_approval_workflow_steps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_approval_instances_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_accounting_inbox"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_approval_instances_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_approval_task_inbox"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_approval_instances_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_business_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_approval_instances_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_customer_receivables_reconciliation"
+            referencedColumns: ["invoice_id"]
+          },
+          {
+            foreignKeyName: "onexa_approval_instances_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_purchase_inventory_reconciliation"
+            referencedColumns: ["document_id"]
+          },
+          {
+            foreignKeyName: "onexa_approval_instances_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_sales_inventory_reconciliation"
+            referencedColumns: ["document_id"]
+          },
+          {
+            foreignKeyName: "onexa_approval_instances_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_approval_workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      onexa_approval_workflow_audit: {
+        Row: {
+          actor_user_id: string
+          after_snapshot: Json | null
+          before_snapshot: Json | null
+          created_at: string
+          event_type: string
+          id: number
+          tenant_id: string
+          workflow_id: string
+        }
+        Insert: {
+          actor_user_id: string
+          after_snapshot?: Json | null
+          before_snapshot?: Json | null
+          created_at?: string
+          event_type: string
+          id?: never
+          tenant_id: string
+          workflow_id: string
+        }
+        Update: {
+          actor_user_id?: string
+          after_snapshot?: Json | null
+          before_snapshot?: Json | null
+          created_at?: string
+          event_type?: string
+          id?: never
+          tenant_id?: string
+          workflow_id?: string
+        }
+        Relationships: []
+      }
+      onexa_approval_workflow_steps: {
+        Row: {
+          action_key: string
+          assignee_department_id: string | null
+          assignee_kind: string
+          assignee_role_key: string | null
+          assignee_user_id: string | null
+          created_at: string
+          id: string
+          is_required: boolean
+          minimum_approvals: number
+          name_ar: string
+          step_order: number
+          tenant_id: string
+          updated_at: string
+          workflow_id: string
+        }
+        Insert: {
+          action_key: string
+          assignee_department_id?: string | null
+          assignee_kind: string
+          assignee_role_key?: string | null
+          assignee_user_id?: string | null
+          created_at?: string
+          id?: string
+          is_required?: boolean
+          minimum_approvals?: number
+          name_ar: string
+          step_order: number
+          tenant_id?: string
+          updated_at?: string
+          workflow_id: string
+        }
+        Update: {
+          action_key?: string
+          assignee_department_id?: string | null
+          assignee_kind?: string
+          assignee_role_key?: string | null
+          assignee_user_id?: string | null
+          created_at?: string
+          id?: string
+          is_required?: boolean
+          minimum_approvals?: number
+          name_ar?: string
+          step_order?: number
+          tenant_id?: string
+          updated_at?: string
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_approval_workflow_steps_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_approval_workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      onexa_approval_workflows: {
+        Row: {
+          allow_creator_approval: boolean
+          allow_same_actor_all_steps: boolean
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          is_active: boolean
+          manager_user_id: string | null
+          name_ar: string
+          process_key: string
+          tenant_id: string
+          updated_at: string
+          updated_by: string
+          version: number
+        }
+        Insert: {
+          allow_creator_approval?: boolean
+          allow_same_actor_all_steps?: boolean
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          manager_user_id?: string | null
+          name_ar: string
+          process_key: string
+          tenant_id?: string
+          updated_at?: string
+          updated_by: string
+          version?: number
+        }
+        Update: {
+          allow_creator_approval?: boolean
+          allow_same_actor_all_steps?: boolean
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          manager_user_id?: string | null
+          name_ar?: string
+          process_key?: string
+          tenant_id?: string
+          updated_at?: string
+          updated_by?: string
+          version?: number
+        }
+        Relationships: []
       }
       onexa_branches: {
         Row: {
@@ -4968,8 +5336,22 @@ export type Database = {
             foreignKeyName: "onexa_branches_legal_entity_id_fkey"
             columns: ["legal_entity_id"]
             isOneToOne: false
+            referencedRelation: "onexa_customer_receipt_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_branches_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
             referencedRelation: "onexa_legal_entities"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_branches_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_purchase_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
           },
           {
             foreignKeyName: "onexa_branches_legal_entity_id_fkey"
@@ -5036,8 +5418,29 @@ export type Database = {
             foreignKeyName: "onexa_business_document_events_document_id_fkey"
             columns: ["document_id"]
             isOneToOne: false
+            referencedRelation: "onexa_approval_task_inbox"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_business_document_events_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "onexa_business_documents"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_business_document_events_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_customer_receivables_reconciliation"
+            referencedColumns: ["invoice_id"]
+          },
+          {
+            foreignKeyName: "onexa_business_document_events_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_purchase_inventory_reconciliation"
+            referencedColumns: ["document_id"]
           },
           {
             foreignKeyName: "onexa_business_document_events_document_id_fkey"
@@ -5124,8 +5527,29 @@ export type Database = {
             foreignKeyName: "onexa_business_document_lines_document_id_fkey"
             columns: ["document_id"]
             isOneToOne: false
+            referencedRelation: "onexa_approval_task_inbox"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_business_document_lines_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "onexa_business_documents"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_business_document_lines_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_customer_receivables_reconciliation"
+            referencedColumns: ["invoice_id"]
+          },
+          {
+            foreignKeyName: "onexa_business_document_lines_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_purchase_inventory_reconciliation"
+            referencedColumns: ["document_id"]
           },
           {
             foreignKeyName: "onexa_business_document_lines_document_id_fkey"
@@ -5278,11 +5702,237 @@ export type Database = {
             foreignKeyName: "onexa_business_documents_legal_entity_id_fkey"
             columns: ["legal_entity_id"]
             isOneToOne: false
+            referencedRelation: "onexa_customer_receipt_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_business_documents_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
             referencedRelation: "onexa_legal_entities"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "onexa_business_documents_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_purchase_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_business_documents_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_sales_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+        ]
+      }
+      onexa_customer_receipt_allocations: {
+        Row: {
+          amount: number
+          customer_id: string
+          invoice_id: string
+          legal_entity_id: string
+          receipt_id: string
+          tenant_id: string
+        }
+        Insert: {
+          amount: number
+          customer_id: string
+          invoice_id: string
+          legal_entity_id: string
+          receipt_id: string
+          tenant_id: string
+        }
+        Update: {
+          amount?: number
+          customer_id?: string
+          invoice_id?: string
+          legal_entity_id?: string
+          receipt_id?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_customer_receipt_allocations_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_accounting_inbox"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_customer_receipt_allocations_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_approval_task_inbox"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_customer_receipt_allocations_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_business_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_customer_receipt_allocations_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_customer_receivables_reconciliation"
+            referencedColumns: ["invoice_id"]
+          },
+          {
+            foreignKeyName: "onexa_customer_receipt_allocations_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_purchase_inventory_reconciliation"
+            referencedColumns: ["document_id"]
+          },
+          {
+            foreignKeyName: "onexa_customer_receipt_allocations_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_sales_inventory_reconciliation"
+            referencedColumns: ["document_id"]
+          },
+          {
+            foreignKeyName: "onexa_customer_receipt_allocations_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_customer_receipt_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_customer_receipt_allocations_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_legal_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_customer_receipt_allocations_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_purchase_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_customer_receipt_allocations_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_sales_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_customer_receipt_allocations_receipt_id_fkey"
+            columns: ["receipt_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_customer_receipt_postings"
+            referencedColumns: ["document_id"]
+          },
+        ]
+      }
+      onexa_customer_receipt_postings: {
+        Row: {
+          amount: number
+          customer_id: string
+          document_id: string
+          journal_id: string
+          legal_entity_id: string
+          posted_at: string
+          posted_by: string
+          source_revision: number
+          tenant_id: string
+        }
+        Insert: {
+          amount: number
+          customer_id: string
+          document_id: string
+          journal_id: string
+          legal_entity_id: string
+          posted_at?: string
+          posted_by: string
+          source_revision: number
+          tenant_id: string
+        }
+        Update: {
+          amount?: number
+          customer_id?: string
+          document_id?: string
+          journal_id?: string
+          legal_entity_id?: string
+          posted_at?: string
+          posted_by?: string
+          source_revision?: number
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_customer_receipt_postings_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: true
+            referencedRelation: "onexa_accounting_inbox"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_customer_receipt_postings_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: true
+            referencedRelation: "onexa_approval_task_inbox"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_customer_receipt_postings_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: true
+            referencedRelation: "onexa_business_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_customer_receipt_postings_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: true
+            referencedRelation: "onexa_customer_receivables_reconciliation"
+            referencedColumns: ["invoice_id"]
+          },
+          {
+            foreignKeyName: "onexa_customer_receipt_postings_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: true
+            referencedRelation: "onexa_purchase_inventory_reconciliation"
+            referencedColumns: ["document_id"]
+          },
+          {
+            foreignKeyName: "onexa_customer_receipt_postings_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: true
+            referencedRelation: "onexa_sales_inventory_reconciliation"
+            referencedColumns: ["document_id"]
+          },
+          {
+            foreignKeyName: "onexa_customer_receipt_postings_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_customer_receipt_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_customer_receipt_postings_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_legal_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_customer_receipt_postings_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_purchase_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_customer_receipt_postings_legal_entity_id_fkey"
             columns: ["legal_entity_id"]
             isOneToOne: false
             referencedRelation: "onexa_sales_posting_configuration_gaps"
@@ -5326,8 +5976,22 @@ export type Database = {
             foreignKeyName: "onexa_document_sequences_legal_entity_id_fkey"
             columns: ["legal_entity_id"]
             isOneToOne: false
+            referencedRelation: "onexa_customer_receipt_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_document_sequences_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
             referencedRelation: "onexa_legal_entities"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_document_sequences_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_purchase_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
           },
           {
             foreignKeyName: "onexa_document_sequences_legal_entity_id_fkey"
@@ -5380,8 +6044,22 @@ export type Database = {
             foreignKeyName: "onexa_fiscal_periods_legal_entity_id_fkey"
             columns: ["legal_entity_id"]
             isOneToOne: false
+            referencedRelation: "onexa_customer_receipt_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_fiscal_periods_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
             referencedRelation: "onexa_legal_entities"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_fiscal_periods_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_purchase_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
           },
           {
             foreignKeyName: "onexa_fiscal_periods_legal_entity_id_fkey"
@@ -5448,8 +6126,22 @@ export type Database = {
             foreignKeyName: "onexa_inventory_balances_legal_entity_id_fkey"
             columns: ["legal_entity_id"]
             isOneToOne: false
+            referencedRelation: "onexa_customer_receipt_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_inventory_balances_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
             referencedRelation: "onexa_legal_entities"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_inventory_balances_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_purchase_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
           },
           {
             foreignKeyName: "onexa_inventory_balances_legal_entity_id_fkey"
@@ -5533,8 +6225,22 @@ export type Database = {
             foreignKeyName: "onexa_inventory_movements_legal_entity_id_fkey"
             columns: ["legal_entity_id"]
             isOneToOne: false
+            referencedRelation: "onexa_customer_receipt_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_inventory_movements_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
             referencedRelation: "onexa_legal_entities"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_inventory_movements_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_purchase_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
           },
           {
             foreignKeyName: "onexa_inventory_movements_legal_entity_id_fkey"
@@ -5554,8 +6260,29 @@ export type Database = {
             foreignKeyName: "onexa_inventory_movements_source_document_id_fkey"
             columns: ["source_document_id"]
             isOneToOne: false
+            referencedRelation: "onexa_approval_task_inbox"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_inventory_movements_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
             referencedRelation: "onexa_business_documents"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_inventory_movements_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_customer_receivables_reconciliation"
+            referencedColumns: ["invoice_id"]
+          },
+          {
+            foreignKeyName: "onexa_inventory_movements_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_purchase_inventory_reconciliation"
+            referencedColumns: ["document_id"]
           },
           {
             foreignKeyName: "onexa_inventory_movements_source_document_id_fkey"
@@ -5649,8 +6376,22 @@ export type Database = {
             foreignKeyName: "onexa_journal_headers_legal_entity_id_fkey"
             columns: ["legal_entity_id"]
             isOneToOne: false
+            referencedRelation: "onexa_customer_receipt_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_journal_headers_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
             referencedRelation: "onexa_legal_entities"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_journal_headers_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_purchase_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
           },
           {
             foreignKeyName: "onexa_journal_headers_legal_entity_id_fkey"
@@ -5845,6 +6586,305 @@ export type Database = {
           },
         ]
       }
+      onexa_manual_journal_events: {
+        Row: {
+          actor_id: string
+          created_at: string
+          event_data: Json
+          event_type: string
+          from_status: string | null
+          id: number
+          manual_journal_id: string
+          reason: string | null
+          tenant_id: string
+          to_status: string | null
+        }
+        Insert: {
+          actor_id: string
+          created_at?: string
+          event_data?: Json
+          event_type: string
+          from_status?: string | null
+          id?: never
+          manual_journal_id: string
+          reason?: string | null
+          tenant_id: string
+          to_status?: string | null
+        }
+        Update: {
+          actor_id?: string
+          created_at?: string
+          event_data?: Json
+          event_type?: string
+          from_status?: string | null
+          id?: never
+          manual_journal_id?: string
+          reason?: string | null
+          tenant_id?: string
+          to_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_manual_journal_events_manual_journal_id_fkey"
+            columns: ["manual_journal_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_manual_journal_reconciliation"
+            referencedColumns: ["manual_journal_id"]
+          },
+          {
+            foreignKeyName: "onexa_manual_journal_events_manual_journal_id_fkey"
+            columns: ["manual_journal_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_manual_journals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      onexa_manual_journal_lines: {
+        Row: {
+          account_code: string
+          created_at: string
+          credit: number
+          debit: number
+          description: string | null
+          dimensions: Json
+          id: string
+          line_number: number
+          manual_journal_id: string
+          tenant_id: string
+        }
+        Insert: {
+          account_code: string
+          created_at?: string
+          credit?: number
+          debit?: number
+          description?: string | null
+          dimensions?: Json
+          id?: string
+          line_number: number
+          manual_journal_id: string
+          tenant_id: string
+        }
+        Update: {
+          account_code?: string
+          created_at?: string
+          credit?: number
+          debit?: number
+          description?: string | null
+          dimensions?: Json
+          id?: string
+          line_number?: number
+          manual_journal_id?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_manual_journal_lines_manual_journal_id_fkey"
+            columns: ["manual_journal_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_manual_journal_reconciliation"
+            referencedColumns: ["manual_journal_id"]
+          },
+          {
+            foreignKeyName: "onexa_manual_journal_lines_manual_journal_id_fkey"
+            columns: ["manual_journal_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_manual_journals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      onexa_manual_journal_sequences: {
+        Row: {
+          fiscal_year: number
+          legal_entity_id: string
+          next_number: number
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          fiscal_year: number
+          legal_entity_id: string
+          next_number?: number
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          fiscal_year?: number
+          legal_entity_id?: string
+          next_number?: number
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_manual_journal_sequences_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_customer_receipt_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_manual_journal_sequences_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_legal_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_manual_journal_sequences_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_purchase_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_manual_journal_sequences_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_sales_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+        ]
+      }
+      onexa_manual_journals: {
+        Row: {
+          accounting_date: string
+          approved_at: string | null
+          approved_by: string | null
+          branch_id: string
+          cancelled_at: string | null
+          cancelled_by: string | null
+          created_at: string
+          created_by: string
+          currency: string
+          external_reference: string | null
+          id: string
+          journal_number: string
+          legal_entity_id: string
+          memo: string
+          period_code: string
+          posted_at: string | null
+          posted_by: string | null
+          posted_journal_id: string | null
+          rejected_at: string | null
+          rejected_by: string | null
+          reversal_journal_id: string | null
+          reversed_at: string | null
+          reversed_by: string | null
+          revision: number
+          status: string
+          submitted_at: string | null
+          submitted_by: string | null
+          tenant_id: string
+          total_credit: number
+          total_debit: number
+          updated_at: string
+        }
+        Insert: {
+          accounting_date: string
+          approved_at?: string | null
+          approved_by?: string | null
+          branch_id: string
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          created_by: string
+          currency?: string
+          external_reference?: string | null
+          id?: string
+          journal_number: string
+          legal_entity_id: string
+          memo: string
+          period_code: string
+          posted_at?: string | null
+          posted_by?: string | null
+          posted_journal_id?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          reversal_journal_id?: string | null
+          reversed_at?: string | null
+          reversed_by?: string | null
+          revision?: number
+          status?: string
+          submitted_at?: string | null
+          submitted_by?: string | null
+          tenant_id: string
+          total_credit: number
+          total_debit: number
+          updated_at?: string
+        }
+        Update: {
+          accounting_date?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          branch_id?: string
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          created_by?: string
+          currency?: string
+          external_reference?: string | null
+          id?: string
+          journal_number?: string
+          legal_entity_id?: string
+          memo?: string
+          period_code?: string
+          posted_at?: string | null
+          posted_by?: string | null
+          posted_journal_id?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          reversal_journal_id?: string | null
+          reversed_at?: string | null
+          reversed_by?: string | null
+          revision?: number
+          status?: string
+          submitted_at?: string | null
+          submitted_by?: string | null
+          tenant_id?: string
+          total_credit?: number
+          total_debit?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_manual_journals_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_manual_journals_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_customer_receipt_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_manual_journals_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_legal_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_manual_journals_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_purchase_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_manual_journals_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_sales_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+        ]
+      }
       onexa_module_entitlements: {
         Row: {
           created_at: string
@@ -5959,8 +6999,22 @@ export type Database = {
             foreignKeyName: "onexa_posting_registry_legal_entity_id_fkey"
             columns: ["legal_entity_id"]
             isOneToOne: false
+            referencedRelation: "onexa_customer_receipt_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_posting_registry_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
             referencedRelation: "onexa_legal_entities"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_posting_registry_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_purchase_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
           },
           {
             foreignKeyName: "onexa_posting_registry_legal_entity_id_fkey"
@@ -6010,6 +7064,125 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "onexa_tenants"
             referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
+      onexa_purchase_posting_runs: {
+        Row: {
+          asset_amount: number
+          document_id: string
+          expense_amount: number
+          inventory_amount: number
+          journal_id: string
+          legal_entity_id: string
+          net_purchase_amount: number
+          payable_amount: number
+          posted_at: string
+          posted_by: string
+          source_revision: number
+          tax_amount: number
+          tenant_id: string
+        }
+        Insert: {
+          asset_amount: number
+          document_id: string
+          expense_amount: number
+          inventory_amount: number
+          journal_id: string
+          legal_entity_id: string
+          net_purchase_amount: number
+          payable_amount: number
+          posted_at?: string
+          posted_by: string
+          source_revision: number
+          tax_amount: number
+          tenant_id: string
+        }
+        Update: {
+          asset_amount?: number
+          document_id?: string
+          expense_amount?: number
+          inventory_amount?: number
+          journal_id?: string
+          legal_entity_id?: string
+          net_purchase_amount?: number
+          payable_amount?: number
+          posted_at?: string
+          posted_by?: string
+          source_revision?: number
+          tax_amount?: number
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_purchase_posting_runs_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: true
+            referencedRelation: "onexa_accounting_inbox"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_purchase_posting_runs_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: true
+            referencedRelation: "onexa_approval_task_inbox"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_purchase_posting_runs_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: true
+            referencedRelation: "onexa_business_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_purchase_posting_runs_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: true
+            referencedRelation: "onexa_customer_receivables_reconciliation"
+            referencedColumns: ["invoice_id"]
+          },
+          {
+            foreignKeyName: "onexa_purchase_posting_runs_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: true
+            referencedRelation: "onexa_purchase_inventory_reconciliation"
+            referencedColumns: ["document_id"]
+          },
+          {
+            foreignKeyName: "onexa_purchase_posting_runs_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: true
+            referencedRelation: "onexa_sales_inventory_reconciliation"
+            referencedColumns: ["document_id"]
+          },
+          {
+            foreignKeyName: "onexa_purchase_posting_runs_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_customer_receipt_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_purchase_posting_runs_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_legal_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_purchase_posting_runs_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_purchase_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_purchase_posting_runs_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_sales_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
           },
         ]
       }
@@ -6065,8 +7238,29 @@ export type Database = {
             foreignKeyName: "onexa_sales_posting_runs_document_id_fkey"
             columns: ["document_id"]
             isOneToOne: true
+            referencedRelation: "onexa_approval_task_inbox"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_sales_posting_runs_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: true
             referencedRelation: "onexa_business_documents"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_sales_posting_runs_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: true
+            referencedRelation: "onexa_customer_receivables_reconciliation"
+            referencedColumns: ["invoice_id"]
+          },
+          {
+            foreignKeyName: "onexa_sales_posting_runs_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: true
+            referencedRelation: "onexa_purchase_inventory_reconciliation"
+            referencedColumns: ["document_id"]
           },
           {
             foreignKeyName: "onexa_sales_posting_runs_document_id_fkey"
@@ -6079,8 +7273,22 @@ export type Database = {
             foreignKeyName: "onexa_sales_posting_runs_legal_entity_id_fkey"
             columns: ["legal_entity_id"]
             isOneToOne: false
+            referencedRelation: "onexa_customer_receipt_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_sales_posting_runs_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
             referencedRelation: "onexa_legal_entities"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_sales_posting_runs_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_purchase_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
           },
           {
             foreignKeyName: "onexa_sales_posting_runs_legal_entity_id_fkey"
@@ -8223,7 +9431,6 @@ export type Database = {
       onexa_accounting_inbox: {
         Row: {
           accounting_date: string | null
-          approval_instance_id: string | null
           approved_at: string | null
           approved_by: string | null
           branch_id: string | null
@@ -8239,14 +9446,11 @@ export type Database = {
           party_id: string | null
           party_name_snapshot: string | null
           party_type: string | null
-          posting_step_name: string | null
-          can_current_user_post: boolean | null
           revision: number | null
           tenant_id: string | null
         }
         Insert: {
           accounting_date?: string | null
-          approval_instance_id?: string | null
           approved_at?: string | null
           approved_by?: string | null
           branch_id?: string | null
@@ -8262,14 +9466,11 @@ export type Database = {
           party_id?: string | null
           party_name_snapshot?: string | null
           party_type?: string | null
-          posting_step_name?: string | null
-          can_current_user_post?: boolean | null
           revision?: number | null
           tenant_id?: string | null
         }
         Update: {
           accounting_date?: string | null
-          approval_instance_id?: string | null
           approved_at?: string | null
           approved_by?: string | null
           branch_id?: string | null
@@ -8285,8 +9486,6 @@ export type Database = {
           party_id?: string | null
           party_name_snapshot?: string | null
           party_type?: string | null
-          posting_step_name?: string | null
-          can_current_user_post?: boolean | null
           revision?: number | null
           tenant_id?: string | null
         }
@@ -8302,8 +9501,157 @@ export type Database = {
             foreignKeyName: "onexa_business_documents_legal_entity_id_fkey"
             columns: ["legal_entity_id"]
             isOneToOne: false
+            referencedRelation: "onexa_customer_receipt_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_business_documents_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
             referencedRelation: "onexa_legal_entities"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_business_documents_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_purchase_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_business_documents_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_sales_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+        ]
+      }
+      onexa_approval_task_inbox: {
+        Row: {
+          accounting_date: string | null
+          approval_instance_id: string | null
+          approvals_received: number | null
+          assignee_kind: string | null
+          branch_id: string | null
+          can_current_user_act: boolean | null
+          created_by: string | null
+          currency: string | null
+          current_action_key: string | null
+          current_step_name: string | null
+          current_step_order: number | null
+          document_date: string | null
+          document_number: string | null
+          document_type: string | null
+          gross_total: number | null
+          id: string | null
+          legal_entity_id: string | null
+          minimum_approvals: number | null
+          module_key: string | null
+          party_name_snapshot: string | null
+          revision: number | null
+          submitted_at: string | null
+          submitted_by: string | null
+          tenant_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_business_documents_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_business_documents_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_customer_receipt_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_business_documents_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_legal_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_business_documents_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_purchase_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_business_documents_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_sales_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+        ]
+      }
+      onexa_customer_receipt_configuration_gaps: {
+        Row: {
+          account_role: string | null
+          legal_entity_code: string | null
+          legal_entity_id: string | null
+          tenant_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_legal_entities_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
+      onexa_customer_receivables_reconciliation: {
+        Row: {
+          branch_id: string | null
+          collected_amount: number | null
+          currency: string | null
+          customer_id: string | null
+          document_number: string | null
+          due_date: string | null
+          invoice_id: string | null
+          invoiced_amount: number | null
+          legal_entity_id: string | null
+          outstanding_amount: number | null
+          reconciliation_status: string | null
+          tenant_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_business_documents_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_business_documents_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_customer_receipt_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_business_documents_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_legal_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_business_documents_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_purchase_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
           },
           {
             foreignKeyName: "onexa_business_documents_legal_entity_id_fkey"
@@ -8363,11 +9711,84 @@ export type Database = {
             foreignKeyName: "onexa_inventory_balances_legal_entity_id_fkey"
             columns: ["legal_entity_id"]
             isOneToOne: false
+            referencedRelation: "onexa_customer_receipt_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_inventory_balances_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
             referencedRelation: "onexa_legal_entities"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "onexa_inventory_balances_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_purchase_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_inventory_balances_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_sales_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+        ]
+      }
+      onexa_manual_journal_reconciliation: {
+        Row: {
+          accounting_date: string | null
+          branch_id: string | null
+          currency: string | null
+          journal_number: string | null
+          ledger_journal_number: string | null
+          ledger_total_credit: number | null
+          ledger_total_debit: number | null
+          legal_entity_id: string | null
+          manual_journal_id: string | null
+          memo: string | null
+          period_code: string | null
+          posted_journal_id: string | null
+          reconciliation_status: string | null
+          reversal_journal_id: string | null
+          status: string | null
+          tenant_id: string | null
+          total_credit: number | null
+          total_debit: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_manual_journals_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_manual_journals_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_customer_receipt_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_manual_journals_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_legal_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_manual_journals_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_purchase_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_manual_journals_legal_entity_id_fkey"
             columns: ["legal_entity_id"]
             isOneToOne: false
             referencedRelation: "onexa_sales_posting_configuration_gaps"
@@ -8403,6 +9824,13 @@ export type Database = {
             foreignKeyName: "onexa_business_documents_legal_entity_id_fkey"
             columns: ["legal_entity_id"]
             isOneToOne: false
+            referencedRelation: "onexa_customer_receipt_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_business_documents_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
             referencedRelation: "onexa_legal_entities"
             referencedColumns: ["id"]
           },
@@ -8410,8 +9838,93 @@ export type Database = {
             foreignKeyName: "onexa_business_documents_legal_entity_id_fkey"
             columns: ["legal_entity_id"]
             isOneToOne: false
+            referencedRelation: "onexa_purchase_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_business_documents_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
             referencedRelation: "onexa_sales_posting_configuration_gaps"
             referencedColumns: ["legal_entity_id"]
+          },
+        ]
+      }
+      onexa_purchase_inventory_reconciliation: {
+        Row: {
+          actual_movement_count: number | null
+          asset_amount: number | null
+          branch_id: string | null
+          currency: string | null
+          document_date: string | null
+          document_id: string | null
+          document_number: string | null
+          due_date: string | null
+          expected_movement_count: number | null
+          expense_amount: number | null
+          legal_entity_id: string | null
+          movement_inventory_amount: number | null
+          net_purchase_amount: number | null
+          payable_amount: number | null
+          posted_inventory_amount: number | null
+          posted_journal_id: string | null
+          reconciliation_status: string | null
+          status: string | null
+          tax_amount: number | null
+          tenant_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_business_documents_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_business_documents_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_customer_receipt_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_business_documents_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_legal_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_business_documents_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_purchase_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_business_documents_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_sales_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+        ]
+      }
+      onexa_purchase_posting_configuration_gaps: {
+        Row: {
+          account_role: string | null
+          legal_entity_code: string | null
+          legal_entity_id: string | null
+          tenant_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onexa_legal_entities_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -8447,8 +9960,22 @@ export type Database = {
             foreignKeyName: "onexa_business_documents_legal_entity_id_fkey"
             columns: ["legal_entity_id"]
             isOneToOne: false
+            referencedRelation: "onexa_customer_receipt_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_business_documents_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
             referencedRelation: "onexa_legal_entities"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_business_documents_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_purchase_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
           },
           {
             foreignKeyName: "onexa_business_documents_legal_entity_id_fkey"
@@ -8498,8 +10025,22 @@ export type Database = {
             foreignKeyName: "onexa_journal_headers_legal_entity_id_fkey"
             columns: ["legal_entity_id"]
             isOneToOne: false
+            referencedRelation: "onexa_customer_receipt_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "onexa_journal_headers_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
             referencedRelation: "onexa_legal_entities"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onexa_journal_headers_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_purchase_posting_configuration_gaps"
+            referencedColumns: ["legal_entity_id"]
           },
           {
             foreignKeyName: "onexa_journal_headers_legal_entity_id_fkey"
@@ -9183,6 +10724,18 @@ export type Database = {
         Returns: boolean
       }
       mark_overdue_tasks: { Args: never; Returns: number }
+      onexa_activate_accountant_user: {
+        Args: { _target_user_id: string }
+        Returns: string
+      }
+      onexa_approval_separation_required: {
+        Args: { _action_key: string; _process_key: string }
+        Returns: boolean
+      }
+      onexa_can_act_on_approval_step: {
+        Args: { _document_id: string }
+        Returns: boolean
+      }
       onexa_create_business_document: {
         Args: {
           _accounting_date: string
@@ -9237,6 +10790,23 @@ export type Database = {
         }
         Returns: string
       }
+      onexa_create_manual_journal: {
+        Args: {
+          _accounting_date: string
+          _branch_id: string
+          _currency: string
+          _external_reference: string
+          _legal_entity_id: string
+          _lines: Json
+          _memo: string
+          _period_code: string
+        }
+        Returns: string
+      }
+      onexa_post_customer_receipt: {
+        Args: { _document_id: string; _period_code: string }
+        Returns: string
+      }
       onexa_post_journal: {
         Args: {
           _accounting_date: string
@@ -9269,6 +10839,14 @@ export type Database = {
         }
         Returns: string
       }
+      onexa_post_manual_journal: {
+        Args: { _journal_id: string }
+        Returns: string
+      }
+      onexa_post_purchase_invoice: {
+        Args: { _document_id: string; _period_code: string }
+        Returns: string
+      }
       onexa_post_sales_invoice: {
         Args: { _document_id: string; _period_code: string }
         Returns: string
@@ -9295,12 +10873,29 @@ export type Database = {
         }
         Returns: string
       }
+      onexa_reverse_manual_journal: {
+        Args: {
+          _accounting_date: string
+          _manual_journal_id: string
+          _period_code: string
+          _reason: string
+        }
+        Returns: string
+      }
+      onexa_save_approval_workflow: {
+        Args: { _workflow: Json }
+        Returns: string
+      }
       onexa_transition_business_document: {
         Args: { _document_id: string; _reason?: string; _to_status: string }
         Returns: string
       }
       onexa_transition_business_document_unchecked: {
         Args: { _document_id: string; _reason?: string; _to_status: string }
+        Returns: string
+      }
+      onexa_transition_manual_journal: {
+        Args: { _journal_id: string; _reason?: string; _to_status: string }
         Returns: string
       }
       user_has_any_role: {
