@@ -72,6 +72,8 @@ jobs:
         run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate90-native-grant-matrix.sql
       - name: Gate 91 prove anonymous privilege escalation is rejected
         run: bash scripts/sql-fixtures/gate91-anon-grant-negative-control.sh
+      - name: Gates 111-114 reject anonymous RPC and authenticated write escalation
+        run: bash scripts/sql-fixtures/gates111-113-grant-negative-controls.sh
       - name: Gate 86 enforce native tenant RLS metadata in disposable PostgreSQL
         run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate86-native-rls-assertions.sql
       - name: Gate 87 prove RLS guard detects intentionally disabled policy enforcement
@@ -144,6 +146,8 @@ jobs:
         run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate90-native-grant-matrix.sql
       - name: Gate 91 prove anonymous privilege escalation is rejected
         run: bash scripts/sql-fixtures/gate91-anon-grant-negative-control.sh
+      - name: Gates 111-114 reject anonymous RPC and authenticated write escalation
+        run: bash scripts/sql-fixtures/gates111-113-grant-negative-controls.sh
       - name: Gate 86 enforce native tenant RLS metadata in disposable PostgreSQL
         run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate86-native-rls-assertions.sql
       - name: Execute Gate 84 catalog audit on disposable PostgreSQL
@@ -216,6 +220,8 @@ jobs:
         run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate90-native-grant-matrix.sql
       - name: Gate 91 prove anonymous privilege escalation is rejected
         run: bash scripts/sql-fixtures/gate91-anon-grant-negative-control.sh
+      - name: Gates 111-114 reject anonymous RPC and authenticated write escalation
+        run: bash scripts/sql-fixtures/gates111-113-grant-negative-controls.sh
       - name: Gate 86 enforce native tenant RLS metadata in disposable PostgreSQL
         run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate86-native-rls-assertions.sql
       - name: Execute Gate 84 catalog audit on disposable PostgreSQL
