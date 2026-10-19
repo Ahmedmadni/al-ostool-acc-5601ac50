@@ -66,6 +66,8 @@ jobs:
         run: psql -X -v ON_ERROR_STOP=1 -f supabase/manual-packages/gate75_native_maintenance_unpaid_source_review.sql
       - name: Gate 86 enforce native tenant RLS metadata in disposable PostgreSQL
         run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate86-native-rls-assertions.sql
+      - name: Gate 87 prove RLS guard detects intentionally disabled policy enforcement
+        run: bash scripts/sql-fixtures/gate87-rls-negative-control.sh
       - name: Execute Gate 84 catalog audit on disposable PostgreSQL
         run: psql -X -v ON_ERROR_STOP=1 -f supabase/manual-packages/gate84_tenant_boundary_catalog_readonly.sql
       - name: Reject cross-tenant access and duplicate GL in synthetic UAT
