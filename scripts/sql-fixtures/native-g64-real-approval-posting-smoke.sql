@@ -222,6 +222,42 @@ begin
    and status='awaiting_post') then
    raise exception 'SMOKE_G64_REJECTED_POST_ADVANCED_APPROVAL'; end if;
 
+ -- Gate101: the real Gate42 posting RPC must reject a known foreign UUID.
+ perform set_config('test.tenant_id','tenant-smoke-B',true);
+ perform set_config('test.user_id','b0000000-0000-4000-8000-000000000011',true);
+ begin
+   perform public.onexa_post_project_cost(
+     'a0000000-0000-4000-8000-000000000021',to_char(current_date,'YYYY-MM'));
+   raise exception 'SMOKE_G101_CROSS_TENANT_COST_POST_ALLOWED';
+ exception when others then
+   if sqlerrm<>'ONEXA_DOCUMENT_NOT_FOUND' then raise; end if;
+ end;
+ perform set_config('test.tenant_id','tenant-smoke-A',true);
+ perform set_config('test.user_id','a0000000-0000-4000-8000-000000000012',true);
+ -- Gate102: reject malformed accounting periods before mutating any ledger.
+ begin
+   perform public.onexa_post_project_cost(
+     'a0000000-0000-4000-8000-000000000021','0000-00');
+   raise exception 'SMOKE_G102_INVALID_PERIOD_ACCEPTED';
+ exception when others then
+   if sqlerrm<>'ONEXA_PROJECT_COST_PERIOD_REQUIRED' then raise; end if;
+ end;
+ -- Gate103: missing auth identity must fail before tenant-sensitive access.
+ perform set_config('test.user_id','',true);
+ begin
+   perform public.onexa_post_project_cost(
+     'a0000000-0000-4000-8000-000000000021',to_char(current_date,'YYYY-MM'));
+   raise exception 'SMOKE_G103_ANONYMOUS_COST_POST_ALLOWED';
+ exception when others then
+   if sqlerrm<>'ONEXA_AUTHENTICATED_TENANT_REQUIRED' then raise; end if;
+ end;
+ perform set_config('test.user_id','a0000000-0000-4000-8000-000000000012',true);
+ if exists(select 1 from public.onexa_project_cost_postings
+      where document_id='a0000000-0000-4000-8000-000000000021')
+    or exists(select 1 from public.onexa_journal_headers
+      where source_document_id='a0000000-0000-4000-8000-000000000021') then
+   raise exception 'SMOKE_G103_REJECTED_POST_ATTEMPTS_LEFT_GL';
+ end if;
  -- Gate 92: document creator must not post their own approved cost.
  perform set_config('test.user_id','a0000000-0000-4000-8000-000000000011',true);
  begin
