@@ -11,3 +11,5 @@
 **G100 — Acceptance boundary:** This suite executes the **actual** Gate42 and Gate64 SQL packages against synthetic parent tables and helpers in ephemeral PostgreSQL 16. It does **not** prove correctness of production parents, complete journal lines, fiscal-period locks, actual Supabase auth, IFRS compliance, ZATCA settings, backup/restore or actual staging readiness. The 125 SAR fixture total is deliberately synthetic. The production engine remains blocked until independently authorized Staging and finance mappings, complete two-tenant acceptance tests, a restore rehearsal and signoff.
 
 No production or hosted staging DDL/DML, ledger posts, role grants, or feature flags are changed.
+
+**Gates 101–103:** The actual Gate42 posting RPC must reject a known document UUID from tenant B as `ONEXA_DOCUMENT_NOT_FOUND`, an invalid accounting period as `ONEXA_PROJECT_COST_PERIOD_REQUIRED`, and an absent user identity as `ONEXA_AUTHENTICATED_TENANT_REQUIRED`. Each denied attempt is tested before the authorized posting and must leave no project-cost posting or GL journal row. These cases run only against synthetic temporary PostgreSQL parent fixtures.
