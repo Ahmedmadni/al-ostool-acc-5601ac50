@@ -8,8 +8,8 @@ assert.doesNotMatch(stripped,/\b(?:insert|update|delete|create|alter|drop|trunca
 assert.match(stripped,/pg_catalog\.pg_policies/);
 assert.match(stripped,/pg_catalog\.pg_constraint/);
 assert.match(stripped,/source_includes_tenant_id/);
-assert.match(stripped,/RLS_DISABLED/);
-assert.match(stripped,/MISSING_TABLE/);
-assert.match(stripped,/INSPECT_EFFECTIVE_POLICIES/);
+assert.match(sql,/RLS_DISABLED/);
+assert.match(sql,/MISSING_TABLE/);
+assert.match(sql,/INSPECT_EFFECTIVE_POLICIES/);
 for(const table of ['onexa_business_documents','onexa_project_cost_postings','onexa_operations_work_orders','onexa_native_maintenance_unpaid_sources']) assert.ok(sql.includes(table),table);
 console.log('Gate84: tenant isolation metadata audit remains three SELECT-only queries');
