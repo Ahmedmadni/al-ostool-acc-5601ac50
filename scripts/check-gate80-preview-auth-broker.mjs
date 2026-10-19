@@ -72,7 +72,7 @@ function sessionEnvironment({host=PREVIEW,framed=true,ancestor=EDITOR,
     Math,
     Date,
     Promise,
-    setTimeout,
+    setTimeout: (fn,ms) => setTimeout(fn,Math.min(ms,30)),
     clearTimeout,
     queueMicrotask,
   },{filename:"previewAuthStorage.transpiled.js",timeout:5000});
