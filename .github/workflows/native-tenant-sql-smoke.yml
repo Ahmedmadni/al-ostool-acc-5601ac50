@@ -40,6 +40,8 @@ jobs:
     steps:
       - name: Check out commit
         uses: actions/checkout@v4
+      - name: Gate 83 approval posting SQL source guard
+        run: node scripts/check-gate83-approval-bridge-contract.mjs
       - name: Gate 82 finance catalog read-only safety guard
         run: node scripts/check-gate82-finance-readiness.mjs
       - name: Gate 81 migration workflow safety guard
@@ -90,6 +92,8 @@ jobs:
     steps:
       - name: Check out commit
         uses: actions/checkout@v4
+      - name: Gate 83 approval posting SQL source guard
+        run: node scripts/check-gate83-approval-bridge-contract.mjs
       - name: Gate 82 finance catalog read-only safety guard
         run: node scripts/check-gate82-finance-readiness.mjs
       - name: Gate 81 migration workflow safety guard
@@ -144,6 +148,8 @@ jobs:
     steps:
       - name: Check out commit
         uses: actions/checkout@v4
+      - name: Gate 83 approval posting SQL source guard
+        run: node scripts/check-gate83-approval-bridge-contract.mjs
       - name: Gate 82 finance catalog read-only safety guard
         run: node scripts/check-gate82-finance-readiness.mjs
       - name: Gate 81 migration workflow safety guard
