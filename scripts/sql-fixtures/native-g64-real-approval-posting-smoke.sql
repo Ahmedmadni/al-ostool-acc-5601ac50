@@ -279,6 +279,28 @@ begin
       and status='completed')<>1 then
     raise exception 'SMOKE_G93_APPROVAL_COMPLETION_NOT_UNIQUE';
  end if;
+ -- Gate96: posting totals, source amount, currency and legal entity agree.
+ if not exists(
+   select 1 from public.onexa_journal_headers j
+   join public.onexa_project_cost_postings p on p.journal_id=j.id
+   join public.onexa_business_documents d on d.id=p.document_id
+   where j.id=_journal and j.tenant_id='tenant-smoke-A'
+     and j.legal_entity_id='a0000000-0000-4000-8000-000000000001'
+     and j.state='posted' and j.currency='SAR'
+     and j.total_debit=125 and j.total_credit=125
+     and p.amount=125 and p.tenant_id=j.tenant_id
+     and p.legal_entity_id=j.legal_entity_id
+     and d.gross_total=125 and d.posted_journal_id=j.id
+ ) then raise exception 'SMOKE_G96_POSTING_TOTALS_OR_ENTITY_MISMATCH'; end if;
+ -- Gate97: the single posted approval decision must name that journal exactly.
+ if (select count(*) from public.onexa_approval_decisions
+    where tenant_id='tenant-smoke-A'
+      and document_id='a0000000-0000-4000-8000-000000000021'
+      and actor_user_id='a0000000-0000-4000-8000-000000000015'
+      and decision='posted'
+      and reason='journal:' || _journal::text)<>1 then
+    raise exception 'SMOKE_G97_APPROVAL_JOURNAL_AUDIT_MISMATCH';
+ end if;
  if (select count(*) from public.onexa_project_cost_postings
     where document_id='a0000000-0000-4000-8000-000000000021')<>1
     or (select count(*) from public.onexa_journal_headers
