@@ -40,6 +40,8 @@ jobs:
     steps:
       - name: Check out commit
         uses: actions/checkout@v4
+      - name: Gate 82 finance catalog read-only safety guard
+        run: node scripts/check-gate82-finance-readiness.mjs
       - name: Gate 81 migration workflow safety guard
         run: node scripts/check-gate81-migration-order.mjs
       - name: Confirm isolated database is empty
@@ -88,6 +90,8 @@ jobs:
     steps:
       - name: Check out commit
         uses: actions/checkout@v4
+      - name: Gate 82 finance catalog read-only safety guard
+        run: node scripts/check-gate82-finance-readiness.mjs
       - name: Gate 81 migration workflow safety guard
         run: node scripts/check-gate81-migration-order.mjs
       - name: Confirm clean disposable PostgreSQL
@@ -140,6 +144,8 @@ jobs:
     steps:
       - name: Check out commit
         uses: actions/checkout@v4
+      - name: Gate 82 finance catalog read-only safety guard
+        run: node scripts/check-gate82-finance-readiness.mjs
       - name: Gate 81 migration workflow safety guard
         run: node scripts/check-gate81-migration-order.mjs
       - name: Confirm clean disposable PostgreSQL
