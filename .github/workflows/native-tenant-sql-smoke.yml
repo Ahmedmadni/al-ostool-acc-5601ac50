@@ -40,6 +40,8 @@ jobs:
     steps:
       - name: Check out commit
         uses: actions/checkout@v4
+      - name: Gate 109 finance denial and reversal source guard
+        run: node scripts/check-gate109-finance-denial-contract.mjs
       - name: Gate 99 finance integration contract guard
         run: node scripts/check-gate99-finance-integrity.mjs
       - name: Gate 84 tenant isolation read-only catalog guard
@@ -106,6 +108,8 @@ jobs:
     steps:
       - name: Check out commit
         uses: actions/checkout@v4
+      - name: Gate 109 finance denial and reversal source guard
+        run: node scripts/check-gate109-finance-denial-contract.mjs
       - name: Gate 99 finance integration contract guard
         run: node scripts/check-gate99-finance-integrity.mjs
       - name: Gate 84 tenant isolation read-only catalog guard
@@ -174,6 +178,8 @@ jobs:
     steps:
       - name: Check out commit
         uses: actions/checkout@v4
+      - name: Gate 109 finance denial and reversal source guard
+        run: node scripts/check-gate109-finance-denial-contract.mjs
       - name: Gate 99 finance integration contract guard
         run: node scripts/check-gate99-finance-integrity.mjs
       - name: Gate 84 tenant isolation read-only catalog guard
