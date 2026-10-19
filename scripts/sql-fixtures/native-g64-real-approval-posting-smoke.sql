@@ -258,6 +258,41 @@ begin
       where source_document_id='a0000000-0000-4000-8000-000000000021') then
    raise exception 'SMOKE_G103_REJECTED_POST_ATTEMPTS_LEFT_GL';
  end if;
+ -- Gate104: a legitimate poster with missing tenant context must be denied.
+ perform set_config('test.tenant_id','',true);
+ perform set_config('test.user_id','a0000000-0000-4000-8000-000000000015',true);
+ begin
+   perform public.onexa_post_project_cost(
+     'a0000000-0000-4000-8000-000000000021',to_char(current_date,'YYYY-MM'));
+   raise exception 'SMOKE_G104_MISSING_TENANT_POST_ALLOWED';
+ exception when others then
+   if sqlerrm<>'ONEXA_AUTHENTICATED_TENANT_REQUIRED' then raise; end if;
+ end;
+ perform set_config('test.tenant_id','tenant-smoke-A',true);
+ -- Gate105: a nonmember identity has no project-post permission.
+ perform set_config('test.user_id','c0000000-0000-4000-8000-000000000999',true);
+ begin
+   perform public.onexa_post_project_cost(
+     'a0000000-0000-4000-8000-000000000021',to_char(current_date,'YYYY-MM'));
+   raise exception 'SMOKE_G105_NONMEMBER_POST_ALLOWED';
+ exception when others then
+   if sqlerrm<>'ONEXA_PROJECT_COST_POST_NOT_AUTHORIZED' then raise; end if;
+ end;
+ -- Gate106: reject a syntactically malformed month before accounting writes.
+ perform set_config('test.user_id','a0000000-0000-4000-8000-000000000015',true);
+ begin
+   perform public.onexa_post_project_cost(
+     'a0000000-0000-4000-8000-000000000021','2026-13');
+   raise exception 'SMOKE_G106_INVALID_MONTH_POST_ALLOWED';
+ exception when others then
+   if sqlerrm<>'ONEXA_PROJECT_COST_PERIOD_REQUIRED' then raise; end if;
+ end;
+ if exists (select 1 from public.onexa_project_cost_postings
+    where document_id='a0000000-0000-4000-8000-000000000021')
+    or exists (select 1 from public.onexa_journal_headers
+    where source_document_id='a0000000-0000-4000-8000-000000000021') then
+   raise exception 'SMOKE_G106_DENIED_ATTEMPTS_LEFT_ACCOUNTING_ROWS';
+ end if;
  -- Gate 92: document creator must not post their own approved cost.
  perform set_config('test.user_id','a0000000-0000-4000-8000-000000000011',true);
  begin
