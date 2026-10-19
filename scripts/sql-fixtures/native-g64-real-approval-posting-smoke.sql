@@ -266,6 +266,19 @@ begin
  if _journal is distinct from _retry then
    raise exception 'SMOKE_GATE42_RETRY_CREATED_DUPLICATE_JOURNAL';
  end if;
+ -- Gate 93: retries must not produce a second completed-post approval decision.
+ if (select count(*) from public.onexa_approval_decisions
+    where tenant_id='tenant-smoke-A'
+      and document_id='a0000000-0000-4000-8000-000000000021'
+      and decision='posted')<>1 then
+    raise exception 'SMOKE_G93_DUPLICATED_POST_DECISION';
+ end if;
+ if (select count(*) from public.onexa_approval_instances
+    where tenant_id='tenant-smoke-A'
+      and document_id='a0000000-0000-4000-8000-000000000021'
+      and status='completed')<>1 then
+    raise exception 'SMOKE_G93_APPROVAL_COMPLETION_NOT_UNIQUE';
+ end if;
  if (select count(*) from public.onexa_project_cost_postings
     where document_id='a0000000-0000-4000-8000-000000000021')<>1
     or (select count(*) from public.onexa_journal_headers
