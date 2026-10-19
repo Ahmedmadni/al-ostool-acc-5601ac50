@@ -440,6 +440,23 @@ declare
 begin
   perform set_config('test.tenant_id','tenant-smoke-A',true);
   perform set_config('test.user_id','a0000000-0000-4000-8000-000000000014',true);
+  -- Gate107: a reversed journal must not be silently reposted on RPC retry.
+  perform set_config('test.user_id','a0000000-0000-4000-8000-000000000015',true);
+  begin
+    perform public.onexa_post_project_cost(
+      'a0000000-0000-4000-8000-000000000021',to_char(current_date,'YYYY-MM'));
+    raise exception 'SMOKE_G107_REVERSED_JOURNAL_REPOST_ALLOWED';
+  exception when others then
+    if sqlerrm<>'ONEXA_PROJECT_COST_JOURNAL_REVERSED_OR_MISSING' then raise; end if;
+  end;
+  perform set_config('test.user_id','a0000000-0000-4000-8000-000000000014',true);
+  -- Gate108: a rejected repost must leave one historical journal and cost posting.
+  if (select count(*) from public.onexa_journal_headers
+      where source_document_id='a0000000-0000-4000-8000-000000000021')<>1
+    or (select count(*) from public.onexa_project_cost_postings
+      where document_id='a0000000-0000-4000-8000-000000000021')<>1 then
+    raise exception 'SMOKE_G108_REVERSAL_RETRY_DUPLICATED_ACCOUNTING';
+  end if;
   if not exists (
     select 1 from public.onexa_native_maintenance_source_reconciliation
     where id=_claim
