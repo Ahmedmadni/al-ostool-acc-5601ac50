@@ -93,6 +93,18 @@ begin
   if (select count(*) from public.onexa_native_maintenance_unpaid_sources)<>1 then
     raise exception 'SMOKE_CROSS_TENANT_SOURCE_UNEXPECTED_COUNT';
   end if;
+  -- Gate 88: a foreign UUID must not reveal a tenant B site, asset or work order.
+  -- Test direct ID probes under tenant A authenticated context (not only counts).
+  if exists (select 1 from public.onexa_operations_sites where id=_site_b) then
+    raise exception 'SMOKE_GATE88_FOREIGN_SITE_VISIBLE_BY_ID';
+  end if;
+  if exists (select 1 from public.onexa_operations_assets where id=_asset_b) then
+    raise exception 'SMOKE_GATE88_FOREIGN_ASSET_VISIBLE_BY_ID';
+  end if;
+  if exists (select 1 from public.onexa_operations_work_orders where id=_work_b) then
+    raise exception 'SMOKE_GATE88_FOREIGN_WORK_ORDER_VISIBLE_BY_ID';
+  end if;
+
   _rejected:=false;
   begin
     perform public.onexa_create_operations_work_order(_site_b,_asset_b,
