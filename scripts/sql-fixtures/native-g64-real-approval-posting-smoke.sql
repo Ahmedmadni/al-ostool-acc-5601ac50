@@ -222,6 +222,29 @@ begin
    and status='awaiting_post') then
    raise exception 'SMOKE_G64_REJECTED_POST_ADVANCED_APPROVAL'; end if;
 
+ -- Gate 92: document creator must not post their own approved cost.
+ perform set_config('test.user_id','a0000000-0000-4000-8000-000000000011',true);
+ begin
+   perform public.onexa_post_project_cost(
+     'a0000000-0000-4000-8000-000000000021',to_char(current_date,'YYYY-MM'));
+   raise exception 'SMOKE_G92_CREATOR_POST_BYPASS_ALLOWED';
+ exception when others then
+   if sqlerrm not in ('ONEXA_POSTER_MUST_DIFFER_FROM_CREATOR',
+                     'ONEXA_SEGREGATION_OF_DUTIES_REQUIRED',
+                     'ONEXA_POST_STEP_NOT_ASSIGNED_TO_ACTOR') then raise; end if;
+ end;
+ if exists(select 1 from public.onexa_project_cost_postings
+      where document_id='a0000000-0000-4000-8000-000000000021')
+   or exists(select 1 from public.onexa_journal_headers
+      where source_document_id='a0000000-0000-4000-8000-000000000021') then
+   raise exception 'SMOKE_G92_DENIED_SELF_POST_CREATED_LEDGER';
+ end if;
+ if not exists(select 1 from public.onexa_approval_instances
+      where id='a0000000-0000-4000-8000-000000000033'
+      and status='awaiting_post') then
+   raise exception 'SMOKE_G92_DENIED_SELF_POST_CHANGED_APPROVAL';
+ end if;
+
  perform set_config('test.user_id','a0000000-0000-4000-8000-000000000015',true);
  _journal:=public.onexa_post_project_cost(
   'a0000000-0000-4000-8000-000000000021',to_char(current_date,'YYYY-MM'));
@@ -242,6 +265,19 @@ begin
   'a0000000-0000-4000-8000-000000000021',to_char(current_date,'YYYY-MM'));
  if _journal is distinct from _retry then
    raise exception 'SMOKE_GATE42_RETRY_CREATED_DUPLICATE_JOURNAL';
+ end if;
+ -- Gate 93: retries must not produce a second completed-post approval decision.
+ if (select count(*) from public.onexa_approval_decisions
+    where tenant_id='tenant-smoke-A'
+      and document_id='a0000000-0000-4000-8000-000000000021'
+      and decision='posted')<>1 then
+    raise exception 'SMOKE_G93_DUPLICATED_POST_DECISION';
+ end if;
+ if (select count(*) from public.onexa_approval_instances
+    where tenant_id='tenant-smoke-A'
+      and document_id='a0000000-0000-4000-8000-000000000021'
+      and status='completed')<>1 then
+    raise exception 'SMOKE_G93_APPROVAL_COMPLETION_NOT_UNIQUE';
  end if;
  if (select count(*) from public.onexa_project_cost_postings
     where document_id='a0000000-0000-4000-8000-000000000021')<>1
