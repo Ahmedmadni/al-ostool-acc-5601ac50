@@ -126,6 +126,25 @@ begin
   end;
   if not _rejected then raise exception 'SMOKE_CROSS_TENANT_CLAIM_REGISTERED'; end if;
 
+  -- Gate 89: verify isolation in the reverse direction (tenant B -> tenant A).
+  perform set_config('test.tenant_id','tenant-smoke-B',true);
+  perform set_config('test.user_id','b0000000-0000-4000-8000-000000000011',true);
+  if exists (select 1 from public.onexa_operations_sites where id=_site_a) then
+    raise exception 'SMOKE_GATE89_FOREIGN_SITE_A_VISIBLE_TO_B';
+  end if;
+  if exists (select 1 from public.onexa_operations_assets where id=_asset_a) then
+    raise exception 'SMOKE_GATE89_FOREIGN_ASSET_A_VISIBLE_TO_B';
+  end if;
+  if exists (select 1 from public.onexa_operations_work_orders where id=_work_a) then
+    raise exception 'SMOKE_GATE89_FOREIGN_WORK_ORDER_A_VISIBLE_TO_B';
+  end if;
+  if exists (select 1 from public.onexa_native_maintenance_unpaid_sources where id=_claim) then
+    raise exception 'SMOKE_GATE89_FOREIGN_UNPAID_SOURCE_A_VISIBLE_TO_B';
+  end if;
+  -- Restore tenant A for the remaining existing negative scenarios.
+  perform set_config('test.tenant_id','tenant-smoke-A',true);
+  perform set_config('test.user_id','a0000000-0000-4000-8000-000000000011',true);
+
   -- Direct UPDATE/DELETE access must not be granted to authenticated.
   if has_table_privilege('authenticated',
         'public.onexa_native_maintenance_unpaid_sources','INSERT')
