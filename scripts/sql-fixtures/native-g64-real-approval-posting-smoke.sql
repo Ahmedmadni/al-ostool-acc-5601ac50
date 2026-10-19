@@ -374,6 +374,21 @@ begin
     where id=_claim
       and current_reconciliation_status='original_journal_reversed_or_missing'
   ) then raise exception 'SMOKE_REVERSED_GL_STILL_RECONCILED'; end if;
+  -- Gate98: reversal must not erase original audit evidence or source linkage.
+  if not exists(
+    select 1 from public.onexa_approval_decisions a
+    join public.onexa_business_documents d on d.id=a.document_id
+    join public.onexa_journal_headers j on j.id=d.posted_journal_id
+    where a.tenant_id='tenant-smoke-A'
+      and a.document_id='a0000000-0000-4000-8000-000000000021'
+      and a.decision='posted' and j.state='reversed'
+      and a.reason='journal:' || j.id::text
+  ) then raise exception 'SMOKE_G98_REVERSAL_ERASED_POSTING_AUDIT'; end if;
+  if not exists(
+    select 1 from public.onexa_native_maintenance_unpaid_sources s
+    where s.id=_claim and s.status='linked'
+      and s.linked_document_id='a0000000-0000-4000-8000-000000000021'
+  ) then raise exception 'SMOKE_G98_REVERSAL_ERASED_SOURCE_EVIDENCE'; end if;
   if exists (
     select 1 from public.onexa_native_maintenance_cost_reconciliation
     where document_id='a0000000-0000-4000-8000-000000000021'
