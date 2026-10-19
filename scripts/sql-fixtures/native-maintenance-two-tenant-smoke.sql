@@ -135,6 +135,26 @@ begin
         'public.onexa_native_maintenance_unpaid_sources','DELETE') then
     raise exception 'SMOKE_SOURCE_DIRECT_CLIENT_WRITES_ALLOWED';
   end if;
+  -- Gate95: a role without a valid user identity must see no tenant rows,
+  -- even if a tenant hint is supplied; a user without a tenant hint is also denied.
+  perform set_config('test.tenant_id','tenant-smoke-A',true);
+  perform set_config('test.user_id','',true);
+  if exists (select 1 from public.onexa_operations_sites)
+     or exists (select 1 from public.onexa_operations_work_orders)
+     or exists (select 1 from public.onexa_native_maintenance_unpaid_sources)
+     or public.onexa_has_company_module_access('OM','maintenance') then
+    raise exception 'SMOKE_GATE95_MISSING_USER_CONTEXT_VISIBLE';
+  end if;
+  perform set_config('test.user_id','a0000000-0000-4000-8000-000000000011',true);
+  perform set_config('test.tenant_id','',true);
+  if exists (select 1 from public.onexa_operations_sites)
+     or exists (select 1 from public.onexa_operations_work_orders)
+     or exists (select 1 from public.onexa_native_maintenance_unpaid_sources)
+     or public.onexa_has_company_module_access('OM','maintenance') then
+    raise exception 'SMOKE_GATE95_MISSING_TENANT_CONTEXT_VISIBLE';
+  end if;
+  perform set_config('test.tenant_id','tenant-smoke-A',true);
+  perform set_config('test.user_id','a0000000-0000-4000-8000-000000000011',true);
 end;
 $native_creation$;
 
