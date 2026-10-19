@@ -222,6 +222,42 @@ begin
    and status='awaiting_post') then
    raise exception 'SMOKE_G64_REJECTED_POST_ADVANCED_APPROVAL'; end if;
 
+ -- Gate101: the real Gate42 posting RPC must reject a known foreign UUID.
+ perform set_config('test.tenant_id','tenant-smoke-B',true);
+ perform set_config('test.user_id','b0000000-0000-4000-8000-000000000011',true);
+ begin
+   perform public.onexa_post_project_cost(
+     'a0000000-0000-4000-8000-000000000021',to_char(current_date,'YYYY-MM'));
+   raise exception 'SMOKE_G101_CROSS_TENANT_COST_POST_ALLOWED';
+ exception when others then
+   if sqlerrm<>'ONEXA_DOCUMENT_NOT_FOUND' then raise; end if;
+ end;
+ perform set_config('test.tenant_id','tenant-smoke-A',true);
+ perform set_config('test.user_id','a0000000-0000-4000-8000-000000000012',true);
+ -- Gate102: reject malformed accounting periods before mutating any ledger.
+ begin
+   perform public.onexa_post_project_cost(
+     'a0000000-0000-4000-8000-000000000021','0000-00');
+   raise exception 'SMOKE_G102_INVALID_PERIOD_ACCEPTED';
+ exception when others then
+   if sqlerrm<>'ONEXA_PROJECT_COST_PERIOD_REQUIRED' then raise; end if;
+ end;
+ -- Gate103: missing auth identity must fail before tenant-sensitive access.
+ perform set_config('test.user_id','',true);
+ begin
+   perform public.onexa_post_project_cost(
+     'a0000000-0000-4000-8000-000000000021',to_char(current_date,'YYYY-MM'));
+   raise exception 'SMOKE_G103_ANONYMOUS_COST_POST_ALLOWED';
+ exception when others then
+   if sqlerrm<>'ONEXA_AUTHENTICATED_TENANT_REQUIRED' then raise; end if;
+ end;
+ perform set_config('test.user_id','a0000000-0000-4000-8000-000000000012',true);
+ if exists(select 1 from public.onexa_project_cost_postings
+      where document_id='a0000000-0000-4000-8000-000000000021')
+    or exists(select 1 from public.onexa_journal_headers
+      where source_document_id='a0000000-0000-4000-8000-000000000021') then
+   raise exception 'SMOKE_G103_REJECTED_POST_ATTEMPTS_LEFT_GL';
+ end if;
  -- Gate 92: document creator must not post their own approved cost.
  perform set_config('test.user_id','a0000000-0000-4000-8000-000000000011',true);
  begin
@@ -278,6 +314,28 @@ begin
       and document_id='a0000000-0000-4000-8000-000000000021'
       and status='completed')<>1 then
     raise exception 'SMOKE_G93_APPROVAL_COMPLETION_NOT_UNIQUE';
+ end if;
+ -- Gate96: posting totals, source amount, currency and legal entity agree.
+ if not exists(
+   select 1 from public.onexa_journal_headers j
+   join public.onexa_project_cost_postings p on p.journal_id=j.id
+   join public.onexa_business_documents d on d.id=p.document_id
+   where j.id=_journal and j.tenant_id='tenant-smoke-A'
+     and j.legal_entity_id='a0000000-0000-4000-8000-000000000001'
+     and j.state='posted' and j.currency='SAR'
+     and j.total_debit=125 and j.total_credit=125
+     and p.amount=125 and p.tenant_id=j.tenant_id
+     and p.legal_entity_id=j.legal_entity_id
+     and d.gross_total=125 and d.posted_journal_id=j.id
+ ) then raise exception 'SMOKE_G96_POSTING_TOTALS_OR_ENTITY_MISMATCH'; end if;
+ -- Gate97: the single posted approval decision must name that journal exactly.
+ if (select count(*) from public.onexa_approval_decisions
+    where tenant_id='tenant-smoke-A'
+      and document_id='a0000000-0000-4000-8000-000000000021'
+      and actor_user_id='a0000000-0000-4000-8000-000000000015'
+      and decision='posted'
+      and reason='journal:' || _journal::text)<>1 then
+    raise exception 'SMOKE_G97_APPROVAL_JOURNAL_AUDIT_MISMATCH';
  end if;
  if (select count(*) from public.onexa_project_cost_postings
     where document_id='a0000000-0000-4000-8000-000000000021')<>1
@@ -352,6 +410,21 @@ begin
     where id=_claim
       and current_reconciliation_status='original_journal_reversed_or_missing'
   ) then raise exception 'SMOKE_REVERSED_GL_STILL_RECONCILED'; end if;
+  -- Gate98: reversal must not erase original audit evidence or source linkage.
+  if not exists(
+    select 1 from public.onexa_approval_decisions a
+    join public.onexa_business_documents d on d.id=a.document_id
+    join public.onexa_journal_headers j on j.id=d.posted_journal_id
+    where a.tenant_id='tenant-smoke-A'
+      and a.document_id='a0000000-0000-4000-8000-000000000021'
+      and a.decision='posted' and j.state='reversed'
+      and a.reason='journal:' || j.id::text
+  ) then raise exception 'SMOKE_G98_REVERSAL_ERASED_POSTING_AUDIT'; end if;
+  if not exists(
+    select 1 from public.onexa_native_maintenance_unpaid_sources s
+    where s.id=_claim and s.status='linked'
+      and s.linked_document_id='a0000000-0000-4000-8000-000000000021'
+  ) then raise exception 'SMOKE_G98_REVERSAL_ERASED_SOURCE_EVIDENCE'; end if;
   if exists (
     select 1 from public.onexa_native_maintenance_cost_reconciliation
     where document_id='a0000000-0000-4000-8000-000000000021'

@@ -40,6 +40,8 @@ jobs:
     steps:
       - name: Check out commit
         uses: actions/checkout@v4
+      - name: Gate 99 finance integration contract guard
+        run: node scripts/check-gate99-finance-integrity.mjs
       - name: Gate 84 tenant isolation read-only catalog guard
         run: node scripts/check-gate84-tenant-boundary-readonly.mjs
       - name: Gate 83 approval posting SQL source guard
@@ -104,6 +106,8 @@ jobs:
     steps:
       - name: Check out commit
         uses: actions/checkout@v4
+      - name: Gate 99 finance integration contract guard
+        run: node scripts/check-gate99-finance-integrity.mjs
       - name: Gate 84 tenant isolation read-only catalog guard
         run: node scripts/check-gate84-tenant-boundary-readonly.mjs
       - name: Gate 83 approval posting SQL source guard
@@ -170,6 +174,8 @@ jobs:
     steps:
       - name: Check out commit
         uses: actions/checkout@v4
+      - name: Gate 99 finance integration contract guard
+        run: node scripts/check-gate99-finance-integrity.mjs
       - name: Gate 84 tenant isolation read-only catalog guard
         run: node scripts/check-gate84-tenant-boundary-readonly.mjs
       - name: Gate 83 approval posting SQL source guard
