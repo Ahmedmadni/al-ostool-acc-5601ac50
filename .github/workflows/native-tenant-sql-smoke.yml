@@ -40,6 +40,8 @@ jobs:
     steps:
       - name: Check out commit
         uses: actions/checkout@v4
+      - name: Gate 124 reconciliation integrity contract
+        run: node scripts/check-gate124-reconciliation-contract.mjs
       - name: Gate 109 finance denial and reversal source guard
         run: node scripts/check-gate109-finance-denial-contract.mjs
       - name: Gate 99 finance integration contract guard
@@ -112,6 +114,8 @@ jobs:
     steps:
       - name: Check out commit
         uses: actions/checkout@v4
+      - name: Gate 124 reconciliation integrity contract
+        run: node scripts/check-gate124-reconciliation-contract.mjs
       - name: Gate 109 finance denial and reversal source guard
         run: node scripts/check-gate109-finance-denial-contract.mjs
       - name: Gate 99 finance integration contract guard
@@ -186,6 +190,8 @@ jobs:
     steps:
       - name: Check out commit
         uses: actions/checkout@v4
+      - name: Gate 124 reconciliation integrity contract
+        run: node scripts/check-gate124-reconciliation-contract.mjs
       - name: Gate 109 finance denial and reversal source guard
         run: node scripts/check-gate109-finance-denial-contract.mjs
       - name: Gate 99 finance integration contract guard

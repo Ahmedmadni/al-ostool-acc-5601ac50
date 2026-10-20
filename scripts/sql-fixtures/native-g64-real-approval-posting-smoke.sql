@@ -405,6 +405,23 @@ begin
       and current_reconciliation_status='reconciled'
   ) then raise exception 'SMOKE_GATE75_LINK_RECONCILIATION_FAILED'; end if;
 
+  -- Gate121: independent finance evidence must be linked exactly once.
+  if (select count(*) from public.onexa_native_maintenance_unpaid_sources
+      where id=_claim and tenant_id='tenant-smoke-A' and status='linked'
+        and linked_document_id='a0000000-0000-4000-8000-000000000021')<>1 then
+    raise exception 'SMOKE_G121_REVIEWED_SOURCE_LINK_MISMATCH';
+  end if;
+  -- Gate122: tenant B must never read tenant A's reconciliation by known UUID.
+  perform set_config('test.tenant_id','tenant-smoke-B',true);
+  perform set_config('test.user_id','b0000000-0000-4000-8000-000000000011',true);
+  if exists (select 1 from public.onexa_native_maintenance_source_reconciliation
+      where id=_claim)
+    or exists (select 1 from public.onexa_native_maintenance_unpaid_sources
+      where id=_claim) then
+    raise exception 'SMOKE_G122_FOREIGN_RECONCILIATION_VISIBLE';
+  end if;
+  perform set_config('test.tenant_id','tenant-smoke-A',true);
+  perform set_config('test.user_id','a0000000-0000-4000-8000-000000000014',true);
   -- Retry should be idempotent, with no duplicate GL transaction created.
   perform public.onexa_link_native_unpaid_maintenance_source(
     _claim,'a0000000-0000-4000-8000-000000000021');
@@ -477,6 +494,12 @@ begin
     where s.id=_claim and s.status='linked'
       and s.linked_document_id='a0000000-0000-4000-8000-000000000021'
   ) then raise exception 'SMOKE_G98_REVERSAL_ERASED_SOURCE_EVIDENCE'; end if;
+  -- Gate123: reversal retains exactly one historical reviewed source and link.
+  if (select count(*) from public.onexa_native_maintenance_unpaid_sources
+    where id=_claim and status='linked'
+      and linked_document_id='a0000000-0000-4000-8000-000000000021')<>1 then
+    raise exception 'SMOKE_G123_REVERSAL_SOURCE_HISTORY_LOST';
+  end if;
   if exists (
     select 1 from public.onexa_native_maintenance_cost_reconciliation
     where document_id='a0000000-0000-4000-8000-000000000021'
