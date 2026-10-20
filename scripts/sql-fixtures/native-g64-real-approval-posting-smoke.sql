@@ -316,6 +316,19 @@ begin
    raise exception 'SMOKE_G92_DENIED_SELF_POST_CHANGED_APPROVAL';
  end if;
 
+ -- Gate131: denied attempts must preserve the draft-to-post approval transition.
+ if (select count(*) from public.onexa_approval_instances
+   where id='a0000000-0000-4000-8000-000000000033'
+     and tenant_id='tenant-smoke-A' and status='awaiting_post')<>1 then
+   raise exception 'SMOKE_G131_DENIED_POST_CHANGED_APPROVAL';
+ end if;
+ -- Gate132: denied attempts must preserve original approved document and no posted journal.
+ if (select count(*) from public.onexa_business_documents
+   where id='a0000000-0000-4000-8000-000000000021'
+     and tenant_id='tenant-smoke-A' and status='approved'
+     and posted_journal_id is null)<>1 then
+   raise exception 'SMOKE_G132_DENIED_POST_CHANGED_DOCUMENT';
+ end if;
  perform set_config('test.user_id','a0000000-0000-4000-8000-000000000015',true);
  _journal:=public.onexa_post_project_cost(
   'a0000000-0000-4000-8000-000000000021',to_char(current_date,'YYYY-MM'));
@@ -508,6 +521,13 @@ begin
     where s.id=_claim and s.status='linked'
       and s.linked_document_id='a0000000-0000-4000-8000-000000000021'
   ) then raise exception 'SMOKE_G98_REVERSAL_ERASED_SOURCE_EVIDENCE'; end if;
+  -- Gate133: reversal preserves the unique completed approval instance.
+  if (select count(*) from public.onexa_approval_instances
+    where tenant_id='tenant-smoke-A'
+      and document_id='a0000000-0000-4000-8000-000000000021'
+      and status='completed' and completed_at is not null)<>1 then
+    raise exception 'SMOKE_G133_REVERSAL_CHANGED_COMPLETED_APPROVAL';
+  end if;
   -- Gate128: reversal cannot retroactively change who posted the original journal.
   if (select count(*) from public.onexa_approval_decisions
       where tenant_id='tenant-smoke-A'
