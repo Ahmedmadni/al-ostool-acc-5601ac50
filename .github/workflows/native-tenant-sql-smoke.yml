@@ -40,6 +40,8 @@ jobs:
     steps:
       - name: Check out commit
         uses: actions/checkout@v4
+      - name: Gate 150 offline Staging evidence safety regression
+        run: node scripts/test-staging-evidence.mjs
       - name: Gate 144 historical reversal accounting guard
         run: node scripts/check-gate144-reversal-history.mjs
       - name: Gate 139 reversal integrity source guard
@@ -122,6 +124,8 @@ jobs:
     steps:
       - name: Check out commit
         uses: actions/checkout@v4
+      - name: Gate 150 offline Staging evidence safety regression
+        run: node scripts/test-staging-evidence.mjs
       - name: Gate 144 historical reversal accounting guard
         run: node scripts/check-gate144-reversal-history.mjs
       - name: Gate 139 reversal integrity source guard
@@ -206,6 +210,8 @@ jobs:
     steps:
       - name: Check out commit
         uses: actions/checkout@v4
+      - name: Gate 150 offline Staging evidence safety regression
+        run: node scripts/test-staging-evidence.mjs
       - name: Gate 144 historical reversal accounting guard
         run: node scripts/check-gate144-reversal-history.mjs
       - name: Gate 139 reversal integrity source guard
