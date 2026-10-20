@@ -40,6 +40,8 @@ jobs:
     steps:
       - name: Check out commit
         uses: actions/checkout@v4
+      - name: Gate 144 historical reversal accounting guard
+        run: node scripts/check-gate144-reversal-history.mjs
       - name: Gate 139 reversal integrity source guard
         run: node scripts/check-gate139-reversal-integrity.mjs
       - name: Gate 134 approval state rollback guard
@@ -120,6 +122,8 @@ jobs:
     steps:
       - name: Check out commit
         uses: actions/checkout@v4
+      - name: Gate 144 historical reversal accounting guard
+        run: node scripts/check-gate144-reversal-history.mjs
       - name: Gate 139 reversal integrity source guard
         run: node scripts/check-gate139-reversal-integrity.mjs
       - name: Gate 134 approval state rollback guard
@@ -202,6 +206,8 @@ jobs:
     steps:
       - name: Check out commit
         uses: actions/checkout@v4
+      - name: Gate 144 historical reversal accounting guard
+        run: node scripts/check-gate144-reversal-history.mjs
       - name: Gate 139 reversal integrity source guard
         run: node scripts/check-gate139-reversal-integrity.mjs
       - name: Gate 134 approval state rollback guard

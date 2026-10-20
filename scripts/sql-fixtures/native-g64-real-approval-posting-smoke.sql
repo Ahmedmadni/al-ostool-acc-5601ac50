@@ -553,6 +553,28 @@ begin
         and actor_user_id='a0000000-0000-4000-8000-000000000015')<>1 then
     raise exception 'SMOKE_G128_REVERSAL_MUTATED_APPROVAL_ACTOR';
   end if;
+  -- Gate141: reversed journal retains its original project-cost posting link.
+  if (select count(*) from public.onexa_project_cost_postings p
+      join public.onexa_journal_headers j on j.id=p.journal_id
+      where p.document_id='a0000000-0000-4000-8000-000000000021'
+        and p.tenant_id='tenant-smoke-A'
+        and j.state='reversed')<>1 then
+    raise exception 'SMOKE_G141_REVERSAL_POSTING_LINK_LOST';
+  end if;
+  -- Gate142: the original document is not quietly assigned a different journal.
+  if (select count(*) from public.onexa_business_documents d
+      join public.onexa_project_cost_postings p on p.document_id=d.id
+      where d.id='a0000000-0000-4000-8000-000000000021'
+        and d.posted_journal_id=p.journal_id)<>1 then
+    raise exception 'SMOKE_G142_REVERSAL_DOCUMENT_JOURNAL_CHANGED';
+  end if;
+  -- Gate143: the reversed entry remains balanced and is not reported as posted.
+  if (select count(*) from public.onexa_journal_headers j
+      where j.source_document_id='a0000000-0000-4000-8000-000000000021'
+        and j.tenant_id='tenant-smoke-A' and j.state='reversed'
+        and j.total_debit=j.total_credit and j.total_debit=125)<>1 then
+    raise exception 'SMOKE_G143_REVERSAL_LOST_BALANCED_HISTORICAL_JOURNAL';
+  end if;
   -- Gate138: source reconciliation remains non-current after a reversed journal.
   if (select count(*) from public.onexa_native_maintenance_source_reconciliation
       where id=_claim and current_reconciliation_status='original_journal_reversed_or_missing')<>1 then
