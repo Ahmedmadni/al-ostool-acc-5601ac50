@@ -1,0 +1,3 @@
+# Gates 136–140 — Reversal audit and reconciliation consistency
+
+G136 asserts that the historical posted decision still names the same journal after the test reverses its state. G137 requires exactly one posted approval decision after reversal and retry. G138 requires a single source reconciliation record whose current status reflects a reversed/missing original journal. G139 adds a CI regression guard for the tests. G140 documents scope: these checks execute the real Gate42 and Gate64 SQL against disposable synthetic parent data on GitHub Actions PostgreSQL, **not** hosted Supabase, production financial records or a complete General Ledger. Staging, account mapping approvals, backup recovery and real role UAT remain blockers. No company production changes.
