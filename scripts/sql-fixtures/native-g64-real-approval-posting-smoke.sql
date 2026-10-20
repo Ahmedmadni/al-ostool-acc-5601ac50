@@ -337,6 +337,20 @@ begin
  if _journal is distinct from _retry then
    raise exception 'SMOKE_GATE42_RETRY_CREATED_DUPLICATE_JOURNAL';
  end if;
+ -- Gate126: completed approval must retain the original posting actor.
+ if (select count(*) from public.onexa_approval_decisions
+   where tenant_id='tenant-smoke-A'
+     and document_id='a0000000-0000-4000-8000-000000000021'
+     and decision='posted'
+     and actor_user_id='a0000000-0000-4000-8000-000000000015')<>1 then
+   raise exception 'SMOKE_G126_POSTER_AUDIT_ACTOR_MISMATCH';
+ end if;
+ -- Gate127: an approval instance cannot remain awaiting post after a valid journal.
+ if exists(select 1 from public.onexa_approval_instances
+   where document_id='a0000000-0000-4000-8000-000000000021'
+     and status='awaiting_post') then
+   raise exception 'SMOKE_G127_POSTING_LEFT_PENDING_APPROVAL';
+ end if;
  -- Gate 93: retries must not produce a second completed-post approval decision.
  if (select count(*) from public.onexa_approval_decisions
     where tenant_id='tenant-smoke-A'
@@ -494,6 +508,14 @@ begin
     where s.id=_claim and s.status='linked'
       and s.linked_document_id='a0000000-0000-4000-8000-000000000021'
   ) then raise exception 'SMOKE_G98_REVERSAL_ERASED_SOURCE_EVIDENCE'; end if;
+  -- Gate128: reversal cannot retroactively change who posted the original journal.
+  if (select count(*) from public.onexa_approval_decisions
+      where tenant_id='tenant-smoke-A'
+        and document_id='a0000000-0000-4000-8000-000000000021'
+        and decision='posted'
+        and actor_user_id='a0000000-0000-4000-8000-000000000015')<>1 then
+    raise exception 'SMOKE_G128_REVERSAL_MUTATED_APPROVAL_ACTOR';
+  end if;
   -- Gate123: reversal retains exactly one historical reviewed source and link.
   if (select count(*) from public.onexa_native_maintenance_unpaid_sources
     where id=_claim and status='linked'
