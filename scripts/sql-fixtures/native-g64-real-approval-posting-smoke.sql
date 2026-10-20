@@ -553,6 +553,11 @@ begin
         and actor_user_id='a0000000-0000-4000-8000-000000000015')<>1 then
     raise exception 'SMOKE_G128_REVERSAL_MUTATED_APPROVAL_ACTOR';
   end if;
+  -- Gate138: source reconciliation remains non-current after a reversed journal.
+  if (select count(*) from public.onexa_native_maintenance_source_reconciliation
+      where id=_claim and current_reconciliation_status='original_journal_reversed_or_missing')<>1 then
+    raise exception 'SMOKE_G138_REVERSAL_RECONCILIATION_STATE_MISMATCH';
+  end if;
   -- Gate123: reversal retains exactly one historical reviewed source and link.
   if (select count(*) from public.onexa_native_maintenance_unpaid_sources
     where id=_claim and status='linked'
