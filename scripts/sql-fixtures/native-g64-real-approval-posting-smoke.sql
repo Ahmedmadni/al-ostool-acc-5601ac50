@@ -508,6 +508,14 @@ begin
     where s.id=_claim and s.status='linked'
       and s.linked_document_id='a0000000-0000-4000-8000-000000000021'
   ) then raise exception 'SMOKE_G98_REVERSAL_ERASED_SOURCE_EVIDENCE'; end if;
+  -- Gate128: reversal cannot retroactively change who posted the original journal.
+  if (select count(*) from public.onexa_approval_decisions
+      where tenant_id='tenant-smoke-A'
+        and document_id='a0000000-0000-4000-8000-000000000021'
+        and decision='posted'
+        and actor_user_id='a0000000-0000-4000-8000-000000000015')<>1 then
+    raise exception 'SMOKE_G128_REVERSAL_MUTATED_APPROVAL_ACTOR';
+  end if;
   -- Gate123: reversal retains exactly one historical reviewed source and link.
   if (select count(*) from public.onexa_native_maintenance_unpaid_sources
     where id=_claim and status='linked'
