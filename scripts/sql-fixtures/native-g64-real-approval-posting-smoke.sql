@@ -521,6 +521,23 @@ begin
     where s.id=_claim and s.status='linked'
       and s.linked_document_id='a0000000-0000-4000-8000-000000000021'
   ) then raise exception 'SMOKE_G98_REVERSAL_ERASED_SOURCE_EVIDENCE'; end if;
+  -- Gate136: the original approval decision must still name the reversed journal.
+  if (select count(*) from public.onexa_approval_decisions a
+      join public.onexa_business_documents d on d.id=a.document_id
+      join public.onexa_journal_headers j on j.id=d.posted_journal_id
+      where a.tenant_id='tenant-smoke-A'
+        and a.document_id='a0000000-0000-4000-8000-000000000021'
+        and a.decision='posted' and a.reason='journal:' || j.id::text
+        and j.state='reversed')<>1 then
+    raise exception 'SMOKE_G136_REVERSAL_LOST_DECISION_JOURNAL_LINK';
+  end if;
+  -- Gate137: no second posting decision is introduced by reversal or retry.
+  if (select count(*) from public.onexa_approval_decisions
+      where tenant_id='tenant-smoke-A'
+        and document_id='a0000000-0000-4000-8000-000000000021'
+        and decision='posted')<>1 then
+    raise exception 'SMOKE_G137_REVERSAL_DUPLICATED_APPROVAL';
+  end if;
   -- Gate133: reversal preserves the unique completed approval instance.
   if (select count(*) from public.onexa_approval_instances
     where tenant_id='tenant-smoke-A'
@@ -535,6 +552,11 @@ begin
         and decision='posted'
         and actor_user_id='a0000000-0000-4000-8000-000000000015')<>1 then
     raise exception 'SMOKE_G128_REVERSAL_MUTATED_APPROVAL_ACTOR';
+  end if;
+  -- Gate138: source reconciliation remains non-current after a reversed journal.
+  if (select count(*) from public.onexa_native_maintenance_source_reconciliation
+      where id=_claim and current_reconciliation_status='original_journal_reversed_or_missing')<>1 then
+    raise exception 'SMOKE_G138_REVERSAL_RECONCILIATION_STATE_MISMATCH';
   end if;
   -- Gate123: reversal retains exactly one historical reviewed source and link.
   if (select count(*) from public.onexa_native_maintenance_unpaid_sources
