@@ -40,6 +40,8 @@ jobs:
     steps:
       - name: Check out commit
         uses: actions/checkout@v4
+      - name: Gates 161-165 mock Staging health probe (no hosted network)
+        run: node scripts/test-staging-health.mjs
       - name: Gate 158 offline evidence size negative controls
         run: node scripts/test-staging-evidence-limits.mjs
       - name: Gate 152 strict staging evidence shape tests
@@ -128,6 +130,8 @@ jobs:
     steps:
       - name: Check out commit
         uses: actions/checkout@v4
+      - name: Gates 161-165 mock Staging health probe (no hosted network)
+        run: node scripts/test-staging-health.mjs
       - name: Gate 158 offline evidence size negative controls
         run: node scripts/test-staging-evidence-limits.mjs
       - name: Gate 152 strict staging evidence shape tests
@@ -218,6 +222,8 @@ jobs:
     steps:
       - name: Check out commit
         uses: actions/checkout@v4
+      - name: Gates 161-165 mock Staging health probe (no hosted network)
+        run: node scripts/test-staging-health.mjs
       - name: Gate 158 offline evidence size negative controls
         run: node scripts/test-staging-evidence-limits.mjs
       - name: Gate 152 strict staging evidence shape tests
