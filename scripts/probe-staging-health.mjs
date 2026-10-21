@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Optional Staging-only network preflight; no secrets, mutations or database queries.
-import { readFileSync } from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
 import { audit } from './audit-staging-evidence.mjs';
 import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
@@ -25,7 +25,8 @@ export async function probeStaging(manifest, fetcher = fetch) {
       method: 'GET', redirect: 'manual', credentials: 'omit', cache: 'no-store',
       signal: controller.signal, headers: { Accept: 'application/json' }
     });
-    return { status: response.status >= 200 && response.status < 300 ? 'reachable' : 'unverified',
+    // Strict result: only HTTP 200 counts as positive endpoint evidence.
+    return { status: response.status === 200 ? 'reachable' : 'unverified',
       http_status: response.status, note: 'HEALTH_ONLY_NO_TENANT_OR_DATABASE_VERIFICATION' };
   } catch {
     return { status: 'unreachable', note: 'STAGING_HEALTH_REQUEST_FAILED' };
@@ -36,6 +37,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
   try {
     if (process.argv.length !== 4 || process.argv[3] !== '--staging-health-only')
       throw Error('Usage: node scripts/probe-staging-health.mjs manifest.json --staging-health-only');
+    if (statSync(process.argv[2]).size > 16384) throw Error('EVIDENCE_FILE_TOO_LARGE');
     const m = JSON.parse(readFileSync(process.argv[2], 'utf8'));
     const result = await probeStaging(m);
     console.log(JSON.stringify(result, null, 2));
