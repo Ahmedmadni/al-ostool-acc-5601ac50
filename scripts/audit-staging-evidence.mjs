@@ -3,6 +3,7 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 const REF=/^[a-z]{20}$/;
+const MAX_EVIDENCE_BYTES=16*1024;
 function parseProject(value) {
  try {
   const u=new URL(value);
@@ -14,6 +15,7 @@ function parseProject(value) {
 export function audit(m) {
  if(!m||typeof m!=='object'||Array.isArray(m))return {ready:false,errors:['INVALID_MANIFEST']};
  const errors=[];
+ if(JSON.stringify(m).length>MAX_EVIDENCE_BYTES)errors.push('EVIDENCE_TOO_LARGE');
  const shape=(v,keys)=>v!==null&&typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).every(k=>keys.includes(k));
  if(!shape(m,['production','staging','validation'])||!shape(m.production,['project_ref','supabase_url','database_write_approval'])||!shape(m.staging,['project_ref','supabase_url','data_classification','database_write_approval'])||!shape(m.validation,['separate_auth_users_confirmed','tenant_rls_test_passed','staging_restore_test_passed','finance_mapping_approved','release_authorized']))errors.push('INVALID_EVIDENCE_SHAPE');
 
@@ -37,7 +39,9 @@ export function audit(m) {
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href) {
  try {
   if(process.argv.length!==3)throw Error('Usage: node scripts/audit-staging-evidence.mjs manifest.json');
-  const result=audit(JSON.parse(readFileSync(process.argv[2],'utf8')));
+  const bytes=readFileSync(process.argv[2]);
+  if(bytes.byteLength>MAX_EVIDENCE_BYTES)throw Error('EVIDENCE_FILE_TOO_LARGE');
+  const result=audit(JSON.parse(bytes.toString('utf8')));
   console.log(JSON.stringify(result,null,2));
   if(!result.ready)process.exitCode=1;
  }catch(e){console.error(e.message);process.exitCode=2;}
