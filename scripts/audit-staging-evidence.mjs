@@ -14,6 +14,9 @@ function parseProject(value) {
 export function audit(m) {
  if(!m||typeof m!=='object'||Array.isArray(m))return {ready:false,errors:['INVALID_MANIFEST']};
  const errors=[];
+ const shape=(v,keys)=>v!==null&&typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).every(k=>keys.includes(k));
+ if(!shape(m,['production','staging','validation'])||!shape(m.production,['project_ref','supabase_url','database_write_approval'])||!shape(m.staging,['project_ref','supabase_url','data_classification','database_write_approval'])||!shape(m.validation,['separate_auth_users_confirmed','tenant_rls_test_passed','staging_restore_test_passed','finance_mapping_approved','release_authorized']))errors.push('INVALID_EVIDENCE_SHAPE');
+
  function secrets(o) {
   if(Array.isArray(o))return o.some(secrets);
   if(o&&typeof o==='object')return Object.entries(o).some(([k,v])=>/^(service_role|anon_key|secret|password|access_token|refresh_token|api_key|authorization|private_key|jwt|connection_string|database_url)$/i.test(k)||secrets(v));
