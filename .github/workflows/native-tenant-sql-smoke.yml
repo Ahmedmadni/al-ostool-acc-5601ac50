@@ -40,6 +40,8 @@ jobs:
     steps:
       - name: Check out commit
         uses: actions/checkout@v4
+      - name: Gate 158 offline evidence size negative controls
+        run: node scripts/test-staging-evidence-limits.mjs
       - name: Gate 152 strict staging evidence shape tests
         run: node scripts/test-staging-evidence-strict.mjs
       - name: Gate 150 offline Staging evidence safety regression
@@ -126,6 +128,8 @@ jobs:
     steps:
       - name: Check out commit
         uses: actions/checkout@v4
+      - name: Gate 158 offline evidence size negative controls
+        run: node scripts/test-staging-evidence-limits.mjs
       - name: Gate 152 strict staging evidence shape tests
         run: node scripts/test-staging-evidence-strict.mjs
       - name: Gate 150 offline Staging evidence safety regression
@@ -214,6 +218,8 @@ jobs:
     steps:
       - name: Check out commit
         uses: actions/checkout@v4
+      - name: Gate 158 offline evidence size negative controls
+        run: node scripts/test-staging-evidence-limits.mjs
       - name: Gate 152 strict staging evidence shape tests
         run: node scripts/test-staging-evidence-strict.mjs
       - name: Gate 150 offline Staging evidence safety regression
