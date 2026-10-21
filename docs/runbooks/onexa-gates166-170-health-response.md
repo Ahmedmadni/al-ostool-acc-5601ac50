@@ -1,0 +1,3 @@
+# Gates 166–170 — Health probe response hardening
+
+Gate166: only HTTP 200 from the staging health endpoint is counted as reachable; 204 and redirects are unverified. Gate167: limit command line evidence to 16 KiB before reading its content. Gate168: test 204 and 302 negative response cases with mocked fetch. Gate169: run those tests in disposable CI jobs (no real hosted endpoint access). Gate170: a 200 response provides endpoint availability evidence only, **not** tenant isolation, authorization, real finance posting or production readiness. Staging has not been provisioned or tested in a live environment. No production changes.

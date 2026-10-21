@@ -31,4 +31,6 @@ assert.equal((await probeStaging(missing,fake)).status,'blocked');
 assert.equal(requests,1);
 assert.equal((await probeStaging(manifest,async()=>({status:401}))).status,'unverified');
 assert.equal((await probeStaging(manifest,async()=>{throw Error('network');})).status,'unreachable');
+assert.equal((await probeStaging(manifest,async()=>({status:204}))).status,'unverified');
+assert.equal((await probeStaging(manifest,async()=>({status:302}))).status,'unverified');
 console.log('Staging-only preflight tests passed: GET-only, zero credentials, fail-closed, error/401 paths.');
