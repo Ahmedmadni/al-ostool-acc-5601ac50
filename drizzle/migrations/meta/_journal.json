@@ -1,0 +1,20 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1792988844373,
+      "tag": "0000_hr_service_period_engine_production",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792988917446,
+      "tag": "0001_hr_termination_authoritative_tenant_safe",
+      "breakpoints": true
+    }
+  ]
+}

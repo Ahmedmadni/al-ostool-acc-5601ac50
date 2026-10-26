@@ -3423,6 +3423,73 @@ export type Database = {
           },
         ]
       }
+      hr_service_interruptions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          employee_id: string
+          exclude_from_service: boolean
+          from_date: string
+          id: string
+          legal_basis: string | null
+          notes: string | null
+          reason: string
+          tenant_id: string
+          to_date: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          employee_id: string
+          exclude_from_service?: boolean
+          from_date: string
+          id?: string
+          legal_basis?: string | null
+          notes?: string | null
+          reason: string
+          tenant_id?: string
+          to_date: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          employee_id?: string
+          exclude_from_service?: boolean
+          from_date?: string
+          id?: string
+          legal_basis?: string | null
+          notes?: string | null
+          reason?: string
+          tenant_id?: string
+          to_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_service_interruptions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hr_service_interruptions_tenant_id_employee_id_fkey"
+            columns: ["tenant_id", "employee_id"]
+            isOneToOne: false
+            referencedRelation: "hr_employees"
+            referencedColumns: ["tenant_id", "id"]
+          },
+          {
+            foreignKeyName: "hr_service_interruptions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "onexa_workspace"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
       hr_shift_assignments: {
         Row: {
           created_at: string
@@ -3632,12 +3699,15 @@ export type Database = {
         Row: {
           approved_at: string | null
           approved_by: string | null
+          calendar_service_days: number | null
           clearance_status: Json | null
           contract_id: string | null
           created_at: string
           created_by: string | null
+          effective_service_days: number | null
           employee_id: string
           eos_amount: number | null
+          excluded_service_days: number
           id: string
           last_working_day: string
           leave_balance_amount: number | null
@@ -3661,12 +3731,15 @@ export type Database = {
         Insert: {
           approved_at?: string | null
           approved_by?: string | null
+          calendar_service_days?: number | null
           clearance_status?: Json | null
           contract_id?: string | null
           created_at?: string
           created_by?: string | null
+          effective_service_days?: number | null
           employee_id: string
           eos_amount?: number | null
+          excluded_service_days?: number
           id?: string
           last_working_day: string
           leave_balance_amount?: number | null
@@ -3690,12 +3763,15 @@ export type Database = {
         Update: {
           approved_at?: string | null
           approved_by?: string | null
+          calendar_service_days?: number | null
           clearance_status?: Json | null
           contract_id?: string | null
           created_at?: string
           created_by?: string | null
+          effective_service_days?: number | null
           employee_id?: string
           eos_amount?: number | null
+          excluded_service_days?: number
           id?: string
           last_working_day?: string
           leave_balance_amount?: number | null
@@ -10198,6 +10274,10 @@ export type Database = {
         Args: { _employee_id: string; _leave_type: string; _year?: number }
         Returns: number
       }
+      hr_calculate_service_period: {
+        Args: { _as_of?: string; _employee_id: string }
+        Returns: Json
+      }
       hr_distance_meters: {
         Args: { _lat1: number; _lat2: number; _lng1: number; _lng2: number }
         Returns: number
@@ -10359,12 +10439,15 @@ export type Database = {
         Returns: {
           approved_at: string | null
           approved_by: string | null
+          calendar_service_days: number | null
           clearance_status: Json | null
           contract_id: string | null
           created_at: string
           created_by: string | null
+          effective_service_days: number | null
           employee_id: string
           eos_amount: number | null
+          excluded_service_days: number
           id: string
           last_working_day: string
           leave_balance_amount: number | null
@@ -10397,12 +10480,15 @@ export type Database = {
         Returns: {
           approved_at: string | null
           approved_by: string | null
+          calendar_service_days: number | null
           clearance_status: Json | null
           contract_id: string | null
           created_at: string
           created_by: string | null
+          effective_service_days: number | null
           employee_id: string
           eos_amount: number | null
+          excluded_service_days: number
           id: string
           last_working_day: string
           leave_balance_amount: number | null
@@ -10434,17 +10520,61 @@ export type Database = {
         Args: { _employee_id: string }
         Returns: Json
       }
+      hr_termination_create_draft: {
+        Args: { _input: Json }
+        Returns: {
+          approved_at: string | null
+          approved_by: string | null
+          calendar_service_days: number | null
+          clearance_status: Json | null
+          contract_id: string | null
+          created_at: string
+          created_by: string | null
+          effective_service_days: number | null
+          employee_id: string
+          eos_amount: number | null
+          excluded_service_days: number
+          id: string
+          last_working_day: string
+          leave_balance_amount: number | null
+          leave_balance_days: number | null
+          loan_settlement: number | null
+          net_settlement: number | null
+          other_payables: number | null
+          other_receivables: number | null
+          outstanding_allowances: number | null
+          outstanding_deductions: number | null
+          reason: Database["public"]["Enums"]["hr_termination_reason"]
+          reason_details: string | null
+          request_id: string | null
+          service_years: number | null
+          settlement_details: Json | null
+          status: string
+          tenant_id: string
+          termination_no: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "hr_terminations"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       hr_termination_mark_paid: {
         Args: { _termination_id: string }
         Returns: {
           approved_at: string | null
           approved_by: string | null
+          calendar_service_days: number | null
           clearance_status: Json | null
           contract_id: string | null
           created_at: string
           created_by: string | null
+          effective_service_days: number | null
           employee_id: string
           eos_amount: number | null
+          excluded_service_days: number
           id: string
           last_working_day: string
           leave_balance_amount: number | null
@@ -10477,12 +10607,15 @@ export type Database = {
         Returns: {
           approved_at: string | null
           approved_by: string | null
+          calendar_service_days: number | null
           clearance_status: Json | null
           contract_id: string | null
           created_at: string
           created_by: string | null
+          effective_service_days: number | null
           employee_id: string
           eos_amount: number | null
+          excluded_service_days: number
           id: string
           last_working_day: string
           leave_balance_amount: number | null
@@ -10515,12 +10648,15 @@ export type Database = {
         Returns: {
           approved_at: string | null
           approved_by: string | null
+          calendar_service_days: number | null
           clearance_status: Json | null
           contract_id: string | null
           created_at: string
           created_by: string | null
+          effective_service_days: number | null
           employee_id: string
           eos_amount: number | null
+          excluded_service_days: number
           id: string
           last_working_day: string
           leave_balance_amount: number | null
@@ -10553,12 +10689,15 @@ export type Database = {
         Returns: {
           approved_at: string | null
           approved_by: string | null
+          calendar_service_days: number | null
           clearance_status: Json | null
           contract_id: string | null
           created_at: string
           created_by: string | null
+          effective_service_days: number | null
           employee_id: string
           eos_amount: number | null
+          excluded_service_days: number
           id: string
           last_working_day: string
           leave_balance_amount: number | null
@@ -10591,12 +10730,15 @@ export type Database = {
         Returns: {
           approved_at: string | null
           approved_by: string | null
+          calendar_service_days: number | null
           clearance_status: Json | null
           contract_id: string | null
           created_at: string
           created_by: string | null
+          effective_service_days: number | null
           employee_id: string
           eos_amount: number | null
+          excluded_service_days: number
           id: string
           last_working_day: string
           leave_balance_amount: number | null
@@ -10629,12 +10771,15 @@ export type Database = {
         Returns: {
           approved_at: string | null
           approved_by: string | null
+          calendar_service_days: number | null
           clearance_status: Json | null
           contract_id: string | null
           created_at: string
           created_by: string | null
+          effective_service_days: number | null
           employee_id: string
           eos_amount: number | null
+          excluded_service_days: number
           id: string
           last_working_day: string
           leave_balance_amount: number | null
@@ -10667,12 +10812,15 @@ export type Database = {
         Returns: {
           approved_at: string | null
           approved_by: string | null
+          calendar_service_days: number | null
           clearance_status: Json | null
           contract_id: string | null
           created_at: string
           created_by: string | null
+          effective_service_days: number | null
           employee_id: string
           eos_amount: number | null
+          excluded_service_days: number
           id: string
           last_working_day: string
           leave_balance_amount: number | null
