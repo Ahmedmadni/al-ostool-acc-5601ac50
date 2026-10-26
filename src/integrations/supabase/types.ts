@@ -10520,6 +10520,47 @@ export type Database = {
         Args: { _employee_id: string }
         Returns: Json
       }
+      hr_termination_create_draft: {
+        Args: { _input: Json }
+        Returns: {
+          approved_at: string | null
+          approved_by: string | null
+          calendar_service_days: number | null
+          clearance_status: Json | null
+          contract_id: string | null
+          created_at: string
+          created_by: string | null
+          effective_service_days: number | null
+          employee_id: string
+          eos_amount: number | null
+          excluded_service_days: number
+          id: string
+          last_working_day: string
+          leave_balance_amount: number | null
+          leave_balance_days: number | null
+          loan_settlement: number | null
+          net_settlement: number | null
+          other_payables: number | null
+          other_receivables: number | null
+          outstanding_allowances: number | null
+          outstanding_deductions: number | null
+          reason: Database["public"]["Enums"]["hr_termination_reason"]
+          reason_details: string | null
+          request_id: string | null
+          service_years: number | null
+          settlement_details: Json | null
+          status: string
+          tenant_id: string
+          termination_no: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "hr_terminations"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       hr_termination_mark_paid: {
         Args: { _termination_id: string }
         Returns: {
