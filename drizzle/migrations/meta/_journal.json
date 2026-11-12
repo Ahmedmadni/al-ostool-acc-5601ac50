@@ -15,6 +15,13 @@
       "when": 1792988917446,
       "tag": "0001_hr_termination_authoritative_tenant_safe",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794469193780,
+      "tag": "0002_hr_termination_two_approved_hardening_fixes",
+      "breakpoints": true
     }
   ]
 }
