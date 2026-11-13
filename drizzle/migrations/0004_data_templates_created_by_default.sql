@@ -1,0 +1,1 @@
+ALTER TABLE public.data_templates ALTER COLUMN created_by SET DEFAULT auth.uid();
