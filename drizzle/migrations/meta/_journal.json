@@ -29,6 +29,13 @@
       "when": 1794583196761,
       "tag": "0003_tighten_lookup_and_template_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794583210551,
+      "tag": "0004_data_templates_created_by_default",
+      "breakpoints": true
     }
   ]
 }
