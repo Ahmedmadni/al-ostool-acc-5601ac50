@@ -1,5 +1,7 @@
 # ONEXA development acceptance
 
+- [ ] November 14 request: complete subsequent stages and enable manual journals — execute only after approval of the isolated validation plan; production activation remains blocked by missing restore evidence, tenant-session acceptance and finance sign-off. No real journals may be used as test records.
+
 - [x] Resume November 12 development: revalidate approved HR fixes, test Gate 71 prerequisites, and document remaining rollout blockers.
 
 - [x] Run latest HR migrations locally using synthetic tenants; test calculation, draft, refresh, denial and isolation.
