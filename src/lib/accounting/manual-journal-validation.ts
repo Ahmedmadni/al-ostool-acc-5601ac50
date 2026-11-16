@@ -55,7 +55,7 @@ function currencyPrecision(currency: string): number {
 function parseDecimalUnits(raw: string, precision: number): bigint | null {
   const text = raw.trim();
   if (!text) return 0n;
-  if (!/^\\d+(?:\\.\\d+)?$/.test(text)) return null;
+  if (!/^\d+(?:\.\d+)?$/.test(text)) return null;
   const [whole, decimal = ""] = text.split(".");
   if (decimal.length > precision) return null;
   const units = BigInt(whole) * UNITS_PER_CURRENCY + BigInt((decimal + "0000").slice(0, 4));
@@ -70,7 +70,7 @@ function formatUnits(units: bigint, precision: number): string {
 }
 
 function validDate(date: string): boolean {
-  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)) return false;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
   const parsed = new Date(date + "T00:00:00.000Z");
   return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === date;
 }
