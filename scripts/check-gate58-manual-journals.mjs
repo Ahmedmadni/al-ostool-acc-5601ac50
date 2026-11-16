@@ -10,6 +10,11 @@ for (const path of [sqlPath, postcheckPath, smokePath]) assert.ok(existsSync(pat
 const sql = read(sqlPath);
 const postcheck = read(postcheckPath);
 const smoke = read(smokePath);
+const liveAudit = read("supabase/manual-packages/gate58_live_compatibility_readonly.sql");
+const reviewPatch = read("supabase/manual-packages/gate58_create_validation_patch_REVIEW_ONLY.sql");
+const g58Smoke = read("scripts/sql-fixtures/gate58-real-manual-journal-smoke.sql");
+const g58Adapter = read("scripts/sql-fixtures/gate58-disposable-b4-adapter.sql");
+const g58Workflow = read(".github/workflows/onexa-manual-journal-real-sql.yml");
 const service = read("src/lib/accounting/manual-journal-service.ts");
 const panel = read("src/components/accounting/manual-journal-panel.tsx");
 const journalValidation = read("src/lib/accounting/manual-journal-validation.ts");
@@ -38,6 +43,17 @@ for (const invariant of [
   "manual-journal-v1",
 ]) assert.ok(sql.includes(invariant), `manual journal invariant missing: ${invariant}`);
 assert.ok(sql.includes("or debit is null or credit is null"), "missing debit or credit must be explicitly rejected before aggregation");
+assert.ok(sql.includes("_period_code <> to_char(_accounting_date, 'YYYY-MM')"), "Manual journal SQL must require accounting-date period consistency");
+assert.ok(reviewPatch.includes("ONEXA_GATE58_LIVE_FUNCTION_DRIFT_STOP_REVIEW_REQUIRED"), "Review-only production function patch must stop on drift");
+assert.ok(reviewPatch.includes("_period_code <> to_char(_accounting_date, 'YYYY-MM')"), "Review patch must include date-period guard");
+assert.ok(g58Smoke.includes("G58_PERIOD_MISMATCH_ACCEPTED") && g58Smoke.includes("G58_CROSS_TENANT_RLS_LEAK"), "Disposable G58 real-RPC negative tests are incomplete");
+assert.ok(g58Adapter.includes("SYNTHETIC DISPOSABLE") && g58Adapter.includes("onexa_reverse_journal"), "G58 B4 test double missing");
+assert.ok(g58Workflow.includes("real-g58-manual-journal-smoke:") && g58Workflow.includes("gate58-real-manual-journal-smoke.sql"), "G58 real SQL smoke is not wired to its isolated CI workflow");
+assert.ok(liveAudit.includes("pg_get_functiondef") && liveAudit.includes("pg_policies"), "Live catalog inspection is incomplete");
+const liveAuditExecutable = liveAudit.replace(/^--.*$/gm, "");
+// Quoted catalog role/privilege arguments such as 'EXECUTE' are data, not SQL statements.
+const liveAuditStatements = liveAuditExecutable.replace(/'(?:''|[^'])*'/g, "''");
+assert.doesNotMatch(liveAuditStatements, /\b(?:INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE|GRANT|REVOKE|DO|EXECUTE)\b/i, "G58 live audit must remain SELECT-only");
 assert.ok(!sql.includes("grant insert") && !sql.includes("grant update") && !sql.includes("grant delete"), "manual journal tables must not expose direct writes");
 assert.ok(sql.includes("_journal_id_result := public.onexa_post_journal("), "manual journal posting must use PostgreSQL-safe direct assignment");
 assert.ok(sql.includes("_reversal_id := public.onexa_reverse_journal("), "manual journal reversal must use PostgreSQL-safe direct assignment");

@@ -1,6 +1,9 @@
 # ONEXA development acceptance
 
 - [x] November 16 source-only Gate 58 editor hardening: exact-precision monetary validation, valid date/account/branch checks, saved-draft retry, fail-closed identity and SQL null-amount rejection; code/test changes in PR #99. This is **not** hosted installation or production activation. See `docs/runbooks/onexa-manual-journal-preflight-2026-11-16.md`.
+- [x] November 16 phase 2: read-only customer catalog diagnosed installed Gate 58 with **missing live server-side null/date-period guards**; drafted checksum-guarded review-only patch, SELECT-only audit, and executable Gate 58 disposable PostgreSQL CI smoke. No hosted changes. See `docs/runbooks/onexa-gate58-live-parity-2026-11-16.md`.
+- [ ] After isolated Staging restores, run hosted tests and apply approved Gate 58 RPC patch; the installed production function still differs from the corrected source. Activation is not authorized.
+
 - [ ] Gate 58 live enablement: requires independent Staging UAT, authorized finance mappings, rollback/reversal tests, and explicit production approval. Keep feature switches off until acceptance.
 
 - [ ] November 14 request: complete subsequent stages and enable manual journals — execute only after approval of the isolated validation plan; production activation remains blocked by missing restore evidence, tenant-session acceptance and finance sign-off. No real journals may be used as test records.
