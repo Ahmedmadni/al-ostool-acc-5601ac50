@@ -45,7 +45,7 @@ function currencyPrecision(currency: string): number {
     const precision = new Intl.NumberFormat("en-US", {
       style: "currency",
       currency,
-    }).resolvedOptions().maximumFractionDigits;
+    }).resolvedOptions().maximumFractionDigits ?? 2;
     return Math.min(Math.max(precision, 0), 4);
   } catch {
     return 2;
