@@ -1,5 +1,8 @@
 # ONEXA development acceptance
 
+- [x] November 16 source-only Gate 58 editor hardening: exact-precision monetary validation, valid date/account/branch checks, saved-draft retry, fail-closed identity and SQL null-amount rejection; code/test changes in PR #99. This is **not** hosted installation or production activation. See `docs/runbooks/onexa-manual-journal-preflight-2026-11-16.md`.
+- [ ] Gate 58 live enablement: requires independent Staging UAT, authorized finance mappings, rollback/reversal tests, and explicit production approval. Keep feature switches off until acceptance.
+
 - [ ] November 14 request: complete subsequent stages and enable manual journals — execute only after approval of the isolated validation plan; production activation remains blocked by missing restore evidence, tenant-session acceptance and finance sign-off. No real journals may be used as test records.
 
 - [x] Resume November 12 development: revalidate approved HR fixes, test Gate 71 prerequisites, and document remaining rollout blockers.

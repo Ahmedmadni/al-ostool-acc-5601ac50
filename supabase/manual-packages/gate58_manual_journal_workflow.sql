@@ -206,8 +206,9 @@ begin
          line_number integer, account_code text, debit numeric, credit numeric,
          description text, dimensions jsonb
        )
-       where line_number < 1
+       where line_number is null or line_number < 1
           or nullif(btrim(account_code), '') is null
+          or debit is null or credit is null
           or debit < 0 or credit < 0
           or not ((debit > 0) <> (credit > 0))
           or dimensions is not null and jsonb_typeof(dimensions) <> 'object'

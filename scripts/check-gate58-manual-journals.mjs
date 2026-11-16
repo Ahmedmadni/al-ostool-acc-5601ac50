@@ -12,6 +12,7 @@ const postcheck = read(postcheckPath);
 const smoke = read(smokePath);
 const service = read("src/lib/accounting/manual-journal-service.ts");
 const panel = read("src/components/accounting/manual-journal-panel.tsx");
+const journalValidation = read("src/lib/accounting/manual-journal-validation.ts");
 const route = read("src/routes/_authenticated/financials/index.tsx");
 const runtime = read("src/lib/runtime-flags.ts");
 const env = read(".env.example");
@@ -36,6 +37,7 @@ for (const invariant of [
   "security_invoker = true",
   "manual-journal-v1",
 ]) assert.ok(sql.includes(invariant), `manual journal invariant missing: ${invariant}`);
+assert.ok(sql.includes("or debit is null or credit is null"), "missing debit or credit must be explicitly rejected before aggregation");
 assert.ok(!sql.includes("grant insert") && !sql.includes("grant update") && !sql.includes("grant delete"), "manual journal tables must not expose direct writes");
 assert.ok(sql.includes("_journal_id_result := public.onexa_post_journal("), "manual journal posting must use PostgreSQL-safe direct assignment");
 assert.ok(sql.includes("_reversal_id := public.onexa_reverse_journal("), "manual journal reversal must use PostgreSQL-safe direct assignment");
@@ -58,6 +60,8 @@ for (const marker of ['db.rpc("onexa_create_manual_journal"', 'db.rpc("onexa_tra
 for (const marker of ["ONEXA_MANUAL_JOURNALS_ENABLED", "إضافة قيد يومية", "إجمالي المدين", "إجمالي الدائن", "اعتماد", "ترحيل"]) {
   assert.ok(panel.includes(marker), `manual journal UI missing: ${marker}`);
 }
+assert.ok(journalValidation.includes("evaluateManualJournalDraft") && journalValidation.includes("BigInt"), "exact-decimal journal input validation is missing");
+assert.ok(panel.includes("validation.normalizedLines") && panel.includes('action: "submitted"'), "journal UI must use strict validated lines and allow draft resubmission");
 assert.ok(route.includes("<ManualJournalPanel />"), "manual journal panel is missing from accounting workspace");
 assert.ok(runtime.includes("VITE_ENABLE_ONEXA_MANUAL_JOURNALS"), "manual journal runtime flag missing");
 assert.ok(env.includes('VITE_ENABLE_ONEXA_MANUAL_JOURNALS=""'), "manual journal flag must default false");
@@ -65,5 +69,7 @@ assert.ok(guide.includes("Gate 58 — القيود اليومية اليدوية
 
 assert.equal(pkg.scripts["check:gate58-manual-journals"], "node scripts/check-gate58-manual-journals.mjs");
 assert.ok(pkg.scripts.verify.includes("check:gate58-manual-journals"), "Gate 58 is missing from verify");
+assert.equal(pkg.scripts["test:manual-journal-validation"], "node scripts/test-manual-journal-validation.mjs");
+assert.ok(pkg.scripts.verify.includes("test:manual-journal-validation"), "journal decimal test is missing from verify");
 
 console.log("Gate 58 governed manual journals checks passed ✓");
