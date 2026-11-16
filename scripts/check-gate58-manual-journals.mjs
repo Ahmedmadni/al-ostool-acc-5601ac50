@@ -14,7 +14,7 @@ const liveAudit = read("supabase/manual-packages/gate58_live_compatibility_reado
 const reviewPatch = read("supabase/manual-packages/gate58_create_validation_patch_REVIEW_ONLY.sql");
 const g58Smoke = read("scripts/sql-fixtures/gate58-real-manual-journal-smoke.sql");
 const g58Adapter = read("scripts/sql-fixtures/gate58-disposable-b4-adapter.sql");
-const nativeWorkflow = read(".github/workflows/native-tenant-sql-smoke.yml");
+const g58Workflow = read(".github/workflows/gate58-real-sql.yml");
 const service = read("src/lib/accounting/manual-journal-service.ts");
 const panel = read("src/components/accounting/manual-journal-panel.tsx");
 const journalValidation = read("src/lib/accounting/manual-journal-validation.ts");
@@ -48,7 +48,7 @@ assert.ok(reviewPatch.includes("ONEXA_GATE58_LIVE_FUNCTION_DRIFT_STOP_REVIEW_REQ
 assert.ok(reviewPatch.includes("_period_code <> to_char(_accounting_date, 'YYYY-MM')"), "Review patch must include date-period guard");
 assert.ok(g58Smoke.includes("G58_PERIOD_MISMATCH_ACCEPTED") && g58Smoke.includes("G58_CROSS_TENANT_RLS_LEAK"), "Disposable G58 real-RPC negative tests are incomplete");
 assert.ok(g58Adapter.includes("SYNTHETIC DISPOSABLE") && g58Adapter.includes("onexa_reverse_journal"), "G58 B4 test double missing");
-assert.ok(nativeWorkflow.includes("real-g58-manual-journal-smoke:") && nativeWorkflow.includes("gate58-real-manual-journal-smoke.sql"), "G58 real SQL smoke is not wired to CI");
+assert.ok(g58Workflow.includes("real-g58-manual-journal-smoke:") && g58Workflow.includes("gate58-real-manual-journal-smoke.sql"), "G58 real SQL smoke is not wired to its isolated CI workflow");
 assert.ok(liveAudit.includes("pg_get_functiondef") && liveAudit.includes("pg_policies"), "Live catalog inspection is incomplete");
 const liveAuditExecutable = liveAudit.replace(/^--.*$/gm, "");
 assert.doesNotMatch(liveAuditExecutable, /\\b(?:INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE|GRANT|REVOKE|DO|EXECUTE)\\b/i, "G58 live audit must remain SELECT-only");
