@@ -16,6 +16,14 @@ for (const job of jobs) {
   if (!/psql\s/.test(job)) continue;
   assert.match(job, /Confirm (?:isolated database is empty|clean disposable PostgreSQL)/, 'Each SQL job must check clean disposable database');
   assert.match(job, /PGDATABASE:\s*onexa_gate_test/, 'Use only the designated disposable test database');
+  if (/^real-g58-manual-journal-smoke:\s*$/m.test(job)) {
+    assert.match(job, /native-g42-real-posting-parent\\.sql/, 'G58 job must use synthetic parents');
+    assert.match(job, /gate58-disposable-b4-adapter\\.sql/, 'G58 job must use isolated fake B4');
+    assert.match(job, /gate58_manual_journal_workflow\\.sql/, 'G58 job must compile actual SQL');
+    assert.match(job, /gate58-real-manual-journal-smoke\\.sql/, 'G58 job must execute real RPC smoke');
+    assert.doesNotMatch(job, /gate(?:71|72|73|74|75)_/, 'Isolated G58 job must not install native gates');
+    continue;
+  }
   const lines = job.split('\n');
   const g42 = lines.findIndex(line => /-f supabase\/manual-packages\/gate42_project_costs\.sql/.test(line));
   const g64 = lines.findIndex(line => /-f supabase\/manual-packages\/gate64_approval_posting_bridge\.sql/.test(line));
