@@ -63,7 +63,8 @@ begin
     raise exception 'ONEXA_MANUAL_JOURNAL_CREATE_NOT_AUTHORIZED';
   end if;
   if _accounting_date is null or _period_code is null
-     or _period_code !~ '^[0-9]{4}-(0[1-9]|1[0-2])
+     or _period_code !~ '^[0-9]{4}-(0[1-9]|1[0-2])$'
+     or _period_code <> to_char(_accounting_date, 'YYYY-MM') then
     raise exception 'ONEXA_MANUAL_JOURNAL_PERIOD_INVALID';
   end if;
   if upper(coalesce(_currency, '')) !~ '^[A-Z]{3}$' then
