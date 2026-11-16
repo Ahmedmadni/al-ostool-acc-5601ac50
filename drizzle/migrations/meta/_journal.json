@@ -36,6 +36,13 @@
       "when": 1794583210551,
       "tag": "0004_data_templates_created_by_default",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794805089822,
+      "tag": "0005_scope_hr_workflow_insert",
+      "breakpoints": true
     }
   ]
 }
