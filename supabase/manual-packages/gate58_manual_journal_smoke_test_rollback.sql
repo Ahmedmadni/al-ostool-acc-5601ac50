@@ -156,6 +156,34 @@ begin
     true
   );
 
+  -- Missing numeric sides must not pass SQL's three-valued boolean checks.
+  -- The nested exception subtransaction rolls back the rejected attempt.
+  begin
+    perform public.onexa_create_manual_journal(
+      _legal_entity_id => _legal_entity,
+      _branch_id => _branch,
+      _accounting_date => current_date,
+      _period_code => to_char(current_date, 'YYYY-MM'),
+      _currency => 'SAR',
+      _memo => 'Gate 58 null amount rejection',
+      _external_reference => 'G58-NULL-' || gen_random_uuid()::text,
+      _lines => jsonb_build_array(
+        jsonb_build_object(
+          'line_number', 1, 'account_code', _debit_account,
+          'debit', 1.00, 'dimensions', '{}'::jsonb
+        ),
+        jsonb_build_object(
+          'line_number', 2, 'account_code', _credit_account,
+          'debit', 0, 'credit', 1.00, 'dimensions', '{}'::jsonb
+        )
+      )
+    );
+    raise exception 'ONEXA_SMOKE_MANUAL_JOURNAL_NULL_AMOUNT_ALLOWED';
+  exception
+    when others then
+      if sqlerrm <> 'ONEXA_MANUAL_JOURNAL_LINE_INVALID' then raise; end if;
+  end;
+
   _manual_journal := public.onexa_create_manual_journal(
     _legal_entity_id => _legal_entity,
     _branch_id => _branch,
