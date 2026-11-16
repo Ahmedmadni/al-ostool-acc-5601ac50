@@ -1,10 +1,11 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { BookPlus, Plus, Send, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ONEXA_MANUAL_JOURNALS_ENABLED } from "@/lib/runtime-flags";
 import { createManualJournal, listManualJournals, postManualJournal, transitionManualJournal } from "@/lib/accounting/manual-journal-service";
+import { evaluateManualJournalDraft } from "@/lib/accounting/manual-journal-validation";
 import { OperationalGateCard } from "@/components/operations/operational-gate-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,10 @@ type DraftLine = {
   description: string;
 };
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => {
+  const date = new Date();
+  return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-");
+};
 const newLine = (key: number): DraftLine => ({ key, accountCode: "", debit: "", credit: "", description: "" });
 const STATUS_LABELS: Record<string, string> = {
   draft: "مسودة",
@@ -43,6 +47,7 @@ export function ManualJournalPanel() {
   const [memo, setMemo] = useState("");
   const [reference, setReference] = useState("");
   const [lines, setLines] = useState<DraftLine[]>([newLine(1), newLine(2)]);
+  const nextLineKey = useRef(3);
 
   const setup = useQuery({
     queryKey: ["onexa-manual-journal-setup"],
@@ -54,8 +59,9 @@ export function ManualJournalPanel() {
         supabase.from("chart_of_accounts").select("code,name_ar").eq("is_active", true).eq("account_type", "detail").order("code"),
         supabase.auth.getUser(),
       ]);
-      const error = entities.error ?? branches.error ?? accounts.error;
+      const error = entities.error ?? branches.error ?? accounts.error ?? user.error;
       if (error) throw error;
+      if (!user.data.user?.id) throw new Error("يجب تسجيل الدخول قبل إدخال القيود");
       return {
         entities: entities.data ?? [],
         branches: branches.data ?? [],
@@ -71,29 +77,30 @@ export function ManualJournalPanel() {
     enabled: ONEXA_MANUAL_JOURNALS_ENABLED,
   });
 
-  const totals = useMemo(() => ({
-    debit: lines.reduce((sum, line) => sum + (Number(line.debit) || 0), 0),
-    credit: lines.reduce((sum, line) => sum + (Number(line.credit) || 0), 0),
-  }), [lines]);
-  const difference = Math.abs(totals.debit - totals.credit);
   const availableBranches = (setup.data?.branches ?? []).filter((branch) => branch.legal_entity_id === legalEntityId);
+  const validation = useMemo(() => evaluateManualJournalDraft({
+    legalEntityId,
+    branchId,
+    entityIds: (setup.data?.entities ?? []).map((entity) => entity.id),
+    branchIdsForEntity: availableBranches.map((branch) => branch.id),
+    accountCodes: (setup.data?.accounts ?? []).map((account) => account.code),
+    accountingDate,
+    currency,
+    memo,
+    lines,
+  }), [legalEntityId, branchId, setup.data, accountingDate, currency, memo, lines]);
 
   const reset = () => {
     setMemo("");
     setReference("");
     setAccountingDate(today());
-    setLines([newLine(Date.now()), newLine(Date.now() + 1)]);
+    setLines([newLine(nextLineKey.current++), newLine(nextLineKey.current++)]);
   };
 
   const create = useMutation({
     mutationFn: async () => {
-      if (!legalEntityId || !branchId || !memo.trim()) throw new Error("حدد الكيان والفرع وبيان القيد");
-      if (lines.length < 2 || lines.some((line) => {
-        const debit = Number(line.debit) || 0;
-        const credit = Number(line.credit) || 0;
-        return !line.accountCode || debit < 0 || credit < 0 || ((debit > 0) === (credit > 0));
-      })) throw new Error("كل سطر يحتاج حسابًا ومبلغًا في جانب واحد فقط");
-      if (totals.debit <= 0 || difference > 0.005) throw new Error("القيد غير متوازن");
+      if (!setup.data?.userId) throw new Error("لم يتم التحقق من هوية المستخدم");
+      if (!validation.valid) throw new Error(validation.errors[0] ?? "بيانات القيد غير مكتملة");
 
       const id = await createManualJournal({
         legalEntityId,
@@ -102,20 +109,24 @@ export function ManualJournalPanel() {
         periodCode: accountingDate.slice(0, 7),
         currency,
         memo: memo.trim(),
-        externalReference: reference,
-        lines: lines.map((line) => ({
-          accountCode: line.accountCode,
-          debit: Number(line.debit) || 0,
-          credit: Number(line.credit) || 0,
-          description: line.description,
+        externalReference: reference.trim(),
+        lines: validation.normalizedLines.map((line) => ({
+          ...line,
           dimensions: { legalEntity: legalEntityId, branch: branchId },
         })),
       });
-      await transitionManualJournal(id, "submitted");
-      return id;
+      // These are two separate RPCs. A failed submission does NOT undo the
+      // successfully created draft; expose it for an explicit retry in the list.
+      try {
+        await transitionManualJournal(id, "submitted");
+        return { id, submitted: true };
+      } catch {
+        return { id, submitted: false };
+      }
     },
-    onSuccess: async () => {
-      toast.success("تم إنشاء القيد وإرساله للاعتماد");
+    onSuccess: async ({ submitted }) => {
+      if (submitted) toast.success("تم إنشاء القيد وإرساله للاعتماد");
+      else toast.warning("تم حفظ القيد كمسودة، لكن لم يتأكد إرساله للاعتماد. أعد الإرسال من القائمة.");
       setOpen(false);
       reset();
       await cache.invalidateQueries({ queryKey: ["onexa-manual-journals"] });
@@ -124,12 +135,15 @@ export function ManualJournalPanel() {
   });
 
   const transition = useMutation({
-    mutationFn: async ({ id, action }: { id: string; action: "approved" | "posted" }) => {
-      if (action === "approved") return transitionManualJournal(id, "approved");
-      return postManualJournal(id);
+    mutationFn: async ({ id, action }: { id: string; action: "submitted" | "approved" | "posted" }) => {
+      if (action === "posted") return postManualJournal(id);
+      return transitionManualJournal(id, action);
     },
     onSuccess: async (_, variables) => {
-      toast.success(variables.action === "approved" ? "تم اعتماد القيد" : "تم ترحيل القيد إلى الأستاذ");
+      const message = variables.action === "submitted" ? "تم إرسال المسودة للاعتماد"
+        : variables.action === "approved" ? "تم اعتماد القيد"
+        : "تم ترحيل القيد إلى الأستاذ";
+      toast.success(message);
       await cache.invalidateQueries({ queryKey: ["onexa-manual-journals"] });
     },
     onError: (error) => toast.error(error.message),
@@ -220,7 +234,7 @@ export function ManualJournalPanel() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <Label>سطور القيد</Label>
-                  <Button type="button" size="sm" variant="outline" onClick={() => setLines((current) => [...current, newLine(Date.now())])}>
+                  <Button type="button" size="sm" variant="outline" onClick={() => setLines((current) => [...current, newLine(nextLineKey.current++)])}>
                     <Plus className="h-4 w-4" />إضافة سطر
                   </Button>
                 </div>
@@ -231,9 +245,9 @@ export function ManualJournalPanel() {
                       <option value="">اختر الحساب</option>
                       {setup.data?.accounts.map((account) => <option key={account.code} value={account.code}>{account.code} — {account.name_ar}</option>)}
                     </select>
-                    <Input aria-label={`مدين السطر ${index + 1}`} type="number" min="0" step="0.01" placeholder="مدين" value={line.debit}
+                    <Input aria-label={`مدين السطر ${index + 1}`} type="number" min="0" step="any" placeholder="مدين" value={line.debit}
                       onChange={(event) => updateLine(line.key, { debit: event.target.value, ...(Number(event.target.value) > 0 ? { credit: "" } : {}) })} />
-                    <Input aria-label={`دائن السطر ${index + 1}`} type="number" min="0" step="0.01" placeholder="دائن" value={line.credit}
+                    <Input aria-label={`دائن السطر ${index + 1}`} type="number" min="0" step="any" placeholder="دائن" value={line.credit}
                       onChange={(event) => updateLine(line.key, { credit: event.target.value, ...(Number(event.target.value) > 0 ? { debit: "" } : {}) })} />
                     <Input aria-label={`وصف السطر ${index + 1}`} placeholder="وصف السطر" value={line.description}
                       onChange={(event) => updateLine(line.key, { description: event.target.value })} />
@@ -246,13 +260,15 @@ export function ManualJournalPanel() {
               </div>
 
               <div className="grid gap-3 rounded-xl border bg-muted/30 p-4 sm:grid-cols-3">
-                <div><span className="text-xs text-muted-foreground">إجمالي المدين</span><div className="mt-1 font-bold">{totals.debit.toFixed(2)}</div></div>
-                <div><span className="text-xs text-muted-foreground">إجمالي الدائن</span><div className="mt-1 font-bold">{totals.credit.toFixed(2)}</div></div>
-                <div><span className="text-xs text-muted-foreground">الفرق</span><div className={`mt-1 font-bold ${difference <= 0.005 ? "text-success" : "text-destructive"}`}>{difference.toFixed(2)}</div></div>
+                <div><span className="text-xs text-muted-foreground">إجمالي المدين</span><div className="mt-1 font-bold tabular-nums">{validation.totalDebit}</div></div>
+                <div><span className="text-xs text-muted-foreground">إجمالي الدائن</span><div className="mt-1 font-bold tabular-nums">{validation.totalCredit}</div></div>
+                <div><span className="text-xs text-muted-foreground">الفرق</span><div className={`mt-1 font-bold tabular-nums ${Number(validation.difference) === 0 ? "text-success" : "text-destructive"}`}>{validation.difference}</div></div>
               </div>
+              {setup.isError && <p role="alert" className="text-sm text-destructive">تعذر تحميل دليل الحسابات أو صلاحيات المستخدم. لا يمكن إنشاء القيد.</p>}
+              {validation.errors.length > 0 && <p role="alert" className="text-sm text-destructive">{validation.errors[0]}</p>}
               <div className="flex justify-end gap-2">
                 <Button type="button" variant="outline" onClick={() => setOpen(false)}>إلغاء</Button>
-                <Button type="submit" disabled={create.isPending || difference > 0.005 || totals.debit <= 0}>
+                <Button type="submit" disabled={create.isPending || !setup.data?.userId || !validation.valid}>
                   <Send className="h-4 w-4" />{create.isPending ? "جارٍ الحفظ..." : "حفظ وإرسال للاعتماد"}
                 </Button>
               </div>
@@ -270,10 +286,14 @@ export function ManualJournalPanel() {
             </div>
             <div className="flex items-center gap-2">
               <Badge variant={journal.status === "posted" ? "default" : "secondary"}>{STATUS_LABELS[journal.status] ?? journal.status}</Badge>
-              {journal.status === "submitted" && journal.created_by !== setup.data?.userId && (
+              {journal.status === "draft" && setup.data?.userId === journal.created_by && (
+                <Button size="sm" variant="outline" disabled={transition.isPending}
+                  onClick={() => transition.mutate({ id: journal.id, action: "submitted" })}>إرسال للاعتماد</Button>
+              )}
+              {journal.status === "submitted" && Boolean(setup.data?.userId) && journal.created_by !== setup.data?.userId && (
                 <Button size="sm" variant="outline" disabled={transition.isPending} onClick={() => transition.mutate({ id: journal.id, action: "approved" })}>اعتماد</Button>
               )}
-              {journal.status === "approved" && journal.created_by !== setup.data?.userId && (
+              {journal.status === "approved" && Boolean(setup.data?.userId) && journal.created_by !== setup.data?.userId && (
                 <Button size="sm" disabled={transition.isPending} onClick={() => {
                   if (window.confirm(`ترحيل القيد ${journal.journal_number} إلى الأستاذ؟`)) transition.mutate({ id: journal.id, action: "posted" });
                 }}>ترحيل</Button>
@@ -281,7 +301,9 @@ export function ManualJournalPanel() {
             </div>
           </div>
         ))}
-        {!journals.isLoading && !journals.data?.length && <p className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">لا توجد قيود يومية يدوية.</p>}
+        {journals.isError && <p role="alert" className="rounded-xl border border-destructive/30 p-4 text-sm text-destructive">تعذر تحميل القيود اليومية. تحقق من صلاحيات القراءة أو اتصال قاعدة البيانات.</p>}
+        {journals.isLoading && <p className="p-4 text-sm text-muted-foreground">جارٍ تحميل القيود...</p>}
+        {!journals.isLoading && !journals.isError && !journals.data?.length && <p className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">لا توجد قيود يومية يدوية.</p>}
       </div>
     </Card>
   );
