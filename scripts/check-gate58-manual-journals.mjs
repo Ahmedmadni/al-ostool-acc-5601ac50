@@ -12,6 +12,7 @@ const postcheck = read(postcheckPath);
 const smoke = read(smokePath);
 const liveAudit = read("supabase/manual-packages/gate58_live_compatibility_readonly.sql");
 const reviewPatch = read("supabase/manual-packages/gate58_create_validation_patch_REVIEW_ONLY.sql");
+const viewReviewPatch = read("supabase/manual-packages/gate58_reconciliation_exact_patch_REVIEW_ONLY.sql");
 const g58Smoke = read("scripts/sql-fixtures/gate58-real-manual-journal-smoke.sql");
 const g58Adapter = read("scripts/sql-fixtures/gate58-disposable-b4-adapter.sql");
 const g58Workflow = read(".github/workflows/onexa-manual-journal-real-sql.yml");
@@ -48,6 +49,21 @@ assert.ok(sql.includes("debit <> round(debit, 4) or credit <> round(credit, 4)")
 assert.ok(sql.includes("debit <> round(debit, 2) or credit <> round(credit, 2)"), "Gate58 must reject fractional halalas for SAR");
 assert.ok(sql.includes("_total_debit <> _total_credit"), "Gate58 must require exact debit-credit equality");
 assert.ok(!sql.includes("abs(_total_debit - _total_credit) > 0.005"), "Gate58 must not allow an unbalanced journal within tolerance");
+assert.ok(sql.includes("manual.total_debit is distinct from header.total_debit"), "Gate58 reconciliation must compare debit exactly");
+assert.ok(sql.includes("manual.total_credit is distinct from header.total_credit"), "Gate58 reconciliation must compare credit exactly");
+assert.ok(!sql.includes("abs(manual.total_debit - coalesce(header.total_debit, 0)) > 0.005"), "Gate58 reconciliation must not hide sub-cent ledger differences");
+const viewStart = "create or replace view public.onexa_manual_journal_reconciliation";
+const viewEnd = "revoke all on table public.onexa_manual_journal_sequences";
+const viewSqlStart = sql.indexOf(viewStart);
+const viewSqlEnd = sql.indexOf(viewEnd, viewSqlStart);
+const viewPatchStart = viewReviewPatch.indexOf(viewStart);
+const viewPatchEnd = viewReviewPatch.indexOf("-- CREATE OR REPLACE preserves existing grants;");
+assert.ok(viewSqlStart >= 0 && viewSqlEnd > viewSqlStart && viewPatchStart >= 0 && viewPatchEnd > viewPatchStart, "Gate58 reconciliation-view boundaries missing");
+assert.equal(viewReviewPatch.slice(viewPatchStart, viewPatchEnd).trim(), sql.slice(viewSqlStart, viewSqlEnd).trim(), "Review-only view patch must match authoritative SQL exactly");
+assert.ok(viewReviewPatch.includes("ONEXA_G58_VIEW_DEFINITION_DRIFT_STOP_REVIEW_REQUIRED"), "View review patch must prevent stale replacement");
+assert.ok(viewReviewPatch.includes("security_invoker=true"), "Review-only view patch must preserve RLS invoker security");
+assert.ok(g58Smoke.includes("G58_SUB_TOLERANCE_RECONCILIATION_ACCEPTED"), "Sub-cent reconciliation negative test missing");
+
 
 assert.ok(reviewPatch.includes("ONEXA_GATE58_LIVE_FUNCTION_DRIFT_STOP_REVIEW_REQUIRED"), "Review-only production function patch must stop on drift");
 assert.ok(reviewPatch.includes("_period_code <> to_char(_accounting_date, 'YYYY-MM')"), "Review patch must include date-period guard");
