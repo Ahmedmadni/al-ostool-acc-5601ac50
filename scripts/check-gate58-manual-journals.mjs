@@ -12,6 +12,7 @@ const postcheck = read(postcheckPath);
 const smoke = read(smokePath);
 const liveAudit = read("supabase/manual-packages/gate58_live_compatibility_readonly.sql");
 const reviewPatch = read("supabase/manual-packages/gate58_create_validation_patch_REVIEW_ONLY.sql");
+const viewReviewPatch = read("supabase/manual-packages/gate58_reconciliation_exact_patch_REVIEW_ONLY.sql");
 const g58Smoke = read("scripts/sql-fixtures/gate58-real-manual-journal-smoke.sql");
 const g58Adapter = read("scripts/sql-fixtures/gate58-disposable-b4-adapter.sql");
 const g58Workflow = read(".github/workflows/onexa-manual-journal-real-sql.yml");
@@ -44,8 +45,54 @@ for (const invariant of [
 ]) assert.ok(sql.includes(invariant), `manual journal invariant missing: ${invariant}`);
 assert.ok(sql.includes("or debit is null or credit is null"), "missing debit or credit must be explicitly rejected before aggregation");
 assert.ok(sql.includes("_period_code <> to_char(_accounting_date, 'YYYY-MM')"), "Manual journal SQL must require accounting-date period consistency");
+assert.ok(sql.includes("debit <> round(debit, 4) or credit <> round(credit, 4)"), "Gate58 must reject storage-rounding of monetary source lines");
+assert.ok(sql.includes("debit <> round(debit, 2) or credit <> round(credit, 2)"), "Gate58 must reject fractional halalas for SAR");
+assert.ok(sql.includes("_total_debit <> _total_credit"), "Gate58 must require exact debit-credit equality");
+assert.ok(!sql.includes("abs(_total_debit - _total_credit) > 0.005"), "Gate58 must not allow an unbalanced journal within tolerance");
+assert.ok(sql.includes("manual.total_debit is distinct from header.total_debit"), "Gate58 reconciliation must compare debit exactly");
+assert.ok(sql.includes("manual.total_credit is distinct from header.total_credit"), "Gate58 reconciliation must compare credit exactly");
+assert.ok(!sql.includes("abs(manual.total_debit - coalesce(header.total_debit, 0)) > 0.005"), "Gate58 reconciliation must not hide sub-cent ledger differences");
+const viewStart = "create or replace view public.onexa_manual_journal_reconciliation";
+const viewEnd = "revoke all on table public.onexa_manual_journal_sequences";
+const viewSqlStart = sql.indexOf(viewStart);
+const viewSqlEnd = sql.indexOf(viewEnd, viewSqlStart);
+const viewPatchStart = viewReviewPatch.indexOf(viewStart);
+const viewPatchEnd = viewReviewPatch.indexOf("-- CREATE OR REPLACE preserves existing grants;");
+assert.ok(viewSqlStart >= 0 && viewSqlEnd > viewSqlStart && viewPatchStart >= 0 && viewPatchEnd > viewPatchStart, "Gate58 reconciliation-view boundaries missing");
+assert.equal(viewReviewPatch.slice(viewPatchStart, viewPatchEnd).trim(), sql.slice(viewSqlStart, viewSqlEnd).trim(), "Review-only view patch must match authoritative SQL exactly");
+assert.ok(viewReviewPatch.includes("ONEXA_G58_VIEW_DEFINITION_DRIFT_STOP_REVIEW_REQUIRED"), "View review patch must prevent stale replacement");
+assert.ok(viewReviewPatch.includes("security_invoker=true"), "Review-only view patch must preserve RLS invoker security");
+assert.ok(g58Smoke.includes("G58_SUB_TOLERANCE_RECONCILIATION_ACCEPTED"), "Sub-cent reconciliation negative test missing");
+for (const negative of [
+  "G58_NONEXISTENT_REVERSAL_RECONCILED",
+  "G58_WRONG_REVERSAL_LINK_RECONCILED",
+  "G58_REVERSAL_AMOUNT_VARIANCE_RECONCILED",
+]) assert.ok(g58Smoke.includes(negative), `Gate58 reversal check missing: ${negative}`);
+assert.ok(sql.includes("reversal.reversal_of_id is distinct from manual.posted_journal_id"), "Reversal reconciliation must validate original-journal link");
+assert.ok(sql.includes("reversal.total_debit is distinct from header.total_credit"), "Reversal reconciliation must verify contra debit");
+assert.ok(sql.includes("reversal.total_credit is distinct from header.total_debit"), "Reversal reconciliation must verify contra credit");
+
+
 assert.ok(reviewPatch.includes("ONEXA_GATE58_LIVE_FUNCTION_DRIFT_STOP_REVIEW_REQUIRED"), "Review-only production function patch must stop on drift");
 assert.ok(reviewPatch.includes("_period_code <> to_char(_accounting_date, 'YYYY-MM')"), "Review patch must include date-period guard");
+const fnStart = "create or replace function public.onexa_create_manual_journal(";
+const fnEnd = "create or replace function public.onexa_transition_manual_journal(";
+const rpcStart = sql.indexOf(fnStart);
+const rpcEnd = sql.indexOf(fnEnd);
+const patchStart = reviewPatch.indexOf(fnStart);
+const patchEnd = reviewPatch.indexOf("-- Do not change function grants here.");
+assert.ok(rpcStart >= 0 && rpcEnd > rpcStart && patchStart >= 0 && patchEnd > patchStart, "Gate58 patch-function boundaries missing");
+assert.equal(
+  reviewPatch.slice(patchStart, patchEnd).trim(),
+  sql.slice(rpcStart, rpcEnd).trim(),
+  "Guarded review-only patch must exactly mirror authoritative Gate58 RPC",
+);
+for (const marker of [
+  "G58_SUB_TOLERANCE_IMBALANCE_ACCEPTED",
+  "G58_EXCESS_STORAGE_PRECISION_ACCEPTED",
+  "G58_FRACTIONAL_HALALA_ACCEPTED",
+]) assert.ok(g58Smoke.includes(marker), `Gate58 financial precision negative test missing: ${marker}`);
+
 assert.ok(g58Smoke.includes("G58_PERIOD_MISMATCH_ACCEPTED") && g58Smoke.includes("G58_CROSS_TENANT_RLS_LEAK"), "Disposable G58 real-RPC negative tests are incomplete");
 assert.ok(g58Adapter.includes("SYNTHETIC DISPOSABLE") && g58Adapter.includes("onexa_reverse_journal"), "G58 B4 test double missing");
 assert.ok(g58Workflow.includes("real-g58-manual-journal-smoke:") && g58Workflow.includes("gate58-real-manual-journal-smoke.sql"), "G58 real SQL smoke is not wired to its isolated CI workflow");

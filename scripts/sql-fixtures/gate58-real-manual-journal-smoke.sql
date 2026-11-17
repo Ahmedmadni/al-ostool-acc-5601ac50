@@ -48,6 +48,52 @@ begin
     if sqlerrm <> 'ONEXA_MANUAL_JOURNAL_PERIOD_INVALID' then raise; end if;
   end;
 
+  -- Under the former 0.005 tolerance, a KWD imbalance of 0.004 passed.
+  -- A ledger journal must balance exactly, even below the storage precision.
+  begin
+    perform public.onexa_create_manual_journal(
+      _entity,_branch,date '2026-11-16','2026-11','KWD',
+      'sub-cent imbalance','G58-NEGATIVE',
+      jsonb_build_array(
+        jsonb_build_object('line_number',1,'account_code','5200','debit',125.2500,'credit',0),
+        jsonb_build_object('line_number',2,'account_code','2100','debit',0,'credit',125.2540)
+      )
+    );
+    raise exception 'G58_SUB_TOLERANCE_IMBALANCE_ACCEPTED';
+  exception when others then
+    if sqlerrm <> 'ONEXA_MANUAL_JOURNAL_NOT_BALANCED' then raise; end if;
+  end;
+
+  -- Source values must never be silently rounded into numeric(20,4).
+  begin
+    perform public.onexa_create_manual_journal(
+      _entity,_branch,date '2026-11-16','2026-11','KWD',
+      'excess four decimal precision','G58-NEGATIVE',
+      jsonb_build_array(
+        jsonb_build_object('line_number',1,'account_code','5200','debit',125.25001,'credit',0),
+        jsonb_build_object('line_number',2,'account_code','2100','debit',0,'credit',125.25001)
+      )
+    );
+    raise exception 'G58_EXCESS_STORAGE_PRECISION_ACCEPTED';
+  exception when others then
+    if sqlerrm <> 'ONEXA_MANUAL_JOURNAL_AMOUNT_PRECISION_INVALID' then raise; end if;
+  end;
+
+  -- SAR must be stored in halalas, not fractional halalas.
+  begin
+    perform public.onexa_create_manual_journal(
+      _entity,_branch,date '2026-11-16','2026-11','SAR',
+      'fractional halala','G58-NEGATIVE',
+      jsonb_build_array(
+        jsonb_build_object('line_number',1,'account_code','5200','debit',125.251,'credit',0),
+        jsonb_build_object('line_number',2,'account_code','2100','debit',0,'credit',125.251)
+      )
+    );
+    raise exception 'G58_FRACTIONAL_HALALA_ACCEPTED';
+  exception when others then
+    if sqlerrm <> 'ONEXA_MANUAL_JOURNAL_SAR_PRECISION_INVALID' then raise; end if;
+  end;
+
   -- Cross-tenant legal entity lookup must fail before creating any journal.
   begin
     perform public.onexa_create_manual_journal(
@@ -96,6 +142,27 @@ begin
     raise exception 'G58_LEDGER_RECONCILIATION_FAILED';
   end if;
 
+  -- A tiny 0.004 ledger/source variance must be marked as a mismatch,
+  -- not silently accepted by the former 0.005 reconciliation tolerance.
+  update public.onexa_journal_headers
+  set total_debit = total_debit + 0.004
+  where id = _ledger and tenant_id = 'tenant-smoke-A';
+  if not exists (
+    select 1 from public.onexa_manual_journal_reconciliation
+    where manual_journal_id = _journal and reconciliation_status = 'amount_mismatch'
+  ) then
+    raise exception 'G58_SUB_TOLERANCE_RECONCILIATION_ACCEPTED';
+  end if;
+  update public.onexa_journal_headers
+  set total_debit = total_debit - 0.004
+  where id = _ledger and tenant_id = 'tenant-smoke-A';
+  if not exists (
+    select 1 from public.onexa_manual_journal_reconciliation
+    where manual_journal_id = _journal and reconciliation_status = 'reconciled'
+  ) then
+    raise exception 'G58_RECONCILIATION_NOT_RESTORED';
+  end if;
+
   _reversal := public.onexa_reverse_manual_journal(
     _journal,date '2026-11-16','2026-11','synthetic correction'
   );
@@ -105,6 +172,49 @@ begin
     ) is distinct from _reversal then
     raise exception 'G58_REVERSE_IDEMPOTENCY_FAILED';
   end if;
+  -- The old reconciliation view treated ANY non-null reversal UUID as
+  -- reconciled even when no reversal ledger header existed.
+  update public.onexa_manual_journals
+  set reversal_journal_id = gen_random_uuid()
+  where id = _journal;
+  if not exists (
+    select 1 from public.onexa_manual_journal_reconciliation
+    where manual_journal_id = _journal and reconciliation_status = 'reversal_missing'
+  ) then
+    raise exception 'G58_NONEXISTENT_REVERSAL_RECONCILED';
+  end if;
+  update public.onexa_manual_journals
+  set reversal_journal_id = _reversal
+  where id = _journal;
+
+  -- A header without a valid link to the source original is not a reversal.
+  update public.onexa_journal_headers
+  set reversal_of_id = null
+  where id = _reversal;
+  if not exists (
+    select 1 from public.onexa_manual_journal_reconciliation
+    where manual_journal_id = _journal and reconciliation_status = 'reversal_mismatch'
+  ) then
+    raise exception 'G58_WRONG_REVERSAL_LINK_RECONCILED';
+  end if;
+  update public.onexa_journal_headers
+  set reversal_of_id = _ledger
+  where id = _reversal;
+
+  -- A reversal must offset the original posted debit/credit exactly.
+  update public.onexa_journal_headers
+  set total_credit = total_credit + 0.004
+  where id = _reversal;
+  if not exists (
+    select 1 from public.onexa_manual_journal_reconciliation
+    where manual_journal_id = _journal and reconciliation_status = 'reversal_mismatch'
+  ) then
+    raise exception 'G58_REVERSAL_AMOUNT_VARIANCE_RECONCILED';
+  end if;
+  update public.onexa_journal_headers
+  set total_credit = total_credit - 0.004
+  where id = _reversal;
+
   if (select count(*) from public.onexa_manual_journal_events
       where manual_journal_id=_journal) <> 5
     or not exists (

@@ -218,7 +218,23 @@ begin
     raise exception 'ONEXA_MANUAL_JOURNAL_LINE_INVALID';
   end if;
 
-  if _total_debit <= 0 or abs(_total_debit - _total_credit) > 0.005 then
+  -- Do not silently round source amounts when storing numeric(20,4) lines.
+  -- SAR journals additionally use halalas (two decimal places).
+  if exists (
+    select 1 from jsonb_to_recordset(_lines) as line(debit numeric, credit numeric)
+    where debit <> round(debit, 4) or credit <> round(credit, 4)
+  ) then
+    raise exception 'ONEXA_MANUAL_JOURNAL_AMOUNT_PRECISION_INVALID';
+  end if;
+
+  if upper(_currency) = 'SAR' and exists (
+    select 1 from jsonb_to_recordset(_lines) as line(debit numeric, credit numeric)
+    where debit <> round(debit, 2) or credit <> round(credit, 2)
+  ) then
+    raise exception 'ONEXA_MANUAL_JOURNAL_SAR_PRECISION_INVALID';
+  end if;
+
+  if _total_debit <= 0 or _total_debit <> _total_credit then
     raise exception 'ONEXA_MANUAL_JOURNAL_NOT_BALANCED';
   end if;
 
@@ -527,16 +543,27 @@ select
   header.total_credit as ledger_total_credit,
   case
     when manual.status in ('draft','submitted','approved','rejected','cancelled') then 'not_posted'
-    when manual.status = 'posted' and header.id is null then 'journal_missing'
-    when manual.status = 'reversed' and manual.reversal_journal_id is null then 'reversal_missing'
-    when abs(manual.total_debit - coalesce(header.total_debit, 0)) > 0.005
-      or abs(manual.total_credit - coalesce(header.total_credit, 0)) > 0.005 then 'amount_mismatch'
+    when manual.status in ('posted','reversed') and header.id is null then 'journal_missing'
+    when manual.status = 'reversed' and
+      (manual.reversal_journal_id is null or reversal.id is null) then 'reversal_missing'
+    when manual.status = 'reversed' and (
+      reversal.reversal_of_id is distinct from manual.posted_journal_id
+      or reversal.legal_entity_id is distinct from manual.legal_entity_id
+      or reversal.total_debit is distinct from header.total_credit
+      or reversal.total_credit is distinct from header.total_debit
+    ) then 'reversal_mismatch'
+    when manual.total_debit is distinct from header.total_debit
+      or manual.total_credit is distinct from header.total_credit
+      or header.legal_entity_id is distinct from manual.legal_entity_id then 'amount_mismatch'
     else 'reconciled'
   end as reconciliation_status
 from public.onexa_manual_journals manual
 left join public.onexa_journal_headers header
   on header.id = manual.posted_journal_id
- and header.tenant_id = manual.tenant_id;
+ and header.tenant_id = manual.tenant_id
+left join public.onexa_journal_headers reversal
+  on reversal.id = manual.reversal_journal_id
+ and reversal.tenant_id = manual.tenant_id;
 
 revoke all on table public.onexa_manual_journal_sequences from public, anon, authenticated;
 revoke all on table public.onexa_manual_journals from public, anon, authenticated;
