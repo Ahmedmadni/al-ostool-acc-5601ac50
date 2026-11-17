@@ -25,6 +25,23 @@ begin
   perform set_config('test.tenant_id','tenant-smoke-A',true);
   perform set_config('test.user_id',_creator::text,true);
 
+  -- The table must independently reject small debit/credit differences.
+  -- A superuser-only disposable fixture tests the storage constraint itself.
+  begin
+    insert into public.onexa_manual_journals (
+      tenant_id, legal_entity_id, branch_id, journal_number,
+      accounting_date, period_code, currency, memo,
+      total_debit, total_credit, created_by
+    ) values (
+      'tenant-smoke-A', _entity, _branch, 'G58-BALANCE-CHECK',
+      date '2026-11-16','2026-11','SAR',
+      'disposable deliberately unbalanced header', 1.00, 1.004, _creator
+    );
+    raise exception 'G58_UNBALANCED_HEADER_CONSTRAINT_ALLOWED';
+  exception when check_violation then
+    if position('onexa_manual_journals_balanced' in sqlerrm) = 0 then raise; end if;
+  end;
+
   -- Explicitly omitted side must fail: SQL three-valued boolean can otherwise
   -- allow missing values that were interpreted as 0 by old browser logic.
   begin
