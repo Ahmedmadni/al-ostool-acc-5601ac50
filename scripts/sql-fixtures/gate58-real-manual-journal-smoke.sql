@@ -172,6 +172,49 @@ begin
     ) is distinct from _reversal then
     raise exception 'G58_REVERSE_IDEMPOTENCY_FAILED';
   end if;
+  -- The old reconciliation view treated ANY non-null reversal UUID as
+  -- reconciled even when no reversal ledger header existed.
+  update public.onexa_manual_journals
+  set reversal_journal_id = gen_random_uuid()
+  where id = _journal;
+  if not exists (
+    select 1 from public.onexa_manual_journal_reconciliation
+    where manual_journal_id = _journal and reconciliation_status = 'reversal_missing'
+  ) then
+    raise exception 'G58_NONEXISTENT_REVERSAL_RECONCILED';
+  end if;
+  update public.onexa_manual_journals
+  set reversal_journal_id = _reversal
+  where id = _journal;
+
+  -- A header without a valid link to the source original is not a reversal.
+  update public.onexa_journal_headers
+  set reversal_of_id = null
+  where id = _reversal;
+  if not exists (
+    select 1 from public.onexa_manual_journal_reconciliation
+    where manual_journal_id = _journal and reconciliation_status = 'reversal_mismatch'
+  ) then
+    raise exception 'G58_WRONG_REVERSAL_LINK_RECONCILED';
+  end if;
+  update public.onexa_journal_headers
+  set reversal_of_id = _ledger
+  where id = _reversal;
+
+  -- A reversal must offset the original posted debit/credit exactly.
+  update public.onexa_journal_headers
+  set total_credit = total_credit + 0.004
+  where id = _reversal;
+  if not exists (
+    select 1 from public.onexa_manual_journal_reconciliation
+    where manual_journal_id = _journal and reconciliation_status = 'reversal_mismatch'
+  ) then
+    raise exception 'G58_REVERSAL_AMOUNT_VARIANCE_RECONCILED';
+  end if;
+  update public.onexa_journal_headers
+  set total_credit = total_credit - 0.004
+  where id = _reversal;
+
   if (select count(*) from public.onexa_manual_journal_events
       where manual_journal_id=_journal) <> 5
     or not exists (
