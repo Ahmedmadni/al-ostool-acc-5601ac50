@@ -142,6 +142,27 @@ begin
     raise exception 'G58_LEDGER_RECONCILIATION_FAILED';
   end if;
 
+  -- A tiny 0.004 ledger/source variance must be marked as a mismatch,
+  -- not silently accepted by the former 0.005 reconciliation tolerance.
+  update public.onexa_journal_headers
+  set total_debit = total_debit + 0.004
+  where id = _ledger and tenant_id = 'tenant-smoke-A';
+  if not exists (
+    select 1 from public.onexa_manual_journal_reconciliation
+    where manual_journal_id = _journal and reconciliation_status = 'amount_mismatch'
+  ) then
+    raise exception 'G58_SUB_TOLERANCE_RECONCILIATION_ACCEPTED';
+  end if;
+  update public.onexa_journal_headers
+  set total_debit = total_debit - 0.004
+  where id = _ledger and tenant_id = 'tenant-smoke-A';
+  if not exists (
+    select 1 from public.onexa_manual_journal_reconciliation
+    where manual_journal_id = _journal and reconciliation_status = 'reconciled'
+  ) then
+    raise exception 'G58_RECONCILIATION_NOT_RESTORED';
+  end if;
+
   _reversal := public.onexa_reverse_manual_journal(
     _journal,date '2026-11-16','2026-11','synthetic correction'
   );
