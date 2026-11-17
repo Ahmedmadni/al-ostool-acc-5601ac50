@@ -69,7 +69,7 @@ create table if not exists public.onexa_manual_journals (
   rejected_at timestamptz,
   cancelled_at timestamptz,
   reversed_at timestamptz,
-  constraint onexa_manual_journals_balanced check (abs(total_debit - total_credit) <= 0.005),
+  constraint onexa_manual_journals_balanced check (total_debit = total_credit),
   unique (tenant_id, legal_entity_id, journal_number, revision)
 );
 
@@ -326,7 +326,8 @@ begin
     raise exception 'ONEXA_MANUAL_JOURNAL_TRANSITION_INVALID:%->%', _journal.status, _to_status;
   end if;
 
-  _action := case when _to_status = 'approved' then 'approve'
+  -- Rejection is a reviewer decision, not a creator's general edit action.
+  _action := case when _to_status in ('approved','rejected') then 'approve'
                   when _to_status = 'submitted' then 'submit'
                   else 'create' end;
   if not onexa_private.has_module_action(_actor, 'finance', _action) then
@@ -339,8 +340,18 @@ begin
   if _to_status = 'approved' and _actor = _journal.created_by then
     raise exception 'ONEXA_MANUAL_JOURNAL_CREATOR_CANNOT_APPROVE';
   end if;
+  if _to_status = 'rejected' and _actor = _journal.created_by then
+    raise exception 'ONEXA_MANUAL_JOURNAL_CREATOR_CANNOT_REJECT';
+  end if;
+  if _to_status = 'cancelled' and _actor <> _journal.created_by then
+    raise exception 'ONEXA_ONLY_MANUAL_JOURNAL_CREATOR_CAN_CANCEL';
+  end if;
   if _to_status = 'rejected' and nullif(btrim(_reason), '') is null then
     raise exception 'ONEXA_MANUAL_JOURNAL_REJECTION_REASON_REQUIRED';
+  end if;
+  if _to_status = 'cancelled' and _journal.status = 'submitted'
+     and nullif(btrim(_reason), '') is null then
+    raise exception 'ONEXA_MANUAL_JOURNAL_CANCELLATION_REASON_REQUIRED';
   end if;
 
   update public.onexa_manual_journals
@@ -484,6 +495,12 @@ begin
   end if;
   if nullif(btrim(_reason), '') is null then
     raise exception 'ONEXA_MANUAL_JOURNAL_REVERSAL_REASON_REQUIRED';
+  end if;
+  -- The B4 engine must additionally enforce closed/frozen fiscal periods.
+  if _accounting_date is null or _period_code is null
+     or _period_code !~ '^[0-9]{4}-(0[1-9]|1[0-2])$'
+     or _period_code <> to_char(_accounting_date, 'YYYY-MM') then
+    raise exception 'ONEXA_MANUAL_JOURNAL_REVERSAL_PERIOD_INVALID';
   end if;
 
   select * into _journal from public.onexa_manual_journals

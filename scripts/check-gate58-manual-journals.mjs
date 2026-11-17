@@ -13,6 +13,8 @@ const smoke = read(smokePath);
 const liveAudit = read("supabase/manual-packages/gate58_live_compatibility_readonly.sql");
 const reviewPatch = read("supabase/manual-packages/gate58_create_validation_patch_REVIEW_ONLY.sql");
 const viewReviewPatch = read("supabase/manual-packages/gate58_reconciliation_exact_patch_REVIEW_ONLY.sql");
+const lifecyclePatch = read("supabase/manual-packages/gate58_lifecycle_authorization_patch_REVIEW_ONLY.sql");
+const balancePatch = read("supabase/manual-packages/gate58_exact_balance_constraint_patch_REVIEW_ONLY.sql");
 const g58Smoke = read("scripts/sql-fixtures/gate58-real-manual-journal-smoke.sql");
 const g58Adapter = read("scripts/sql-fixtures/gate58-disposable-b4-adapter.sql");
 const g58Workflow = read(".github/workflows/onexa-manual-journal-real-sql.yml");
@@ -49,6 +51,50 @@ assert.ok(sql.includes("debit <> round(debit, 4) or credit <> round(credit, 4)")
 assert.ok(sql.includes("debit <> round(debit, 2) or credit <> round(credit, 2)"), "Gate58 must reject fractional halalas for SAR");
 assert.ok(sql.includes("_total_debit <> _total_credit"), "Gate58 must require exact debit-credit equality");
 assert.ok(!sql.includes("abs(_total_debit - _total_credit) > 0.005"), "Gate58 must not allow an unbalanced journal within tolerance");
+for (const required of [
+  "constraint onexa_manual_journals_balanced check (total_debit = total_credit)",
+  "_to_status in ('approved','rejected') then 'approve'",
+  "ONEXA_MANUAL_JOURNAL_CREATOR_CANNOT_REJECT",
+  "ONEXA_ONLY_MANUAL_JOURNAL_CREATOR_CAN_CANCEL",
+  "ONEXA_MANUAL_JOURNAL_CANCELLATION_REASON_REQUIRED",
+  "ONEXA_MANUAL_JOURNAL_REVERSAL_PERIOD_INVALID",
+]) assert.ok(sql.includes(required), `Gate58 lifecycle invariant missing: ${required}`);
+assert.ok(!sql.includes("constraint onexa_manual_journals_balanced check (abs(total_debit - total_credit) <= 0.005)"), "Gate58 fresh installs must enforce exact header balance");
+
+const transitionStart = "create or replace function public.onexa_transition_manual_journal(";
+const transitionEnd = "create or replace function public.onexa_post_manual_journal(";
+const reverseStart = "create or replace function public.onexa_reverse_manual_journal(";
+const reverseEnd = "create or replace view public.onexa_manual_journal_reconciliation";
+function assertGuardedSqlBody(start, end, patch, patchEnd) {
+  const begin = sql.indexOf(start), finish = sql.indexOf(end, begin + start.length);
+  const patchBegin = patch.indexOf(start), patchFinish = patch.indexOf(patchEnd, patchBegin + start.length);
+  assert.ok(begin >= 0 && finish > begin && patchBegin >= 0 && patchFinish > patchBegin, "Guarded patch function boundaries missing");
+  assert.equal(patch.slice(patchBegin, patchFinish).trim(), sql.slice(begin, finish).trim(), "Guarded lifecycle patch must match authoritative SQL source");
+}
+assertGuardedSqlBody(transitionStart, transitionEnd, lifecyclePatch, reverseStart);
+assertGuardedSqlBody(reverseStart, reverseEnd, lifecyclePatch, "-- Existing grants, RLS policies");
+for (const gate of [
+  "ONEXA_GATE58_TRANSITION_DRIFT_STOP_REVIEW_REQUIRED",
+  "ONEXA_GATE58_REVERSAL_DRIFT_STOP_REVIEW_REQUIRED",
+]) assert.ok(lifecyclePatch.includes(gate), `Lifecycle patch drift gate missing: ${gate}`);
+for (const gate of [
+  "ONEXA_GATE58_BALANCE_CONSTRAINT_DRIFT_STOP_REVIEW_REQUIRED",
+  "ONEXA_GATE58_HISTORICAL_UNBALANCED_ROWS_STOP_FINANCE_REVIEW_REQUIRED",
+  "check (total_debit = total_credit)",
+  "lock_timeout",
+]) assert.ok(balancePatch.includes(gate), `Balance patch safeguard missing: ${gate}`);
+for (const test of [
+  "G58_UNBALANCED_HEADER_CONSTRAINT_ALLOWED",
+  "G58_CREATOR_REJECTION_ALLOWED",
+  "G58_UNAUTHORIZED_REVIEWER_REJECTION_ALLOWED",
+  "G58_OTHER_CREATOR_CANCELLATION_ALLOWED",
+  "G58_SUBMITTED_CANCEL_NO_REASON_ALLOWED",
+  "G58_REVIEW_REJECTION_AUDIT_FAILED",
+  "G58_CREATOR_CANCEL_WITH_REASON_FAILED",
+  "G58_REVERSAL_PERIOD_MISMATCH_ALLOWED",
+  "G58_NULL_REVERSAL_DATE_ALLOWED",
+]) assert.ok(g58Smoke.includes(test), `Gate58 database lifecycle negative test missing: ${test}`);
+
 assert.ok(sql.includes("manual.total_debit is distinct from header.total_debit"), "Gate58 reconciliation must compare debit exactly");
 assert.ok(sql.includes("manual.total_credit is distinct from header.total_credit"), "Gate58 reconciliation must compare credit exactly");
 assert.ok(!sql.includes("abs(manual.total_debit - coalesce(header.total_debit, 0)) > 0.005"), "Gate58 reconciliation must not hide sub-cent ledger differences");
