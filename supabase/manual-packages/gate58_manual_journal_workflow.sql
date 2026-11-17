@@ -545,8 +545,8 @@ select
     when manual.status in ('draft','submitted','approved','rejected','cancelled') then 'not_posted'
     when manual.status = 'posted' and header.id is null then 'journal_missing'
     when manual.status = 'reversed' and manual.reversal_journal_id is null then 'reversal_missing'
-    when abs(manual.total_debit - coalesce(header.total_debit, 0)) > 0.005
-      or abs(manual.total_credit - coalesce(header.total_credit, 0)) > 0.005 then 'amount_mismatch'
+    when manual.total_debit is distinct from header.total_debit
+      or manual.total_credit is distinct from header.total_credit then 'amount_mismatch'
     else 'reconciled'
   end as reconciliation_status
 from public.onexa_manual_journals manual
