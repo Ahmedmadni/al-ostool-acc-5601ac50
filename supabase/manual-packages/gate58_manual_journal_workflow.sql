@@ -69,7 +69,7 @@ create table if not exists public.onexa_manual_journals (
   rejected_at timestamptz,
   cancelled_at timestamptz,
   reversed_at timestamptz,
-  constraint onexa_manual_journals_balanced check (abs(total_debit - total_credit) <= 0.005),
+  constraint onexa_manual_journals_balanced check (total_debit = total_credit),
   unique (tenant_id, legal_entity_id, journal_number, revision)
 );
 
@@ -326,7 +326,8 @@ begin
     raise exception 'ONEXA_MANUAL_JOURNAL_TRANSITION_INVALID:%->%', _journal.status, _to_status;
   end if;
 
-  _action := case when _to_status = 'approved' then 'approve'
+  -- Rejection is a reviewer decision, not a creator's general edit action.
+  _action := case when _to_status in ('approved','rejected') then 'approve'
                   when _to_status = 'submitted' then 'submit'
                   else 'create' end;
   if not onexa_private.has_module_action(_actor, 'finance', _action) then
@@ -339,8 +340,18 @@ begin
   if _to_status = 'approved' and _actor = _journal.created_by then
     raise exception 'ONEXA_MANUAL_JOURNAL_CREATOR_CANNOT_APPROVE';
   end if;
+  if _to_status = 'rejected' and _actor = _journal.created_by then
+    raise exception 'ONEXA_MANUAL_JOURNAL_CREATOR_CANNOT_REJECT';
+  end if;
+  if _to_status = 'cancelled' and _actor <> _journal.created_by then
+    raise exception 'ONEXA_ONLY_MANUAL_JOURNAL_CREATOR_CAN_CANCEL';
+  end if;
   if _to_status = 'rejected' and nullif(btrim(_reason), '') is null then
     raise exception 'ONEXA_MANUAL_JOURNAL_REJECTION_REASON_REQUIRED';
+  end if;
+  if _to_status = 'cancelled' and _journal.status = 'submitted'
+     and nullif(btrim(_reason), '') is null then
+    raise exception 'ONEXA_MANUAL_JOURNAL_CANCELLATION_REASON_REQUIRED';
   end if;
 
   update public.onexa_manual_journals
@@ -484,6 +495,112 @@ begin
   end if;
   if nullif(btrim(_reason), '') is null then
     raise exception 'ONEXA_MANUAL_JOURNAL_REVERSAL_REASON_REQUIRED';
+  end if;
+  -- The B4 engine must additionally enforce closed/frozen fiscal periods.
+  if _accounting_date is null or _period_code is null
+     or _period_code !~ '^[0-9]{4}-(0[1-9]|1[0-2])
+
+  select * into _journal from public.onexa_manual_journals
+  where id = _manual_journal_id and tenant_id = _tenant_id
+  for update;
+  if not found then raise exception 'ONEXA_MANUAL_JOURNAL_NOT_FOUND'; end if;
+  if _journal.status = 'reversed' and _journal.reversal_journal_id is not null then
+    return _journal.reversal_journal_id;
+  end if;
+  if _journal.status <> 'posted' or _journal.posted_journal_id is null then
+    raise exception 'ONEXA_MANUAL_JOURNAL_MUST_BE_POSTED';
+  end if;
+
+  _reversal_id := public.onexa_reverse_journal(
+    _journal_id => _journal.posted_journal_id,
+    _accounting_date => _accounting_date,
+    _period_code => _period_code,
+    _reason => btrim(_reason)
+  )::uuid;
+
+  update public.onexa_manual_journals
+  set status = 'reversed', reversal_journal_id = _reversal_id,
+      reversed_by = _actor, reversed_at = now(), updated_at = now()
+  where id = _journal.id and tenant_id = _tenant_id;
+
+  insert into public.onexa_manual_journal_events (
+    tenant_id, manual_journal_id, event_type, from_status, to_status, actor_id, reason, event_data
+  ) values (
+    _tenant_id, _journal.id, 'reversal_completed', 'posted', 'reversed', _actor,
+    btrim(_reason), jsonb_build_object('reversal_journal_id', _reversal_id)
+  );
+
+  return _reversal_id;
+end;
+$function$;
+
+create or replace view public.onexa_manual_journal_reconciliation
+with (security_invoker = true)
+as
+select
+  manual.id as manual_journal_id,
+  manual.tenant_id,
+  manual.legal_entity_id,
+  manual.branch_id,
+  manual.journal_number,
+  manual.accounting_date,
+  manual.period_code,
+  manual.currency,
+  manual.memo,
+  manual.status,
+  manual.total_debit,
+  manual.total_credit,
+  manual.posted_journal_id,
+  manual.reversal_journal_id,
+  header.journal_number as ledger_journal_number,
+  header.total_debit as ledger_total_debit,
+  header.total_credit as ledger_total_credit,
+  case
+    when manual.status in ('draft','submitted','approved','rejected','cancelled') then 'not_posted'
+    when manual.status in ('posted','reversed') and header.id is null then 'journal_missing'
+    when manual.status = 'reversed' and
+      (manual.reversal_journal_id is null or reversal.id is null) then 'reversal_missing'
+    when manual.status = 'reversed' and (
+      reversal.reversal_of_id is distinct from manual.posted_journal_id
+      or reversal.legal_entity_id is distinct from manual.legal_entity_id
+      or reversal.total_debit is distinct from header.total_credit
+      or reversal.total_credit is distinct from header.total_debit
+    ) then 'reversal_mismatch'
+    when manual.total_debit is distinct from header.total_debit
+      or manual.total_credit is distinct from header.total_credit
+      or header.legal_entity_id is distinct from manual.legal_entity_id then 'amount_mismatch'
+    else 'reconciled'
+  end as reconciliation_status
+from public.onexa_manual_journals manual
+left join public.onexa_journal_headers header
+  on header.id = manual.posted_journal_id
+ and header.tenant_id = manual.tenant_id
+left join public.onexa_journal_headers reversal
+  on reversal.id = manual.reversal_journal_id
+ and reversal.tenant_id = manual.tenant_id;
+
+revoke all on table public.onexa_manual_journal_sequences from public, anon, authenticated;
+revoke all on table public.onexa_manual_journals from public, anon, authenticated;
+revoke all on table public.onexa_manual_journal_lines from public, anon, authenticated;
+revoke all on table public.onexa_manual_journal_events from public, anon, authenticated;
+grant select on table public.onexa_manual_journals to authenticated;
+grant select on table public.onexa_manual_journal_lines to authenticated;
+grant select on table public.onexa_manual_journal_events to authenticated;
+grant select on table public.onexa_manual_journal_reconciliation to authenticated;
+
+revoke all on function public.onexa_create_manual_journal(uuid,uuid,date,text,text,text,text,jsonb) from public, anon;
+revoke all on function public.onexa_transition_manual_journal(uuid,text,text) from public, anon;
+revoke all on function public.onexa_post_manual_journal(uuid) from public, anon;
+revoke all on function public.onexa_reverse_manual_journal(uuid,date,text,text) from public, anon;
+grant execute on function public.onexa_create_manual_journal(uuid,uuid,date,text,text,text,text,jsonb) to authenticated;
+grant execute on function public.onexa_transition_manual_journal(uuid,text,text) to authenticated;
+grant execute on function public.onexa_post_manual_journal(uuid) to authenticated;
+grant execute on function public.onexa_reverse_manual_journal(uuid,date,text,text) to authenticated;
+
+commit;
+
+     or _period_code <> to_char(_accounting_date, 'YYYY-MM') then
+    raise exception 'ONEXA_MANUAL_JOURNAL_REVERSAL_PERIOD_INVALID';
   end if;
 
   select * into _journal from public.onexa_manual_journals
