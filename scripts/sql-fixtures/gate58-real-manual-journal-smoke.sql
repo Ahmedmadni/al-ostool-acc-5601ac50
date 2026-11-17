@@ -48,6 +48,52 @@ begin
     if sqlerrm <> 'ONEXA_MANUAL_JOURNAL_PERIOD_INVALID' then raise; end if;
   end;
 
+  -- Under the former 0.005 tolerance, a KWD imbalance of 0.004 passed.
+  -- A ledger journal must balance exactly, even below the storage precision.
+  begin
+    perform public.onexa_create_manual_journal(
+      _entity,_branch,date '2026-11-16','2026-11','KWD',
+      'sub-cent imbalance','G58-NEGATIVE',
+      jsonb_build_array(
+        jsonb_build_object('line_number',1,'account_code','5200','debit',125.2500,'credit',0),
+        jsonb_build_object('line_number',2,'account_code','2100','debit',0,'credit',125.2540)
+      )
+    );
+    raise exception 'G58_SUB_TOLERANCE_IMBALANCE_ACCEPTED';
+  exception when others then
+    if sqlerrm <> 'ONEXA_MANUAL_JOURNAL_NOT_BALANCED' then raise; end if;
+  end;
+
+  -- Source values must never be silently rounded into numeric(20,4).
+  begin
+    perform public.onexa_create_manual_journal(
+      _entity,_branch,date '2026-11-16','2026-11','KWD',
+      'excess four decimal precision','G58-NEGATIVE',
+      jsonb_build_array(
+        jsonb_build_object('line_number',1,'account_code','5200','debit',125.25001,'credit',0),
+        jsonb_build_object('line_number',2,'account_code','2100','debit',0,'credit',125.25001)
+      )
+    );
+    raise exception 'G58_EXCESS_STORAGE_PRECISION_ACCEPTED';
+  exception when others then
+    if sqlerrm <> 'ONEXA_MANUAL_JOURNAL_AMOUNT_PRECISION_INVALID' then raise; end if;
+  end;
+
+  -- SAR must be stored in halalas, not fractional halalas.
+  begin
+    perform public.onexa_create_manual_journal(
+      _entity,_branch,date '2026-11-16','2026-11','SAR',
+      'fractional halala','G58-NEGATIVE',
+      jsonb_build_array(
+        jsonb_build_object('line_number',1,'account_code','5200','debit',125.251,'credit',0),
+        jsonb_build_object('line_number',2,'account_code','2100','debit',0,'credit',125.251)
+      )
+    );
+    raise exception 'G58_FRACTIONAL_HALALA_ACCEPTED';
+  exception when others then
+    if sqlerrm <> 'ONEXA_MANUAL_JOURNAL_SAR_PRECISION_INVALID' then raise; end if;
+  end;
+
   -- Cross-tenant legal entity lookup must fail before creating any journal.
   begin
     perform public.onexa_create_manual_journal(
