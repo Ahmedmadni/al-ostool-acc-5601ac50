@@ -63,6 +63,14 @@ assert.equal(viewReviewPatch.slice(viewPatchStart, viewPatchEnd).trim(), sql.sli
 assert.ok(viewReviewPatch.includes("ONEXA_G58_VIEW_DEFINITION_DRIFT_STOP_REVIEW_REQUIRED"), "View review patch must prevent stale replacement");
 assert.ok(viewReviewPatch.includes("security_invoker=true"), "Review-only view patch must preserve RLS invoker security");
 assert.ok(g58Smoke.includes("G58_SUB_TOLERANCE_RECONCILIATION_ACCEPTED"), "Sub-cent reconciliation negative test missing");
+for (const negative of [
+  "G58_NONEXISTENT_REVERSAL_RECONCILED",
+  "G58_WRONG_REVERSAL_LINK_RECONCILED",
+  "G58_REVERSAL_AMOUNT_VARIANCE_RECONCILED",
+]) assert.ok(g58Smoke.includes(negative), `Gate58 reversal check missing: ${negative}`);
+assert.ok(sql.includes("reversal.reversal_of_id is distinct from manual.posted_journal_id"), "Reversal reconciliation must validate original-journal link");
+assert.ok(sql.includes("reversal.total_debit is distinct from header.total_credit"), "Reversal reconciliation must verify contra debit");
+assert.ok(sql.includes("reversal.total_credit is distinct from header.total_debit"), "Reversal reconciliation must verify contra credit");
 
 
 assert.ok(reviewPatch.includes("ONEXA_GATE58_LIVE_FUNCTION_DRIFT_STOP_REVIEW_REQUIRED"), "Review-only production function patch must stop on drift");
