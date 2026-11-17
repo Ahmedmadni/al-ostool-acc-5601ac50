@@ -44,8 +44,31 @@ for (const invariant of [
 ]) assert.ok(sql.includes(invariant), `manual journal invariant missing: ${invariant}`);
 assert.ok(sql.includes("or debit is null or credit is null"), "missing debit or credit must be explicitly rejected before aggregation");
 assert.ok(sql.includes("_period_code <> to_char(_accounting_date, 'YYYY-MM')"), "Manual journal SQL must require accounting-date period consistency");
+assert.ok(sql.includes("debit <> round(debit, 4) or credit <> round(credit, 4)"), "Gate58 must reject storage-rounding of monetary source lines");
+assert.ok(sql.includes("debit <> round(debit, 2) or credit <> round(credit, 2)"), "Gate58 must reject fractional halalas for SAR");
+assert.ok(sql.includes("_total_debit <> _total_credit"), "Gate58 must require exact debit-credit equality");
+assert.ok(!sql.includes("abs(_total_debit - _total_credit) > 0.005"), "Gate58 must not allow an unbalanced journal within tolerance");
+
 assert.ok(reviewPatch.includes("ONEXA_GATE58_LIVE_FUNCTION_DRIFT_STOP_REVIEW_REQUIRED"), "Review-only production function patch must stop on drift");
 assert.ok(reviewPatch.includes("_period_code <> to_char(_accounting_date, 'YYYY-MM')"), "Review patch must include date-period guard");
+const fnStart = "create or replace function public.onexa_create_manual_journal(";
+const fnEnd = "create or replace function public.onexa_transition_manual_journal(";
+const rpcStart = sql.indexOf(fnStart);
+const rpcEnd = sql.indexOf(fnEnd);
+const patchStart = reviewPatch.indexOf(fnStart);
+const patchEnd = reviewPatch.indexOf("-- Do not change function grants here.");
+assert.ok(rpcStart >= 0 && rpcEnd > rpcStart && patchStart >= 0 && patchEnd > patchStart, "Gate58 patch-function boundaries missing");
+assert.equal(
+  reviewPatch.slice(patchStart, patchEnd).trim(),
+  sql.slice(rpcStart, rpcEnd).trim(),
+  "Guarded review-only patch must exactly mirror authoritative Gate58 RPC",
+);
+for (const marker of [
+  "G58_SUB_TOLERANCE_IMBALANCE_ACCEPTED",
+  "G58_EXCESS_STORAGE_PRECISION_ACCEPTED",
+  "G58_FRACTIONAL_HALALA_ACCEPTED",
+]) assert.ok(g58Smoke.includes(marker), `Gate58 financial precision negative test missing: ${marker}`);
+
 assert.ok(g58Smoke.includes("G58_PERIOD_MISMATCH_ACCEPTED") && g58Smoke.includes("G58_CROSS_TENANT_RLS_LEAK"), "Disposable G58 real-RPC negative tests are incomplete");
 assert.ok(g58Adapter.includes("SYNTHETIC DISPOSABLE") && g58Adapter.includes("onexa_reverse_journal"), "G58 B4 test double missing");
 assert.ok(g58Workflow.includes("real-g58-manual-journal-smoke:") && g58Workflow.includes("gate58-real-manual-journal-smoke.sql"), "G58 real SQL smoke is not wired to its isolated CI workflow");
