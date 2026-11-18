@@ -160,7 +160,9 @@ export function ManualJournalPanel() {
       reset();
       await cache.invalidateQueries({ queryKey: ["onexa-manual-journals"] });
     },
-    onError: (error) => toast.error(error.message),
+    onError: (error) => toast.error(error.message.includes("ONEXA_MANUAL_JOURNAL_REVISION_CONFLICT")
+      ? "تم تعديل هذا القيد من جلسة أخرى. أغلق النموذج وأعد فتح القيد للحصول على آخر مراجعة."
+      : error.message),
   });
 
   const transition = useMutation({
@@ -347,7 +349,7 @@ export function ManualJournalPanel() {
               {setup.isError && <p role="alert" className="text-sm text-destructive">تعذر تحميل دليل الحسابات أو صلاحيات المستخدم. لا يمكن إنشاء القيد.</p>}
               {validation.errors.length > 0 && <p role="alert" className="text-sm text-destructive">{validation.errors[0]}</p>}
               <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setOpen(false)}>إلغاء</Button>
+                <Button type="button" variant="outline" onClick={() => openForm(false)}>إلغاء</Button>
                 <Button type="submit" disabled={create.isPending || !setup.data?.userId || !validation.valid}>
                   <Send className="h-4 w-4" />{create.isPending ? "جارٍ الحفظ..." : editTarget ? "حفظ التصحيح وإعادة الإرسال" : "حفظ وإرسال للاعتماد"}
                 </Button>
