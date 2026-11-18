@@ -649,6 +649,24 @@ begin
 
   if _journal_id_result is null then raise exception 'ONEXA_POST_JOURNAL_INVALID_RESPONSE'; end if;
 
+  -- Treat the B4 result as an untrusted downstream contract. A UUID alone
+  -- does not prove that the exact approved source reached this tenant's GL.
+  perform 1 from public.onexa_journal_headers posted
+  where posted.id = _journal_id_result
+    and posted.tenant_id = _tenant_id
+    and posted.legal_entity_id = _journal.legal_entity_id
+    and posted.accounting_date = _journal.accounting_date
+    and posted.currency = _journal.currency
+    and posted.source_document_type = 'manual_journal'
+    and posted.source_document_id = _journal.id::text
+    and posted.source_revision = _journal.revision
+    and posted.total_debit = _journal.total_debit
+    and posted.total_credit = _journal.total_credit
+    and posted.state = 'posted';
+  if not found then
+    raise exception 'ONEXA_MANUAL_JOURNAL_B4_POST_CONTRACT_MISMATCH';
+  end if;
+
   update public.onexa_manual_journals
   set status = 'posted', posted_journal_id = _journal_id_result,
       posted_by = _actor, posted_at = now(), updated_at = now()
@@ -716,6 +734,27 @@ begin
     _period_code => _period_code,
     _reason => btrim(_reason)
   )::uuid;
+
+  if _reversal_id is null or not exists (
+    select 1
+    from public.onexa_journal_headers reversed
+    join public.onexa_journal_headers original
+      on original.id = _journal.posted_journal_id
+     and original.tenant_id = _tenant_id
+    where reversed.id = _reversal_id
+      and reversed.tenant_id = _tenant_id
+      and reversed.legal_entity_id = _journal.legal_entity_id
+      and reversed.reversal_of_id = original.id
+      and reversed.accounting_date = _accounting_date
+      and reversed.currency = _journal.currency
+      and reversed.total_debit = original.total_credit
+      and reversed.total_credit = original.total_debit
+      and reversed.state = 'posted'
+      and original.state = 'reversed'
+      and original.reversal_journal_id = reversed.id
+  ) then
+    raise exception 'ONEXA_MANUAL_JOURNAL_B4_REVERSAL_CONTRACT_MISMATCH';
+  end if;
 
   update public.onexa_manual_journals
   set status = 'reversed', reversal_journal_id = _reversal_id,
