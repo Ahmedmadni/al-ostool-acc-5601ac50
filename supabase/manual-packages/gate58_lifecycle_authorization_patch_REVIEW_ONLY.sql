@@ -167,6 +167,27 @@ begin
     _reason => btrim(_reason)
   )::uuid;
 
+  if _reversal_id is null or not exists (
+    select 1
+    from public.onexa_journal_headers reversed
+    join public.onexa_journal_headers original
+      on original.id = _journal.posted_journal_id
+     and original.tenant_id = _tenant_id
+    where reversed.id = _reversal_id
+      and reversed.tenant_id = _tenant_id
+      and reversed.legal_entity_id = _journal.legal_entity_id
+      and reversed.reversal_of_id = original.id
+      and reversed.accounting_date = _accounting_date
+      and reversed.currency = _journal.currency
+      and reversed.total_debit = original.total_credit
+      and reversed.total_credit = original.total_debit
+      and reversed.state = 'posted'
+      and original.state = 'reversed'
+      and original.reversal_journal_id = reversed.id
+  ) then
+    raise exception 'ONEXA_MANUAL_JOURNAL_B4_REVERSAL_CONTRACT_MISMATCH';
+  end if;
+
   update public.onexa_manual_journals
   set status = 'reversed', reversal_journal_id = _reversal_id,
       reversed_by = _actor, reversed_at = now(), updated_at = now()
