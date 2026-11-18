@@ -56,4 +56,6 @@ jobs:
         run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-real-manual-journal-smoke.sql
       - name: Exercise ACTUAL Gate 58 amendment RPC with preserved revision audit
         run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-amendment-smoke.sql
+      - name: Deliberately corrupt B4 receipts and confirm Gate58 fails atomically
+        run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-b4-invalid-receipt-smoke.sql
 

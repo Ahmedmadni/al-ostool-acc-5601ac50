@@ -20,6 +20,15 @@ const amendSmoke = read("scripts/sql-fixtures/gate58-amendment-smoke.sql");
 const g58Smoke = read("scripts/sql-fixtures/gate58-real-manual-journal-smoke.sql");
 const g58Adapter = read("scripts/sql-fixtures/gate58-disposable-b4-adapter.sql");
 const g58Workflow = read(".github/workflows/onexa-manual-journal-real-sql.yml");
+const realB4Workflow = read(".github/workflows/onexa-manual-journal-real-b4.yml");
+const realB4Snapshot = read("scripts/sql-fixtures/gate58-b4-catalog-snapshot-20261118.sql");
+const realB4Parents = read("scripts/sql-fixtures/gate58-b4-real-parents-ONLY.sql");
+const realB4Smoke = read("scripts/sql-fixtures/gate58-real-b4-post-reverse-smoke.sql");
+const badB4Smoke = read("scripts/sql-fixtures/gate58-b4-invalid-receipt-smoke.sql");
+const b4LiveAudit = read("supabase/manual-packages/gate58_b4_live_contract_readonly.sql");
+const b4PostPatch = read("supabase/manual-packages/gate58_b4_post_contract_REVIEW_ONLY.sql");
+const b4PrivateGrantPatch = read("supabase/manual-packages/gate58_b4_private_grants_REVIEW_ONLY.sql");
+const b4PrivateGrantSmoke = read("scripts/sql-fixtures/gate58-b4-private-grant-smoke.sql");
 const service = read("src/lib/accounting/manual-journal-service.ts");
 const panel = read("src/components/accounting/manual-journal-panel.tsx");
 const journalValidation = read("src/lib/accounting/manual-journal-validation.ts");
@@ -155,6 +164,87 @@ assert.ok(g58Adapter.includes("SYNTHETIC DISPOSABLE") && g58Adapter.includes("on
 assert.ok(g58Workflow.includes("real-g58-manual-journal-smoke:") && g58Workflow.includes("gate58-real-manual-journal-smoke.sql"), "G58 real SQL smoke is not wired to its isolated CI workflow");
 assert.ok(liveAudit.includes("pg_get_functiondef") && liveAudit.includes("pg_policies"), "Live catalog inspection is incomplete");
 assert.ok(g58Workflow.includes("gate58-amendment-smoke.sql"), "Real amendment SQL test must execute in disposable PostgreSQL CI");
+
+assert.ok(g58Workflow.includes("gate58-b4-invalid-receipt-smoke.sql"), "B4 fail-closed negative smoke must run in CI");
+for (const marker of [
+  "ONEXA_MANUAL_JOURNAL_B4_POST_CONTRACT_MISMATCH",
+  "ONEXA_MANUAL_JOURNAL_B4_REVERSAL_CONTRACT_MISMATCH",
+  "posted.source_revision = _journal.revision",
+  "posted.source_document_id = _journal.id::text",
+  "posted.total_debit = _journal.total_debit",
+  "posted.total_credit = _journal.total_credit",
+  "reversed.reversal_of_id = original.id",
+  "original.reversal_journal_id = reversed.id",
+]) assert.ok(sql.includes(marker), `Gate58 must verify actual B4 receipt contract: ${marker}`);
+for (const marker of [
+  "G58_INVALID_B4_POST_RECEIPT_ACCEPTED",
+  "G58_INVALID_B4_POST_WAS_NOT_ATOMIC",
+  "G58_INVALID_B4_REVERSAL_RECEIPT_ACCEPTED",
+  "G58_INVALID_B4_REVERSAL_NOT_ATOMIC",
+]) assert.ok(badB4Smoke.includes(marker), `Bad B4 receipt regression missing: ${marker}`);
+assert.ok((badB4Smoke.match(/rollback;/g) ?? []).length === 2, "Both malicious B4 fixture transactions must roll back");
+assert.ok(realB4Workflow.includes("postgres:16") && realB4Workflow.includes("gate58-b4-catalog-snapshot-20261118.sql"), "Isolated actual B4 SQL CI is missing");
+assert.ok(realB4Workflow.includes("gate58-b4-real-parents-ONLY.sql") && realB4Workflow.includes("gate58-real-b4-post-reverse-smoke.sql"), "Actual B4 CI needs real functional acceptance");
+assert.ok(!realB4Workflow.includes("gate58-disposable-b4-adapter.sql"), "Real B4 job must never use a mock GL engine");
+assert.ok(realB4Parents.includes("ONEXA_B4_DISPOSABLE_PARENT_REQUIRED") && realB4Parents.includes("onexa_fiscal_periods"), "Actual B4 harness must be synthetic and gated");
+for (const marker of [
+  "-- onexa_private.post_journal: pg_get_functiondef MD5 5ac58a780bbed49e8ba31b6f46c39f48",
+  "-- onexa_private.reverse_journal: pg_get_functiondef MD5 f51a890027057a0e838c13cbfd6ddb61",
+  "-- public.onexa_post_journal: pg_get_functiondef MD5 0f8adeaf5c85cd470f1c1a29b6545376",
+  "-- public.onexa_reverse_journal: pg_get_functiondef MD5 ac77042a26c0c954a7f26402a583f52e",
+  "-- public.onexa_post_journal_unchecked: pg_get_functiondef MD5 51db95c8878a9ff78db87cc1cef7ae3d",
+  "-- public.onexa_reverse_journal_unchecked: pg_get_functiondef MD5 9f9b4798858ca441280c07de774769f4",
+  "p.status = 'open'",
+  "onexa_posting_registry",
+  "abs(v_debit - v_credit) > 0.005",
+]) assert.ok(realB4Snapshot.includes(marker), `Actual deployed B4 catalog snapshot marker missing: ${marker}`);
+for (const marker of [
+  "G58_REAL_B4_POSTING_CONTRACT_FAILED",
+  "G58_REAL_B4_CLOSED_PERIOD_POST_ALLOWED",
+  "G58_REAL_B4_PERIOD_REJECTION_NOT_ATOMIC",
+  "G58_REAL_B4_CLOSED_PERIOD_REVERSE_ALLOWED",
+  "G58_REAL_B4_REVERSE_DENIAL_NOT_ATOMIC",
+  "G58_REAL_B4_REVERSAL_CONTRACT_FAILED",
+  "G58_REAL_B4_CROSS_TENANT_POST_ALLOWED",
+]) assert.ok(realB4Smoke.includes(marker), `Actual B4 closed-period acceptance case missing: ${marker}`);
+assert.ok(realB4Smoke.trimEnd().endsWith("rollback;"), "Actual B4 synthetic integration must roll back");
+assert.ok(b4LiveAudit.includes("pg_get_functiondef") && b4LiveAudit.includes("matches_verified_snapshot"), "Read-only real B4 catalog fingerprint checks missing");
+const b4AuditExecutable = b4LiveAudit.replace(/^--.*$/gm, "").replace(/'(?:''|[^'])*'/g, "''");
+assert.doesNotMatch(b4AuditExecutable, /\b(?:INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE|GRANT|REVOKE|DO|EXECUTE)\b/i, "B4 catalog audit must remain SELECT-only");
+const postFunctionStart = "create or replace function public.onexa_post_manual_journal(";
+const postFunctionEnd = "create or replace function public.onexa_reverse_manual_journal(";
+const postSourceStart = sql.indexOf(postFunctionStart);
+const postSourceEnd = sql.indexOf(postFunctionEnd, postSourceStart);
+const postPatchStart = b4PostPatch.indexOf(postFunctionStart);
+const postPatchEnd = b4PostPatch.indexOf("-- This replacement preserves the existing EXECUTE grants.", postPatchStart);
+assert.ok(postSourceStart >= 0 && postSourceEnd > postSourceStart && postPatchStart >= 0 && postPatchEnd > postPatchStart, "Guarded B4 posting patch function bounds missing");
+assert.equal(
+  b4PostPatch.slice(postPatchStart, postPatchEnd).trim(),
+  sql.slice(postSourceStart, postSourceEnd).trim(),
+  "Review-only GL posting receipt patch must exactly mirror authoritative Gate58 source",
+);
+assert.ok(b4PostPatch.includes("ONEXA_GATE58_B4_POST_RPC_DRIFT_STOP_REVIEW_REQUIRED"), "B4 posting patch needs hosted function fingerprint precondition");
+for (const marker of [
+  "ONEXA_B4_PRIVATE_GRANT_DEFINITION_DRIFT_STOP",
+  "ONEXA_B4_PRIVATE_GRANT_EXPECTED_MATRIX_CHANGED_STOP",
+  "ONEXA_B4_UNCHECKED_RPC_PERMISSION_DRIFT_STOP",
+  "ONEXA_B4_PRIVATE_GRANT_POSTCHECK_FAILED",
+  "from authenticated;",
+]) assert.ok(b4PrivateGrantPatch.includes(marker), `B4 direct-grant review patch missing: ${marker}`);
+for (const marker of [
+  "ONEXA_B4_PRIVATE_DIRECT_EXECUTE_STILL_GRANTED",
+  "ONEXA_B4_PUBLIC_CHECKED_RPC_INACCESSIBLE",
+  "ONEXA_B4_RESTRICTED_PRIVATE_GRANTS_BREAK_APPROVED_FLOW",
+  "set local role authenticated;",
+  "rollback;",
+]) assert.ok(b4PrivateGrantSmoke.includes(marker), `B4 privilege regression missing: ${marker}`);
+assert.ok(realB4Workflow.includes("gate58-b4-private-grant-smoke.sql"), "Real B4 CI must exercise restricted internal permissions");
+assert.ok(b4LiveAudit.includes("authenticated_can_execute_private_post") &&
+  b4LiveAudit.includes("authenticated_can_execute_private_reverse") &&
+  b4LiveAudit.includes("authenticated_can_execute_unchecked_post"),
+  "Read-only B4 audit must expose public versus internal grant difference");
+
+
 assert.ok(sql.includes("for update;") && sql.includes("ONEXA_MANUAL_JOURNAL_REVISION_CONFLICT"), "Amendment must lock and enforce optimistic revision");
 for (const marker of [
   "ONEXA_ONLY_MANUAL_JOURNAL_CREATOR_CAN_AMEND",
