@@ -27,6 +27,8 @@ const realB4Smoke = read("scripts/sql-fixtures/gate58-real-b4-post-reverse-smoke
 const badB4Smoke = read("scripts/sql-fixtures/gate58-b4-invalid-receipt-smoke.sql");
 const b4LiveAudit = read("supabase/manual-packages/gate58_b4_live_contract_readonly.sql");
 const b4PostPatch = read("supabase/manual-packages/gate58_b4_post_contract_REVIEW_ONLY.sql");
+const b4PrivateGrantPatch = read("supabase/manual-packages/gate58_b4_private_grants_REVIEW_ONLY.sql");
+const b4PrivateGrantSmoke = read("scripts/sql-fixtures/gate58-b4-private-grant-smoke.sql");
 const service = read("src/lib/accounting/manual-journal-service.ts");
 const panel = read("src/components/accounting/manual-journal-panel.tsx");
 const journalValidation = read("src/lib/accounting/manual-journal-validation.ts");
@@ -190,6 +192,8 @@ for (const marker of [
   "-- onexa_private.reverse_journal: pg_get_functiondef MD5 f51a890027057a0e838c13cbfd6ddb61",
   "-- public.onexa_post_journal: pg_get_functiondef MD5 0f8adeaf5c85cd470f1c1a29b6545376",
   "-- public.onexa_reverse_journal: pg_get_functiondef MD5 ac77042a26c0c954a7f26402a583f52e",
+  "-- public.onexa_post_journal_unchecked: pg_get_functiondef MD5 51db95c8878a9ff78db87cc1cef7ae3d",
+  "-- public.onexa_reverse_journal_unchecked: pg_get_functiondef MD5 9f9b4798858ca441280c07de774769f4",
   "p.status = 'open'",
   "onexa_posting_registry",
   "abs(v_debit - v_credit) > 0.005",
@@ -220,6 +224,26 @@ assert.equal(
   "Review-only GL posting receipt patch must exactly mirror authoritative Gate58 source",
 );
 assert.ok(b4PostPatch.includes("ONEXA_GATE58_B4_POST_RPC_DRIFT_STOP_REVIEW_REQUIRED"), "B4 posting patch needs hosted function fingerprint precondition");
+for (const marker of [
+  "ONEXA_B4_PRIVATE_GRANT_DEFINITION_DRIFT_STOP",
+  "ONEXA_B4_PRIVATE_GRANT_EXPECTED_MATRIX_CHANGED_STOP",
+  "ONEXA_B4_UNCHECKED_RPC_PERMISSION_DRIFT_STOP",
+  "ONEXA_B4_PRIVATE_GRANT_POSTCHECK_FAILED",
+  "from authenticated;",
+]) assert.ok(b4PrivateGrantPatch.includes(marker), `B4 direct-grant review patch missing: ${marker}`);
+for (const marker of [
+  "ONEXA_B4_PRIVATE_DIRECT_EXECUTE_STILL_GRANTED",
+  "ONEXA_B4_PUBLIC_CHECKED_RPC_INACCESSIBLE",
+  "ONEXA_B4_RESTRICTED_PRIVATE_GRANTS_BREAK_APPROVED_FLOW",
+  "set local role authenticated;",
+  "rollback;",
+]) assert.ok(b4PrivateGrantSmoke.includes(marker), `B4 privilege regression missing: ${marker}`);
+assert.ok(realB4Workflow.includes("gate58-b4-private-grant-smoke.sql"), "Real B4 CI must exercise restricted internal permissions");
+assert.ok(b4LiveAudit.includes("authenticated_can_execute_private_post") &&
+  b4LiveAudit.includes("authenticated_can_execute_private_reverse") &&
+  b4LiveAudit.includes("authenticated_can_execute_unchecked_post"),
+  "Read-only B4 audit must expose public versus internal grant difference");
+
 
 assert.ok(sql.includes("for update;") && sql.includes("ONEXA_MANUAL_JOURNAL_REVISION_CONFLICT"), "Amendment must lock and enforce optimistic revision");
 for (const marker of [
