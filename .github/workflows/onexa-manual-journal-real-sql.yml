@@ -54,4 +54,6 @@ jobs:
         run: psql -X -v ON_ERROR_STOP=1 -f supabase/manual-packages/gate58_postcheck.sql
       - name: Exercise ACTUAL Gate 58 finance functions and cross-tenant isolation
         run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-real-manual-journal-smoke.sql
+      - name: Exercise ACTUAL Gate 58 amendment RPC with preserved revision audit
+        run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-amendment-smoke.sql
 

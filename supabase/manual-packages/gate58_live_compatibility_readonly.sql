@@ -4,6 +4,7 @@
 with checks(label,installed) as (
   values
   ('g58_create_rpc', to_regprocedure('public.onexa_create_manual_journal(uuid,uuid,date,text,text,text,text,jsonb)') is not null),
+  ('g58_amend_rpc', to_regprocedure('public.onexa_amend_manual_journal(uuid,integer,text,text,jsonb)') is not null),
   ('g58_submit_approval_rpc', to_regprocedure('public.onexa_transition_manual_journal(uuid,text,text)') is not null),
   ('g58_post_rpc', to_regprocedure('public.onexa_post_manual_journal(uuid)') is not null),
   ('g58_reverse_rpc', to_regprocedure('public.onexa_reverse_manual_journal(uuid,date,text,text)') is not null),
@@ -47,6 +48,6 @@ select
   not has_function_privilege('anon',p.oid,'EXECUTE') as anon_cannot_execute
 from pg_proc p
 join pg_namespace n on n.oid=p.pronamespace and n.nspname='public'
-where p.proname in ('onexa_create_manual_journal','onexa_transition_manual_journal',
+where p.proname in ('onexa_create_manual_journal','onexa_amend_manual_journal','onexa_transition_manual_journal',
   'onexa_post_manual_journal','onexa_reverse_manual_journal')
 order by p.proname;

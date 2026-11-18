@@ -15,6 +15,8 @@ const reviewPatch = read("supabase/manual-packages/gate58_create_validation_patc
 const viewReviewPatch = read("supabase/manual-packages/gate58_reconciliation_exact_patch_REVIEW_ONLY.sql");
 const lifecyclePatch = read("supabase/manual-packages/gate58_lifecycle_authorization_patch_REVIEW_ONLY.sql");
 const balancePatch = read("supabase/manual-packages/gate58_exact_balance_constraint_patch_REVIEW_ONLY.sql");
+const amendmentPatch = read("supabase/manual-packages/gate58_amendment_REVIEW_ONLY.sql");
+const amendSmoke = read("scripts/sql-fixtures/gate58-amendment-smoke.sql");
 const g58Smoke = read("scripts/sql-fixtures/gate58-real-manual-journal-smoke.sql");
 const g58Adapter = read("scripts/sql-fixtures/gate58-disposable-b4-adapter.sql");
 const g58Workflow = read(".github/workflows/onexa-manual-journal-real-sql.yml");
@@ -31,7 +33,7 @@ for (const table of ["onexa_manual_journals","onexa_manual_journal_lines","onexa
   assert.ok(sql.includes(`public.${table}`), `manual journal table missing: ${table}`);
   assert.ok(sql.includes(`alter table public.${table} enable row level security`), `RLS missing: ${table}`);
 }
-for (const fn of ["onexa_create_manual_journal","onexa_transition_manual_journal","onexa_post_manual_journal","onexa_reverse_manual_journal"]) {
+for (const fn of ["onexa_create_manual_journal","onexa_amend_manual_journal","onexa_transition_manual_journal","onexa_post_manual_journal","onexa_reverse_manual_journal"]) {
   assert.ok(sql.includes(`function public.${fn}`), `manual journal function missing: ${fn}`);
   assert.ok(sql.includes(`grant execute on function public.${fn}`), `authenticated grant missing: ${fn}`);
 }
@@ -59,6 +61,12 @@ for (const required of [
   "ONEXA_MANUAL_JOURNAL_CANCELLATION_REASON_REQUIRED",
   "ONEXA_MANUAL_JOURNAL_REVERSAL_PERIOD_INVALID",
 ]) assert.ok(sql.includes(required), `Gate58 lifecycle invariant missing: ${required}`);
+assert.ok(sql.includes("ONEXA_MANUAL_JOURNAL_REJECTED_MUST_BE_AMENDED"), "Rejected journal must require an audited edit before reopening");
+assert.ok(g58Smoke.includes("G58_REJECTED_REOPEN_WITHOUT_AMEND_ALLOWED"), "Legacy rejected-to-draft bypass must have a denial test");
+assert.ok(amendSmoke.includes("'costCenter','COST-7'"), "Cost centre dimensions must survive audited journal corrections");
+assert.ok(service.includes("dimensions") && panel.includes("...lines[index].dimensions"), "Client correction must preserve prior project dimensions");
+assert.ok(panel.includes('onClick={() => openForm(false)}'), "Cancelling an edit must clear stale revision context");
+assert.ok(panel.includes("ONEXA_MANUAL_JOURNAL_REVISION_CONFLICT"), "Client must explain stale edit denial");
 assert.ok(!sql.includes("constraint onexa_manual_journals_balanced check (abs(total_debit - total_credit) <= 0.005)"), "Gate58 fresh installs must enforce exact header balance");
 
 const transitionStart = "create or replace function public.onexa_transition_manual_journal(";
@@ -122,12 +130,15 @@ assert.ok(sql.includes("reversal.total_credit is distinct from header.total_debi
 assert.ok(reviewPatch.includes("ONEXA_GATE58_LIVE_FUNCTION_DRIFT_STOP_REVIEW_REQUIRED"), "Review-only production function patch must stop on drift");
 assert.ok(reviewPatch.includes("_period_code <> to_char(_accounting_date, 'YYYY-MM')"), "Review patch must include date-period guard");
 const fnStart = "create or replace function public.onexa_create_manual_journal(";
-const fnEnd = "create or replace function public.onexa_transition_manual_journal(";
+const fnEnd = "create or replace function public.onexa_amend_manual_journal(";
 const rpcStart = sql.indexOf(fnStart);
-const rpcEnd = sql.indexOf(fnEnd);
+// Stop at the end of the CREATE function itself: comments introducing the
+// next amendment RPC are not part of the create function's deployable body.
+const rpcEndMarker = "\n$function$;";
+const rpcEnd = sql.indexOf(rpcEndMarker, rpcStart) + rpcEndMarker.length;
 const patchStart = reviewPatch.indexOf(fnStart);
 const patchEnd = reviewPatch.indexOf("-- Do not change function grants here.");
-assert.ok(rpcStart >= 0 && rpcEnd > rpcStart && patchStart >= 0 && patchEnd > patchStart, "Gate58 patch-function boundaries missing");
+assert.ok(rpcStart >= 0 && rpcEnd > rpcStart && sql.indexOf(fnEnd, rpcStart) > rpcEnd && patchStart >= 0 && patchEnd > patchStart, "Gate58 patch-function boundaries missing");
 assert.equal(
   reviewPatch.slice(patchStart, patchEnd).trim(),
   sql.slice(rpcStart, rpcEnd).trim(),
@@ -143,6 +154,52 @@ assert.ok(g58Smoke.includes("G58_PERIOD_MISMATCH_ACCEPTED") && g58Smoke.includes
 assert.ok(g58Adapter.includes("SYNTHETIC DISPOSABLE") && g58Adapter.includes("onexa_reverse_journal"), "G58 B4 test double missing");
 assert.ok(g58Workflow.includes("real-g58-manual-journal-smoke:") && g58Workflow.includes("gate58-real-manual-journal-smoke.sql"), "G58 real SQL smoke is not wired to its isolated CI workflow");
 assert.ok(liveAudit.includes("pg_get_functiondef") && liveAudit.includes("pg_policies"), "Live catalog inspection is incomplete");
+assert.ok(g58Workflow.includes("gate58-amendment-smoke.sql"), "Real amendment SQL test must execute in disposable PostgreSQL CI");
+assert.ok(sql.includes("for update;") && sql.includes("ONEXA_MANUAL_JOURNAL_REVISION_CONFLICT"), "Amendment must lock and enforce optimistic revision");
+for (const marker of [
+  "ONEXA_ONLY_MANUAL_JOURNAL_CREATOR_CAN_AMEND",
+  "ONEXA_MANUAL_JOURNAL_AMEND_STATUS_INVALID",
+  "ONEXA_MANUAL_JOURNAL_NOT_BALANCED",
+  "'previous_revision', _journal.revision",
+  "'new_revision', _new_revision",
+  "'before', jsonb_build_object",
+  "'after', jsonb_build_object",
+  "event_type,",
+  "'amended', _journal.status, 'draft', _actor",
+]) assert.ok(sql.includes(marker), `Amendment SQL audit/authorization missing: ${marker}`);
+const amendmentStart = "create or replace function public.onexa_amend_manual_journal(";
+const amendmentEnd = "create or replace function public.onexa_transition_manual_journal(";
+const amendStartInSql = sql.indexOf(amendmentStart);
+const amendEndInSql = sql.indexOf(amendmentEnd, amendStartInSql);
+const amendStartInPatch = amendmentPatch.indexOf(amendmentStart);
+const amendEndInPatch = amendmentPatch.indexOf("revoke all on function public.onexa_amend_manual_journal", amendStartInPatch);
+assert.ok(amendStartInSql >= 0 && amendEndInSql > amendStartInSql && amendStartInPatch >= 0 && amendEndInPatch > amendStartInPatch, "Amendment patch and source boundaries required");
+assert.equal(
+  amendmentPatch.slice(amendStartInPatch, amendEndInPatch).trim(),
+  sql.slice(amendStartInSql, amendEndInSql).trim(),
+  "Review-only amendment patch must equal authoritative new function",
+);
+for (const marker of [
+  "ONEXA_GATE58_CREATE_RPC_NOT_HARDENED_STOP",
+  "ONEXA_GATE58_REVIEWER_PERMISSIONS_NOT_HARDENED_STOP",
+  "ONEXA_GATE58_EXACT_BALANCE_CONSTRAINT_REQUIRED",
+  "ONEXA_GATE58_AMENDMENT_ALREADY_EXISTS_STOP_REVIEW_REQUIRED",
+]) assert.ok(amendmentPatch.includes(marker), `Amendment review-only gate missing: ${marker}`);
+for (const marker of [
+  "G58_AMEND_DRAFT_UPDATE_FAILED",
+  "G58_AMEND_AUDIT_SNAPSHOTS_MISSING",
+  "G58_STALE_AMEND_ALLOWED",
+  "G58_UNBALANCED_AMEND_ALLOWED",
+  "G58_FRACTIONAL_HALALA_AMEND_ALLOWED",
+  "G58_NULL_SIDE_AMEND_ALLOWED",
+  "G58_DIFFERENT_MAKER_AMEND_ALLOWED",
+  "G58_CROSS_TENANT_AMEND_ALLOWED",
+  "G58_SUBMITTED_AMEND_ALLOWED",
+  "G58_REJECTED_AMEND_REVISION_OR_HISTORY_FAILED",
+  "G58_AMENDED_REPOST_LEDGER_REVISION_FAILED",
+  "G58_POSTED_AMEND_ALLOWED",
+]) assert.ok(amendSmoke.includes(marker), `Amendment executable negative test missing: ${marker}`);
+assert.ok(amendSmoke.includes("rollback;") && !amendSmoke.includes("commit;"), "Amendment smoke must be rollback-only");
 const liveAuditExecutable = liveAudit.replace(/^--.*$/gm, "");
 // Quoted catalog role/privilege arguments such as 'EXECUTE' are data, not SQL statements.
 const liveAuditStatements = liveAuditExecutable.replace(/'(?:''|[^'])*'/g, "''");
@@ -163,7 +220,7 @@ for (const marker of [
 ]) assert.ok(smoke.includes(marker), `manual journal end-to-end smoke check missing: ${marker}`);
 assert.ok(smoke.includes("rollback;") && !smoke.includes("commit;"), "manual journal smoke test must roll back");
 
-for (const marker of ['db.rpc("onexa_create_manual_journal"', 'db.rpc("onexa_transition_manual_journal"', 'db.rpc("onexa_post_manual_journal"']) {
+for (const marker of ['db.rpc("onexa_create_manual_journal"', 'db.rpc("onexa_amend_manual_journal"', 'db.rpc("onexa_transition_manual_journal"', 'db.rpc("onexa_post_manual_journal"']) {
   assert.ok(service.includes(marker), `manual journal service missing: ${marker}`);
 }
 for (const marker of ["ONEXA_MANUAL_JOURNALS_ENABLED", "إضافة قيد يومية", "إجمالي المدين", "إجمالي الدائن", "اعتماد", "ترحيل"]) {
@@ -171,6 +228,9 @@ for (const marker of ["ONEXA_MANUAL_JOURNALS_ENABLED", "إضافة قيد يوم
 }
 assert.ok(journalValidation.includes("evaluateManualJournalDraft") && journalValidation.includes("BigInt"), "exact-decimal journal input validation is missing");
 assert.ok(panel.includes("validation.normalizedLines") && panel.includes('action: "submitted"'), "journal UI must use strict validated lines and allow draft resubmission");
+for (const marker of ["loadEditableManualJournal", "amendManualJournal", "تصحيح القيد المرفوض", "سبب الرفض السابق", "expectedRevision", "disabled={Boolean(editTarget)}"]) {
+  assert.ok(panel.includes(marker), `Amendment UI flow missing: ${marker}`);
+}
 assert.ok(route.includes("<ManualJournalPanel />"), "manual journal panel is missing from accounting workspace");
 assert.ok(runtime.includes("VITE_ENABLE_ONEXA_MANUAL_JOURNALS"), "manual journal runtime flag missing");
 assert.ok(env.includes('VITE_ENABLE_ONEXA_MANUAL_JOURNALS=""'), "manual journal flag must default false");

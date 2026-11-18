@@ -4,7 +4,7 @@ import { BookPlus, Plus, Send, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ONEXA_MANUAL_JOURNALS_ENABLED } from "@/lib/runtime-flags";
-import { createManualJournal, listManualJournals, postManualJournal, transitionManualJournal } from "@/lib/accounting/manual-journal-service";
+import { amendManualJournal, createManualJournal, listManualJournals, loadEditableManualJournal, postManualJournal, transitionManualJournal } from "@/lib/accounting/manual-journal-service";
 import { evaluateManualJournalDraft } from "@/lib/accounting/manual-journal-validation";
 import { OperationalGateCard } from "@/components/operations/operational-gate-card";
 import { Badge } from "@/components/ui/badge";
@@ -20,13 +20,14 @@ type DraftLine = {
   debit: string;
   credit: string;
   description: string;
+  dimensions: Record<string, string>;
 };
 
 const today = () => {
   const date = new Date();
   return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-");
 };
-const newLine = (key: number): DraftLine => ({ key, accountCode: "", debit: "", credit: "", description: "" });
+const newLine = (key: number): DraftLine => ({ key, accountCode: "", debit: "", credit: "", description: "", dimensions: {} });
 const STATUS_LABELS: Record<string, string> = {
   draft: "مسودة",
   submitted: "بانتظار الاعتماد",
@@ -40,6 +41,9 @@ const STATUS_LABELS: Record<string, string> = {
 export function ManualJournalPanel() {
   const cache = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<{ id: string; revision: number; status: "draft" | "rejected" } | null>(null);
+  const [loadingEditId, setLoadingEditId] = useState<string | null>(null);
+  const [rejectionReason, setRejectionReason] = useState<string | null>(null);
   const [legalEntityId, setLegalEntityId] = useState("");
   const [branchId, setBranchId] = useState("");
   const [accountingDate, setAccountingDate] = useState(today);
@@ -91,6 +95,8 @@ export function ManualJournalPanel() {
   }), [legalEntityId, branchId, setup.data, accountingDate, currency, memo, lines]);
 
   const reset = () => {
+    setEditTarget(null);
+    setRejectionReason(null);
     setMemo("");
     setReference("");
     setAccountingDate(today());
@@ -102,36 +108,61 @@ export function ManualJournalPanel() {
       if (!setup.data?.userId) throw new Error("لم يتم التحقق من هوية المستخدم");
       if (!validation.valid) throw new Error(validation.errors[0] ?? "بيانات القيد غير مكتملة");
 
-      const id = await createManualJournal({
-        legalEntityId,
-        branchId,
-        accountingDate,
-        periodCode: accountingDate.slice(0, 7),
-        currency,
-        memo: memo.trim(),
-        externalReference: reference.trim(),
-        lines: validation.normalizedLines.map((line) => ({
-          ...line,
-          dimensions: { legalEntity: legalEntityId, branch: branchId },
-        })),
-      });
+      // Preserve cost-centre/project dimensions across amendments; an edit must
+      // not silently discard data not exposed as controls in this small panel.
+      const inputLines = validation.normalizedLines.map((line, index) => ({
+        ...line,
+        dimensions: {
+          ...lines[index].dimensions,
+          legalEntity: legalEntityId,
+          branch: branchId,
+        },
+      }));
+      let id: string;
+      if (editTarget) {
+        // An RPC-amended draft is committed before the separate submit RPC.
+        // Failure to submit leaves a retryable draft, not an ambiguous save.
+        await amendManualJournal({
+          journalId: editTarget.id,
+          expectedRevision: editTarget.revision,
+          memo: memo.trim(),
+          externalReference: reference.trim(),
+          lines: inputLines,
+        });
+        id = editTarget.id;
+      } else {
+        id = await createManualJournal({
+          legalEntityId,
+          branchId,
+          accountingDate,
+          periodCode: accountingDate.slice(0, 7),
+          currency,
+          memo: memo.trim(),
+          externalReference: reference.trim(),
+          lines: inputLines,
+        });
+      }
       // These are two separate RPCs. A failed submission does NOT undo the
       // successfully created draft; expose it for an explicit retry in the list.
       try {
         await transitionManualJournal(id, "submitted");
-        return { id, submitted: true };
+        return { id, submitted: true, amended: Boolean(editTarget) };
       } catch {
-        return { id, submitted: false };
+        return { id, submitted: false, amended: Boolean(editTarget) };
       }
     },
-    onSuccess: async ({ submitted }) => {
-      if (submitted) toast.success("تم إنشاء القيد وإرساله للاعتماد");
-      else toast.warning("تم حفظ القيد كمسودة، لكن لم يتأكد إرساله للاعتماد. أعد الإرسال من القائمة.");
+    onSuccess: async ({ submitted, amended }) => {
+      if (submitted) toast.success(amended ? "تم حفظ التصحيح وإعادة إرسال القيد للاعتماد" : "تم إنشاء القيد وإرساله للاعتماد");
+      else toast.warning(amended
+        ? "تم حفظ التعديل كمراجعة جديدة، ولم يتأكد الإرسال. أعد الإرسال من القائمة."
+        : "تم حفظ القيد كمسودة، لكن لم يتأكد إرساله للاعتماد. أعد الإرسال من القائمة.");
       setOpen(false);
       reset();
       await cache.invalidateQueries({ queryKey: ["onexa-manual-journals"] });
     },
-    onError: (error) => toast.error(error.message),
+    onError: (error) => toast.error(error.message.includes("ONEXA_MANUAL_JOURNAL_REVISION_CONFLICT")
+      ? "تم تعديل هذا القيد من جلسة أخرى. أغلق النموذج وأعد فتح القيد للحصول على آخر مراجعة."
+      : error.message),
   });
 
   const transition = useMutation({
@@ -163,7 +194,11 @@ export function ManualJournalPanel() {
 
   const openForm = (next: boolean) => {
     setOpen(next);
-    if (!next || !setup.data) return;
+    if (!next) {
+      reset();
+      return;
+    }
+    if (!setup.data) return;
     const entity = setup.data.entities.find((row) => row.is_default) ?? setup.data.entities[0];
     if (entity && !legalEntityId) {
       setLegalEntityId(entity.id);
@@ -171,6 +206,46 @@ export function ManualJournalPanel() {
       const branch = setup.data.branches.find((row) => row.legal_entity_id === entity.id && row.is_default)
         ?? setup.data.branches.find((row) => row.legal_entity_id === entity.id);
       setBranchId(branch?.id ?? "");
+    }
+  };
+
+  const startEditing = async (journalId: string) => {
+    if (loadingEditId) return;
+    setLoadingEditId(journalId);
+    try {
+      const entry = await loadEditableManualJournal(journalId);
+      const creator = setup.data?.userId;
+      if (!creator || entry.journal.created_by !== creator) {
+        throw new Error("لا يمكن تصحيح قيد أنشأه مستخدم آخر");
+      }
+      if (entry.journal.status !== "draft" && entry.journal.status !== "rejected") {
+        throw new Error("لا يمكن تعديل قيد بعد تقديمه للاعتماد");
+      }
+      setEditTarget({
+        id: entry.journal.id,
+        revision: entry.journal.revision,
+        status: entry.journal.status,
+      });
+      setRejectionReason(entry.latestRejectionReason);
+      setLegalEntityId(entry.journal.legal_entity_id);
+      setBranchId(entry.journal.branch_id);
+      setAccountingDate(entry.journal.accounting_date);
+      setCurrency(entry.journal.currency);
+      setMemo(entry.journal.memo);
+      setReference(entry.journal.external_reference ?? "");
+      setLines(entry.lines.map((line) => ({
+        key: nextLineKey.current++,
+        accountCode: line.account_code,
+        debit: line.debit ? String(line.debit) : "",
+        credit: line.credit ? String(line.credit) : "",
+        description: line.description ?? "",
+        dimensions: line.dimensions ?? {},
+      })));
+      setOpen(true);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "تعذر فتح القيد للتصحيح");
+    } finally {
+      setLoadingEditId(null);
     }
   };
 
@@ -188,14 +263,21 @@ export function ManualJournalPanel() {
           <DialogTrigger asChild><Button><Plus className="h-4 w-4" />إضافة قيد يومية</Button></DialogTrigger>
           <DialogContent className="max-h-[92vh] max-w-5xl overflow-y-auto" dir="rtl">
             <DialogHeader>
-              <DialogTitle>قيد يومية جديد</DialogTitle>
-              <DialogDescription>أدخل طرفي القيد ثم أرسله لمستخدم آخر للاعتماد.</DialogDescription>
+              <DialogTitle>{editTarget ? `تصحيح القيد — المراجعة ${editTarget.revision}` : "قيد يومية جديد"}</DialogTitle>
+              <DialogDescription>{editTarget
+                ? "يمكن تعديل البيان والمرجع والسطور فقط. يحتفظ القيد بنفس هويته، ويسجل النظام نسخة سابقة لكل تصحيح."
+                : "أدخل طرفي القيد ثم أرسله لمستخدم آخر للاعتماد."}</DialogDescription>
             </DialogHeader>
             <form className="space-y-5" onSubmit={(event) => { event.preventDefault(); create.mutate(); }}>
+              {editTarget && rejectionReason && (
+                <p role="note" className="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 text-sm">
+                  سبب الرفض السابق: {rejectionReason}
+                </p>
+              )}
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="space-y-2">
                   <Label htmlFor="journal-entity">الكيان القانوني</Label>
-                  <select id="journal-entity" className="h-10 w-full rounded-md border bg-background px-3 text-sm" value={legalEntityId}
+                  <select id="journal-entity" disabled={Boolean(editTarget)} className="h-10 w-full rounded-md border bg-background px-3 text-sm" value={legalEntityId}
                     onChange={(event) => {
                       const id = event.target.value;
                       setLegalEntityId(id);
@@ -211,7 +293,7 @@ export function ManualJournalPanel() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="journal-branch">الفرع</Label>
-                  <select id="journal-branch" className="h-10 w-full rounded-md border bg-background px-3 text-sm" value={branchId}
+                  <select id="journal-branch" disabled={Boolean(editTarget)} className="h-10 w-full rounded-md border bg-background px-3 text-sm" value={branchId}
                     onChange={(event) => setBranchId(event.target.value)} required>
                     <option value="">اختر الفرع</option>
                     {availableBranches.map((branch) => <option key={branch.id} value={branch.id}>{branch.name_ar}</option>)}
@@ -219,7 +301,7 @@ export function ManualJournalPanel() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="journal-date">تاريخ القيد</Label>
-                  <Input id="journal-date" type="date" value={accountingDate} onChange={(event) => setAccountingDate(event.target.value)} required />
+                  <Input id="journal-date" disabled={Boolean(editTarget)} type="date" value={accountingDate} onChange={(event) => setAccountingDate(event.target.value)} required />
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="journal-memo">بيان القيد</Label>
@@ -267,9 +349,9 @@ export function ManualJournalPanel() {
               {setup.isError && <p role="alert" className="text-sm text-destructive">تعذر تحميل دليل الحسابات أو صلاحيات المستخدم. لا يمكن إنشاء القيد.</p>}
               {validation.errors.length > 0 && <p role="alert" className="text-sm text-destructive">{validation.errors[0]}</p>}
               <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setOpen(false)}>إلغاء</Button>
+                <Button type="button" variant="outline" onClick={() => openForm(false)}>إلغاء</Button>
                 <Button type="submit" disabled={create.isPending || !setup.data?.userId || !validation.valid}>
-                  <Send className="h-4 w-4" />{create.isPending ? "جارٍ الحفظ..." : "حفظ وإرسال للاعتماد"}
+                  <Send className="h-4 w-4" />{create.isPending ? "جارٍ الحفظ..." : editTarget ? "حفظ التصحيح وإعادة الإرسال" : "حفظ وإرسال للاعتماد"}
                 </Button>
               </div>
             </form>
@@ -282,10 +364,17 @@ export function ManualJournalPanel() {
           <div key={journal.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-3 text-sm">
             <div>
               <div className="font-semibold">{journal.journal_number} · {journal.memo}</div>
+              <div className="text-xs text-muted-foreground">مراجعة {journal.revision}</div>
               <div className="mt-1 text-xs text-muted-foreground">{journal.accounting_date} · {Number(journal.total_debit).toFixed(2)} {journal.currency}</div>
             </div>
             <div className="flex items-center gap-2">
               <Badge variant={journal.status === "posted" ? "default" : "secondary"}>{STATUS_LABELS[journal.status] ?? journal.status}</Badge>
+              {(journal.status === "draft" || journal.status === "rejected") && setup.data?.userId === journal.created_by && (
+                <Button size="sm" variant="outline" disabled={create.isPending || Boolean(loadingEditId)}
+                  onClick={() => void startEditing(journal.id)}>
+                  {loadingEditId === journal.id ? "جارٍ تحميل القيد..." : journal.status === "rejected" ? "تصحيح القيد المرفوض" : "تعديل المسودة"}
+                </Button>
+              )}
               {journal.status === "draft" && setup.data?.userId === journal.created_by && (
                 <Button size="sm" variant="outline" disabled={transition.isPending}
                   onClick={() => transition.mutate({ id: journal.id, action: "submitted" })}>إرسال للاعتماد</Button>

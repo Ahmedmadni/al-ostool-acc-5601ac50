@@ -14,6 +14,7 @@ declare
   _ledger uuid;
   _reversal uuid;
   _status text;
+  _amended_revision integer;
   _lines jsonb := jsonb_build_array(
     jsonb_build_object('line_number',1,'account_code','5200','debit',125.25,'credit',0),
     jsonb_build_object('line_number',2,'account_code','2100','debit',0,'credit',125.25)
@@ -312,8 +313,21 @@ begin
     raise exception 'G58_REVIEW_REJECTION_AUDIT_FAILED';
   end if;
   perform set_config('test.user_id',_creator::text,true);
-  _status := public.onexa_transition_manual_journal(_rejection_journal,'draft');
-  if _status <> 'draft' then raise exception 'G58_REJECTED_REOPEN_FAILED'; end if;
+  begin
+    perform public.onexa_transition_manual_journal(_rejection_journal,'draft');
+    raise exception 'G58_REJECTED_REOPEN_WITHOUT_AMEND_ALLOWED';
+  exception when others then
+    if sqlerrm <> 'ONEXA_MANUAL_JOURNAL_REJECTED_MUST_BE_AMENDED' then raise; end if;
+  end;
+  _amended_revision := public.onexa_amend_manual_journal(
+    _rejection_journal,1,'original attachment reviewed','G58-REVIEW-CORRECTED',_lines
+  );
+  if _amended_revision <> 2 or not exists (
+    select 1 from public.onexa_manual_journals
+    where id=_rejection_journal and status='draft' and revision=2
+  ) then
+    raise exception 'G58_REJECTED_AMEND_REOPEN_FAILED';
+  end if;
   perform public.onexa_transition_manual_journal(_rejection_journal,'submitted');
 
   -- A creator may cancel their own submitted journal with an audit reason.
