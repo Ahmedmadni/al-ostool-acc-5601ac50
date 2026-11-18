@@ -84,3 +84,29 @@ select
    as gate58_post_installed,
  to_regprocedure('public.onexa_reverse_manual_journal(uuid,date,text,text)') is not null
    as gate58_reverse_installed;
+-- Ledger constraints are independent from the post_journal RPC body.
+-- Report only definitions and readiness, never read customer journal rows.
+with expected(constraint_name) as (
+  values ('onexa_journal_headers_source_document_type_check'),
+         ('onexa_journal_headers_check')
+), observed as (
+ select e.constraint_name,pg_get_constraintdef(c.oid,true) as definition
+ from expected e
+ left join pg_constraint c
+   on c.conrelid=to_regclass('public.onexa_journal_headers')
+  and c.conname=e.constraint_name
+)
+select constraint_name,
+       definition,
+       case when definition is null then 'MISSING'
+            when constraint_name='onexa_journal_headers_source_document_type_check'
+              and definition like '%''manual_journal''%'
+              then 'INCLUDES_MANUAL_JOURNAL'
+            when constraint_name='onexa_journal_headers_source_document_type_check'
+              then 'MANUAL_JOURNAL_BLOCKED'
+            when constraint_name='onexa_journal_headers_check'
+              and definition = 'CHECK (total_debit = total_credit)'
+              then 'EXACT_BALANCE'
+            else 'PERMISSIVE_OR_DRIFTED'
+       end as operational_readiness
+from observed order by constraint_name;
