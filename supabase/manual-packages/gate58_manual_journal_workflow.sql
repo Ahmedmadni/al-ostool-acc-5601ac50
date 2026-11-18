@@ -510,9 +510,14 @@ begin
   for update;
   if not found then raise exception 'ONEXA_MANUAL_JOURNAL_NOT_FOUND'; end if;
 
+  -- A rejected journal may return to draft ONLY through the amendment RPC.
+  -- That path increments the revision and records the before/after snapshot.
+  if _journal.status = 'rejected' and _to_status = 'draft' then
+    raise exception 'ONEXA_MANUAL_JOURNAL_REJECTED_MUST_BE_AMENDED';
+  end if;
   _allowed := (_journal.status = 'draft' and _to_status in ('submitted','cancelled'))
     or (_journal.status = 'submitted' and _to_status in ('approved','rejected','cancelled'))
-    or (_journal.status = 'rejected' and _to_status in ('draft','cancelled'));
+    or (_journal.status = 'rejected' and _to_status = 'cancelled');
   if not _allowed then
     raise exception 'ONEXA_MANUAL_JOURNAL_TRANSITION_INVALID:%->%', _journal.status, _to_status;
   end if;
