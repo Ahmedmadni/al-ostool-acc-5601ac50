@@ -29,6 +29,15 @@ const b4LiveAudit = read("supabase/manual-packages/gate58_b4_live_contract_reado
 const b4PostPatch = read("supabase/manual-packages/gate58_b4_post_contract_REVIEW_ONLY.sql");
 const b4PrivateGrantPatch = read("supabase/manual-packages/gate58_b4_private_grants_REVIEW_ONLY.sql");
 const b4PrivateGrantSmoke = read("scripts/sql-fixtures/gate58-b4-private-grant-smoke.sql");
+const b4FoundationWorkflow = read(".github/workflows/onexa-b4-shared-ledger-integrity.yml");
+const b4StrictReview = read("supabase/manual-packages/gate58_b4_strict_monetary_REVIEW_ONLY.sql");
+const b4StrictFixture = read("scripts/sql-fixtures/gate58-b4-strict-monetary-fixture.sql");
+const b4SourceTypeReview = read("supabase/manual-packages/gate58_b4_gl_source_type_REVIEW_ONLY.sql");
+const b4HeaderBalanceReview = read("supabase/manual-packages/gate58_b4_gl_exact_balance_REVIEW_ONLY.sql");
+const b4LegacyConstraints = read("scripts/sql-fixtures/gate58-b4-hosted-check-constraints-ONLY.sql");
+const b4LegacyProbe = read("scripts/sql-fixtures/gate58-b4-hosted-baseline-defects-smoke.sql");
+const b4StrictSmoke = read("scripts/sql-fixtures/gate58-b4-strict-cross-module-smoke.sql");
+
 const service = read("src/lib/accounting/manual-journal-service.ts");
 const panel = read("src/components/accounting/manual-journal-panel.tsx");
 const journalValidation = read("src/lib/accounting/manual-journal-validation.ts");
@@ -239,6 +248,83 @@ for (const marker of [
   "rollback;",
 ]) assert.ok(b4PrivateGrantSmoke.includes(marker), `B4 privilege regression missing: ${marker}`);
 assert.ok(realB4Workflow.includes("gate58-b4-private-grant-smoke.sql"), "Real B4 CI must exercise restricted internal permissions");
+
+const coreFunctionStart="CREATE OR REPLACE FUNCTION onexa_private.post_journal(";
+const endCore="\n$function$;";
+function extractCoreFunction(source) {
+  const i=source.indexOf(coreFunctionStart);
+  const j=source.indexOf(endCore,i+coreFunctionStart.length);
+  assert.ok(i>=0 && j>i, "B4 strict function boundaries required");
+  return source.slice(i,j+endCore.length).trim();
+}
+assert.equal(extractCoreFunction(b4StrictReview),extractCoreFunction(b4StrictFixture),
+  "Strict B4 reviewed shared publisher must exactly match the isolated test version");
+assert.ok(b4StrictReview.includes("ONEXA_B4_SHARED_PUBLISHER_DRIFT_STOP_REVIEW_REQUIRED"),
+  "B4 core patch cannot silently overwrite an unknown deployed function");
+assert.ok(b4StrictReview.includes("5ac58a780bbed49e8ba31b6f46c39f48"),
+  "The review patch must preflight exactly the observed B4 function version");
+assert.ok(!extractCoreFunction(b4StrictFixture).includes("abs(v_debit - v_credit) > 0.005"),
+  "Strict publisher may not hide small currency imbalances");
+for(const marker of [
+ "v_debit numeric;","v_credit numeric;",
+ "v_debit <> v_credit",
+ "ONEXA_B4_LINE_INVALID",
+ "ONEXA_B4_STORAGE_PRECISION_INVALID",
+ "ONEXA_B4_SAR_HALALA_PRECISION_INVALID",
+ "jsonb_typeof(x->'debit') is distinct from 'number'",
+ "jsonb_typeof(x->'credit') is distinct from 'number'",
+ "ONEXA_B4_SOURCE_ID_REQUIRED",
+]) assert.ok(b4StrictFixture.includes(marker),`B4 strict monetary invariant missing: ${marker}`);
+assert.ok(b4LegacyConstraints.includes("source_document_type = ANY") &&
+ b4LegacyConstraints.includes("abs(total_debit - total_credit) <= 0.005") &&
+ !b4LegacyConstraints.includes("'manual_journal'::text"),
+ "Disposable baseline must reproduce actual hosted source-type omission and balance tolerance");
+for(const marker of [
+ "ONEXA_B4_SOURCE_TYPE_ALLOWLIST_DRIFT_STOP",
+ "onexa_journal_headers_source_document_type_check_v2",
+ "'manual_journal'::text",
+ "validate constraint",
+]) assert.ok(b4SourceTypeReview.includes(marker),`Manual journal allowlist review gate missing: ${marker}`);
+for(const marker of [
+ "ONEXA_B4_HEADER_BALANCE_CONSTRAINT_DRIFT_STOP",
+ "ONEXA_B4_HISTORICAL_IMBALANCE_REQUIRES_FINANCE_REVIEW",
+ "check (total_debit = total_credit) not valid",
+ "validate constraint",
+]) assert.ok(b4HeaderBalanceReview.includes(marker),`Exact GL header guard missing: ${marker}`);
+for(const marker of [
+ "G58_B4_BASELINE_MANUAL_TYPE_UNEXPECTEDLY_ALLOWED",
+ "BASELINE_IMBALANCE_CONFIRMED",
+ "BASELINE_ROUNDING_CONFIRMED",
+ "BASELINE_MISSING_SIDE_CONFIRMED",
+ "G58_B4_BASELINE_PROBES_LEFT_LEDGER_DATA",
+]) assert.ok(b4LegacyProbe.includes(marker),`Real B4 baseline defect regression missing: ${marker}`);
+for(const marker of [
+ "G58_B4_STRICT_SOURCE_COVERAGE_INCOMPLETE",
+ "G58_B4_STRICT_IMBALANCE_ACCEPTED",
+ "G58_B4_STRICT_STORAGE_ROUNDING_ACCEPTED",
+ "G58_B4_STRICT_FRACTIONAL_HALALA_ACCEPTED",
+ "G58_B4_STRICT_MISSING_DEBIT_ACCEPTED",
+ "G58_B4_STRICT_NULL_AMOUNT_ACCEPTED",
+ "G58_B4_STRICT_NULL_APPROVAL_ACCEPTED",
+ "G58_B4_STRICT_NULL_REVISION_ACCEPTED",
+ "G58_B4_STRICT_KWD_3_DECIMAL_REGRESSION",
+]) assert.ok(b4StrictSmoke.includes(marker),`B4 strict cross-module regression missing: ${marker}`);
+for(const marker of [
+ "postgres:16",
+ "gate58-b4-catalog-snapshot-20261118.sql",
+ "gate58-b4-hosted-check-constraints-ONLY.sql",
+ "gate58-b4-hosted-baseline-defects-smoke.sql",
+ "gate58_b4_gl_source_type_REVIEW_ONLY.sql",
+ "gate58_b4_gl_exact_balance_REVIEW_ONLY.sql",
+ "gate58-b4-strict-monetary-fixture.sql",
+ "gate58-b4-strict-cross-module-smoke.sql",
+]) assert.ok(b4FoundationWorkflow.includes(marker),`B4 GL foundation CI missing: ${marker}`);
+assert.ok(!b4FoundationWorkflow.includes("gate58-disposable-b4-adapter.sql"),
+  "B4 shared-ledger acceptance must not fake the actual B4 publisher");
+assert.ok(b4StrictSmoke.trimEnd().endsWith("rollback;") &&
+ b4LegacyProbe.trimEnd().endsWith("rollback;"),
+ "B4 financial acceptance tests must rollback every synthetic posting");
+
 assert.ok(b4LiveAudit.includes("authenticated_can_execute_private_post") &&
   b4LiveAudit.includes("authenticated_can_execute_private_reverse") &&
   b4LiveAudit.includes("authenticated_can_execute_unchecked_post"),
