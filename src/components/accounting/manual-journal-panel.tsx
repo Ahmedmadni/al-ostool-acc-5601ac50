@@ -349,7 +349,7 @@ export function ManualJournalPanel() {
               <div className="flex justify-end gap-2">
                 <Button type="button" variant="outline" onClick={() => setOpen(false)}>إلغاء</Button>
                 <Button type="submit" disabled={create.isPending || !setup.data?.userId || !validation.valid}>
-                  <Send className="h-4 w-4" />{create.isPending ? "جارٍ الحفظ..." : editTarget ? "حفظ التصحيح وإعادة الإرسال" : "حفظ وإرسال للاعتماد"
+                  <Send className="h-4 w-4" />{create.isPending ? "جارٍ الحفظ..." : editTarget ? "حفظ التصحيح وإعادة الإرسال" : "حفظ وإرسال للاعتماد"}
                 </Button>
               </div>
             </form>
