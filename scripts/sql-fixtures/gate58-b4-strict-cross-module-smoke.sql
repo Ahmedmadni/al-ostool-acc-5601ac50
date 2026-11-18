@@ -70,7 +70,7 @@ begin
  -- 0.004 discrepancy previously passed both B4 and header CHECK.
  begin
   perform public.onexa_post_journal(_entity,'sales_invoice','NEG-IMBAL',1,
-   'approved','{}'::jsonb,date '2026-11-18','2026-11','SAR','negative imbalance',
+   'approved','{}'::jsonb,date '2026-11-18','2026-11','KWD','negative imbalance',
    jsonb_build_array(
      jsonb_build_object('account_code','5200','debit',100,'credit',0),
      jsonb_build_object('account_code','2100','debit',0,'credit',100.004)
