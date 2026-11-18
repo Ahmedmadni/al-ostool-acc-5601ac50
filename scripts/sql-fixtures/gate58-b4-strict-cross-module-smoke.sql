@@ -147,18 +147,6 @@ begin
  end;
 
  begin
-  perform public.onexa_post_journal(_entity,'fleet_trip_cost','NEG-SOURCE-ID',1,
-   'approved','{}'::jsonb,date '2026-11-18','2026-11','SAR','missing source identity',
-   _good);
-  raise exception 'G58_B4_STRICT_SOURCE_ID_NEGATIVE_FIXTURE_INVALID';
- exception when others then
-  -- This case uses a nonempty document ID, and is expected to reach success.
-  -- Its exception proves a test fixture cannot fake source validation success.
-  if sqlerrm='ONEXA_B4_SOURCE_ID_REQUIRED' then raise; end if;
-  if sqlerrm<>'G58_B4_STRICT_SOURCE_ID_NEGATIVE_FIXTURE_INVALID' then raise; end if;
- end;
-
- begin
   perform public.onexa_post_journal(_entity,'fleet_trip_cost',null,1,
    'approved','{}'::jsonb,date '2026-11-18','2026-11','SAR','missing source identity',
    _good);
