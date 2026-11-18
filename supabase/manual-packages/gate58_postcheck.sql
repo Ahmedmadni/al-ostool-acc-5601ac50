@@ -5,6 +5,7 @@ with expected(kind, object_name) as (
     ('table','onexa_manual_journal_lines'),
     ('table','onexa_manual_journal_events'),
     ('function','onexa_create_manual_journal'),
+    ('function','onexa_amend_manual_journal'),
     ('function','onexa_transition_manual_journal'),
     ('function','onexa_post_manual_journal'),
     ('function','onexa_reverse_manual_journal'),
@@ -51,6 +52,7 @@ join pg_namespace n on n.oid = p.pronamespace and n.nspname = r.routine_schema
 where r.routine_schema = 'public'
   and r.routine_name in (
     'onexa_create_manual_journal',
+    'onexa_amend_manual_journal',
     'onexa_transition_manual_journal',
     'onexa_post_manual_journal',
     'onexa_reverse_manual_journal'
