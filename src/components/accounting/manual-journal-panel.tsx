@@ -20,13 +20,14 @@ type DraftLine = {
   debit: string;
   credit: string;
   description: string;
+  dimensions: Record<string, string>;
 };
 
 const today = () => {
   const date = new Date();
   return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-");
 };
-const newLine = (key: number): DraftLine => ({ key, accountCode: "", debit: "", credit: "", description: "" });
+const newLine = (key: number): DraftLine => ({ key, accountCode: "", debit: "", credit: "", description: "", dimensions: {} });
 const STATUS_LABELS: Record<string, string> = {
   draft: "مسودة",
   submitted: "بانتظار الاعتماد",
@@ -107,9 +108,15 @@ export function ManualJournalPanel() {
       if (!setup.data?.userId) throw new Error("لم يتم التحقق من هوية المستخدم");
       if (!validation.valid) throw new Error(validation.errors[0] ?? "بيانات القيد غير مكتملة");
 
-      const inputLines = validation.normalizedLines.map((line) => ({
+      // Preserve cost-centre/project dimensions across amendments; an edit must
+      // not silently discard data not exposed as controls in this small panel.
+      const inputLines = validation.normalizedLines.map((line, index) => ({
         ...line,
-        dimensions: { legalEntity: legalEntityId, branch: branchId },
+        dimensions: {
+          ...lines[index].dimensions,
+          legalEntity: legalEntityId,
+          branch: branchId,
+        },
       }));
       let id: string;
       if (editTarget) {
@@ -230,6 +237,7 @@ export function ManualJournalPanel() {
         debit: line.debit ? String(line.debit) : "",
         credit: line.credit ? String(line.credit) : "",
         description: line.description ?? "",
+        dimensions: line.dimensions ?? {},
       })));
       setOpen(true);
     } catch (error) {
