@@ -14,6 +14,7 @@ declare
   _ledger uuid;
   _reversal uuid;
   _status text;
+  _amended_revision integer;
   _lines jsonb := jsonb_build_array(
     jsonb_build_object('line_number',1,'account_code','5200','debit',125.25,'credit',0),
     jsonb_build_object('line_number',2,'account_code','2100','debit',0,'credit',125.25)
@@ -318,9 +319,10 @@ begin
   exception when others then
     if sqlerrm <> 'ONEXA_MANUAL_JOURNAL_REJECTED_MUST_BE_AMENDED' then raise; end if;
   end;
-  if public.onexa_amend_manual_journal(
+  _amended_revision := public.onexa_amend_manual_journal(
     _rejection_journal,1,'original attachment reviewed','G58-REVIEW-CORRECTED',_lines
-  ) <> 2 or not exists (
+  );
+  if _amended_revision <> 2 or not exists (
     select 1 from public.onexa_manual_journals
     where id=_rejection_journal and status='draft' and revision=2
   ) then
