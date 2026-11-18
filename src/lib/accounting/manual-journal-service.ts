@@ -71,6 +71,7 @@ export async function loadEditableManualJournal(id: string): Promise<{
     debit: number;
     credit: number;
     description: string | null;
+    dimensions: Record<string, string>;
   }[];
   latestRejectionReason: string | null;
 }> {
@@ -84,7 +85,7 @@ export async function loadEditableManualJournal(id: string): Promise<{
   }
   const [lines, rejection] = await Promise.all([
     db.from("onexa_manual_journal_lines")
-      .select("line_number,account_code,debit,credit,description")
+      .select("line_number,account_code,debit,credit,description,dimensions")
       .eq("manual_journal_id", id).order("line_number", { ascending: true }),
     db.from("onexa_manual_journal_events")
       .select("reason").eq("manual_journal_id", id)
