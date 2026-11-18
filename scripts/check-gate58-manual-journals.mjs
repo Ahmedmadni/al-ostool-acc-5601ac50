@@ -65,6 +65,8 @@ assert.ok(sql.includes("ONEXA_MANUAL_JOURNAL_REJECTED_MUST_BE_AMENDED"), "Reject
 assert.ok(g58Smoke.includes("G58_REJECTED_REOPEN_WITHOUT_AMEND_ALLOWED"), "Legacy rejected-to-draft bypass must have a denial test");
 assert.ok(amendSmoke.includes("'costCenter','COST-7'"), "Cost centre dimensions must survive audited journal corrections");
 assert.ok(service.includes("dimensions") && panel.includes("...lines[index].dimensions"), "Client correction must preserve prior project dimensions");
+assert.ok(panel.includes('onClick={() => openForm(false)}'), "Cancelling an edit must clear stale revision context");
+assert.ok(panel.includes("ONEXA_MANUAL_JOURNAL_REVISION_CONFLICT"), "Client must explain stale edit denial");
 assert.ok(!sql.includes("constraint onexa_manual_journals_balanced check (abs(total_debit - total_credit) <= 0.005)"), "Gate58 fresh installs must enforce exact header balance");
 
 const transitionStart = "create or replace function public.onexa_transition_manual_journal(";
