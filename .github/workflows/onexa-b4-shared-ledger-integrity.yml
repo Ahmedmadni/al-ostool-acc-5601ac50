@@ -1,0 +1,68 @@
+name: B4 Shared GL Foundation Integrity (Disposable PostgreSQL)
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: onexa-b4-foundation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  b4-shared-gl-integrity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: disposable_only
+          POSTGRES_USER: postgres
+          POSTGRES_DB: onexa_gate_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d onexa_gate_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 8
+    env:
+      PGHOST: localhost
+      PGPORT: "5432"
+      PGUSER: postgres
+      PGPASSWORD: disposable_only
+      PGDATABASE: onexa_gate_test
+      PGOPTIONS: "-c client_min_messages=warning"
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Confirm disposable database is clean
+        run: |
+          test "$(psql -X -v ON_ERROR_STOP=1 -Atc 'select current_database()')" = "onexa_gate_test"
+          test "$(psql -X -v ON_ERROR_STOP=1 -Atc "select count(*) from pg_class where relname='onexa_tenants'")" = "0"
+      - name: Install synthetic legal entities, branches, roles and tenancy
+        run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/native-g42-real-posting-parent.sql
+      - name: Install synthetic B4 fiscal periods and GL registry parents
+        run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-b4-real-parents-ONLY.sql
+      - name: Install captured ACTUAL hosted B4 engine source
+        run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-b4-catalog-snapshot-20261118.sql
+      - name: Install actual Gate 58 source workflow
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/manual-packages/gate58_manual_journal_workflow.sql
+      - name: Recreate observed production ledger checks on disposable GL
+        run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-b4-hosted-check-constraints-ONLY.sql
+      - name: Prove legacy hosted source type, precision and balance flaws with rollback
+        run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-b4-hosted-baseline-defects-smoke.sql
+      - name: Dry-run source-type allowlist migration (review-only package on disposable DB)
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/manual-packages/gate58_b4_gl_source_type_REVIEW_ONLY.sql
+      - name: Dry-run historical balance guard and exact GL header constraint
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/manual-packages/gate58_b4_gl_exact_balance_REVIEW_ONLY.sql
+      - name: Install proposed strict B4 monetary function in synthetic DB ONLY
+        run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-b4-strict-monetary-fixture.sql
+      - name: Exercise shared B4 exact monetary contract for ten source types
+        run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-b4-strict-cross-module-smoke.sql
+      - name: Exercise Gate58 with strict B4, real closed periods and reversals
+        run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-real-b4-post-reverse-smoke.sql
