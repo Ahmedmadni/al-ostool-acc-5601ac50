@@ -11,11 +11,13 @@ declare
   _ledger uuid;
   _rev integer;
   _original jsonb := jsonb_build_array(
-    jsonb_build_object('line_number',1,'account_code','5200','debit',125.25,'credit',0),
+    jsonb_build_object('line_number',1,'account_code','5200','debit',125.25,'credit',0,
+      'dimensions',jsonb_build_object('project','PRJ-42','costCenter','COST-7')),
     jsonb_build_object('line_number',2,'account_code','2100','debit',0,'credit',125.25)
   );
   _corrected jsonb := jsonb_build_array(
-    jsonb_build_object('line_number',1,'account_code','5200','debit',240.75,'credit',0,'description','corrected'),
+    jsonb_build_object('line_number',1,'account_code','5200','debit',240.75,'credit',0,'description','corrected',
+      'dimensions',jsonb_build_object('project','PRJ-42','costCenter','COST-7')),
     jsonb_build_object('line_number',2,'account_code','2100','debit',0,'credit',240.75)
   );
   _final jsonb := jsonb_build_array(
@@ -62,6 +64,8 @@ begin
       and (event_data #>> '{after,total_debit}')::numeric=240.75
       and jsonb_array_length(event_data #> '{before,lines}')=2
       and jsonb_array_length(event_data #> '{after,lines}')=2
+      and (event_data #>> '{before,lines,0,dimensions,project}')='PRJ-42'
+      and (event_data #>> '{after,lines,0,dimensions,costCenter}')='COST-7'
   ) then
     raise exception 'G58_AMEND_AUDIT_SNAPSHOTS_MISSING';
   end if;
