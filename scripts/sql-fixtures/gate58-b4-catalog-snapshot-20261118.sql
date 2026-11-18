@@ -394,3 +394,39 @@ begin
   );
 end;
 $function$;
+
+-- Public intermediate wrappers also captured from installed production catalog.
+-- public.onexa_post_journal_unchecked: pg_get_functiondef MD5 51db95c8878a9ff78db87cc1cef7ae3d
+CREATE OR REPLACE FUNCTION public.onexa_post_journal_unchecked(_legal_entity_id uuid, _source_document_type text, _source_document_id text, _source_revision integer, _source_status text, _source_snapshot jsonb, _accounting_date date, _period_code text, _currency text, _memo text, _lines jsonb)
+ RETURNS uuid
+ LANGUAGE sql
+ SET search_path TO ''
+AS $function$
+  select onexa_private.post_journal(
+    _legal_entity_id,
+    _source_document_type,
+    _source_document_id,
+    _source_revision,
+    _source_status,
+    _source_snapshot,
+    _accounting_date,
+    _period_code,
+    _currency,
+    _memo,
+    _lines
+  )
+$function$;
+
+-- public.onexa_reverse_journal_unchecked: pg_get_functiondef MD5 9f9b4798858ca441280c07de774769f4
+CREATE OR REPLACE FUNCTION public.onexa_reverse_journal_unchecked(_journal_id uuid, _accounting_date date, _period_code text, _reason text)
+ RETURNS uuid
+ LANGUAGE sql
+ SET search_path TO ''
+AS $function$
+  select onexa_private.reverse_journal(
+    _journal_id,
+    _accounting_date,
+    _period_code,
+    _reason
+  )
+$function$;
