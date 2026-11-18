@@ -61,6 +61,10 @@ for (const required of [
   "ONEXA_MANUAL_JOURNAL_CANCELLATION_REASON_REQUIRED",
   "ONEXA_MANUAL_JOURNAL_REVERSAL_PERIOD_INVALID",
 ]) assert.ok(sql.includes(required), `Gate58 lifecycle invariant missing: ${required}`);
+assert.ok(sql.includes("ONEXA_MANUAL_JOURNAL_REJECTED_MUST_BE_AMENDED"), "Rejected journal must require an audited edit before reopening");
+assert.ok(g58Smoke.includes("G58_REJECTED_REOPEN_WITHOUT_AMEND_ALLOWED"), "Legacy rejected-to-draft bypass must have a denial test");
+assert.ok(amendSmoke.includes("'costCenter','COST-7'"), "Cost centre dimensions must survive audited journal corrections");
+assert.ok(service.includes("dimensions") && panel.includes("...lines[index].dimensions"), "Client correction must preserve prior project dimensions");
 assert.ok(!sql.includes("constraint onexa_manual_journals_balanced check (abs(total_debit - total_credit) <= 0.005)"), "Gate58 fresh installs must enforce exact header balance");
 
 const transitionStart = "create or replace function public.onexa_transition_manual_journal(";
