@@ -56,3 +56,5 @@ jobs:
         run: psql -X -v ON_ERROR_STOP=1 -f supabase/manual-packages/gate58_postcheck.sql
       - name: Test real B4 open closed periods and posted/reversed ledgers
         run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-real-b4-post-reverse-smoke.sql
+      - name: Prove checked public posting still works after private grants are revoked
+        run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-b4-private-grant-smoke.sql
