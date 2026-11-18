@@ -1,0 +1,58 @@
+name: Gate 58 Actual B4 SQL (Disposable PostgreSQL)
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: onexa-g58-actual-b4-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate58-actual-b4-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: disposable_only
+          POSTGRES_USER: postgres
+          POSTGRES_DB: onexa_gate_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d onexa_gate_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 8
+    env:
+      PGHOST: localhost
+      PGPORT: "5432"
+      PGUSER: postgres
+      PGPASSWORD: disposable_only
+      PGDATABASE: onexa_gate_test
+      PGOPTIONS: "-c client_min_messages=warning"
+    steps:
+      - name: Check out tested source
+        uses: actions/checkout@v4
+      - name: Verify isolated synthetic database
+        run: |
+          test "$(psql -X -v ON_ERROR_STOP=1 -Atc "select current_database()")" = "onexa_gate_test"
+          test "$(psql -X -v ON_ERROR_STOP=1 -Atc "select count(*) from pg_class where relname='onexa_tenants'")" = "0"
+      - name: Set up synthetic companies and roles
+        run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/native-g42-real-posting-parent.sql
+      - name: Set up real B4 required parent columns and open fiscal periods
+        run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-b4-real-parents-ONLY.sql
+      - name: Compile exact captured live B4 SQL (not a fake posting adapter)
+        run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-b4-catalog-snapshot-20261118.sql
+      - name: Compile actual Gate 58 journaling SQL
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/manual-packages/gate58_manual_journal_workflow.sql
+      - name: Verify exact source and grant catalog
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/manual-packages/gate58_postcheck.sql
+      - name: Test real B4 open closed periods and posted/reversed ledgers
+        run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-real-b4-post-reverse-smoke.sql
