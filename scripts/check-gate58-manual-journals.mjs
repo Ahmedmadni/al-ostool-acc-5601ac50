@@ -259,6 +259,10 @@ function extractCoreFunction(source) {
 }
 assert.equal(extractCoreFunction(b4StrictReview),extractCoreFunction(b4StrictFixture),
   "Strict B4 reviewed shared publisher must exactly match the isolated test version");
+assert.ok(b4LiveAudit.includes("MANUAL_JOURNAL_BLOCKED") &&
+  b4LiveAudit.includes("EXACT_BALANCE") &&
+  b4LiveAudit.includes("pg_get_constraintdef"),
+  "Read-only B4 hosted contract audit must surface the actual ledger constraints");
 assert.ok(b4StrictReview.includes("ONEXA_B4_SHARED_PUBLISHER_DRIFT_STOP_REVIEW_REQUIRED"),
   "B4 core patch cannot silently overwrite an unknown deployed function");
 assert.ok(b4StrictReview.includes("5ac58a780bbed49e8ba31b6f46c39f48"),
