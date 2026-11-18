@@ -130,10 +130,13 @@ assert.ok(reviewPatch.includes("_period_code <> to_char(_accounting_date, 'YYYY-
 const fnStart = "create or replace function public.onexa_create_manual_journal(";
 const fnEnd = "create or replace function public.onexa_amend_manual_journal(";
 const rpcStart = sql.indexOf(fnStart);
-const rpcEnd = sql.indexOf(fnEnd);
+// Stop at the end of the CREATE function itself: comments introducing the
+// next amendment RPC are not part of the create function's deployable body.
+const rpcEndMarker = "\n$function$;";
+const rpcEnd = sql.indexOf(rpcEndMarker, rpcStart) + rpcEndMarker.length;
 const patchStart = reviewPatch.indexOf(fnStart);
 const patchEnd = reviewPatch.indexOf("-- Do not change function grants here.");
-assert.ok(rpcStart >= 0 && rpcEnd > rpcStart && patchStart >= 0 && patchEnd > patchStart, "Gate58 patch-function boundaries missing");
+assert.ok(rpcStart >= 0 && rpcEnd > rpcStart && sql.indexOf(fnEnd, rpcStart) > rpcEnd && patchStart >= 0 && patchEnd > patchStart, "Gate58 patch-function boundaries missing");
 assert.equal(
   reviewPatch.slice(patchStart, patchEnd).trim(),
   sql.slice(rpcStart, rpcEnd).trim(),
