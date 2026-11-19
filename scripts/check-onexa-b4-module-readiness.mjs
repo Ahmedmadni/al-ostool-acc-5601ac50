@@ -58,6 +58,7 @@ for (const mod of modules) {
   assert.ok(mod.source_types.length>=1 && mod.source_types.length<=2);
   const sql = read(mod.sql);
   const service = read(mod.client);
+  const flagUsage = read(mod.flag_usage ?? mod.client);
   const fn = functionBody(sql,mod.rpc);
 
   assert.ok(fn.includes("onexa_post_journal("),
@@ -68,8 +69,8 @@ for (const mod of modules) {
     "Publisher must fail closed on empty B4 journal response: "+mod.rpc);
   assert.ok(service.includes('"' + mod.rpc + '"') && service.includes(".rpc("),
     "Client must call expected server RPC rather than direct B4: "+mod.rpc);
-  assert.ok(service.includes(mod.flag),
-    "Client must check its specific disabled-by-default flag: "+mod.rpc);
+  assert.ok(flagUsage.includes(mod.flag),
+    "The owning service or manual-journal panel must check the module flag: "+mod.rpc);
   assert.ok(flags.includes("export const "+mod.flag+" =") &&
     flags.includes("import.meta.env."+mod.env+' === "true"'),
     "Runtime must expose exact opt-in flag: "+mod.env);
