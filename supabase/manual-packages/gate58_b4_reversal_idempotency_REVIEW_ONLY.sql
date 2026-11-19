@@ -92,6 +92,18 @@ begin
         and reversal.memo = concat(
           'Reversal of ', v_original.journal_number, ' — ', _reason
         )
+        and (select count(*) from public.onexa_journal_lines l
+             where l.journal_id = v_original.id and l.tenant_id = v_original.tenant_id) >= 2
+        and (select count(*) from public.onexa_journal_lines l
+             where l.journal_id = reversal.id and l.tenant_id = v_original.tenant_id) >= 2
+        and (select coalesce(sum(l.debit), 0) from public.onexa_journal_lines l
+             where l.journal_id = v_original.id and l.tenant_id = v_original.tenant_id) = v_original.total_debit
+        and (select coalesce(sum(l.credit), 0) from public.onexa_journal_lines l
+             where l.journal_id = v_original.id and l.tenant_id = v_original.tenant_id) = v_original.total_credit
+        and (select coalesce(sum(l.debit), 0) from public.onexa_journal_lines l
+             where l.journal_id = reversal.id and l.tenant_id = v_original.tenant_id) = reversal.total_debit
+        and (select coalesce(sum(l.credit), 0) from public.onexa_journal_lines l
+             where l.journal_id = reversal.id and l.tenant_id = v_original.tenant_id) = reversal.total_credit
         and (
           select coalesce(jsonb_agg(jsonb_build_object(
             'account_code', line.account_code,
@@ -199,6 +211,18 @@ begin
       and reversal.memo = concat(
         'Reversal of ', v_original.journal_number, ' — ', _reason
       )
+      and (select count(*) from public.onexa_journal_lines l
+           where l.journal_id = v_original.id and l.tenant_id = v_original.tenant_id) >= 2
+      and (select count(*) from public.onexa_journal_lines l
+           where l.journal_id = reversal.id and l.tenant_id = v_original.tenant_id) >= 2
+      and (select coalesce(sum(l.debit), 0) from public.onexa_journal_lines l
+           where l.journal_id = v_original.id and l.tenant_id = v_original.tenant_id) = v_original.total_debit
+      and (select coalesce(sum(l.credit), 0) from public.onexa_journal_lines l
+           where l.journal_id = v_original.id and l.tenant_id = v_original.tenant_id) = v_original.total_credit
+      and (select coalesce(sum(l.debit), 0) from public.onexa_journal_lines l
+           where l.journal_id = reversal.id and l.tenant_id = v_original.tenant_id) = reversal.total_debit
+      and (select coalesce(sum(l.credit), 0) from public.onexa_journal_lines l
+           where l.journal_id = reversal.id and l.tenant_id = v_original.tenant_id) = reversal.total_credit
   ) then
     raise exception 'ONEXA_B4_REVERSAL_RECEIPT_INVALID';
   end if;
