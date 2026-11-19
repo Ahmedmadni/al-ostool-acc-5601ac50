@@ -93,7 +93,7 @@ begin
    if sqlerrm <> 'G58_TAMPERED_REVERSAL_SNAPSHOT_CONFIRMED' then raise; end if;
  end;
  begin
-   update public.onexa_journal_lines set debit=0,credit=130.25
+   update public.onexa_journal_lines set account_code='SYNTHETIC-CORRUPTED'
      where journal_id=_reversal and line_number=1;
    perform pg_temp.expect_manual_reverse_conflict(
      _manual,date '2026-12-03','2026-12','documented correction');
