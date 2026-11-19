@@ -70,3 +70,5 @@ jobs:
         run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-b4-idempotency-strict-smoke.sql
       - name: Exercise Gate58 with strict B4, real closed periods and reversals
         run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-real-b4-post-reverse-smoke.sql
+      - name: Test concurrent same-key source drift across two real PostgreSQL sessions
+        run: bash scripts/sql-fixtures/gate58-b4-idempotency-concurrency.sh
