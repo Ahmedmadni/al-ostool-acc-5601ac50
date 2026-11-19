@@ -373,6 +373,8 @@ for (const marker of [
  "reversal.source_document_type = 'journal_reversal'",
  "reversal.source_snapshot = jsonb_build_object(",
  "reversal.memo = concat(",
+ "(select count(*) from public.onexa_journal_lines l",
+ "(select coalesce(sum(l.debit), 0) from public.onexa_journal_lines l",
  "reversal.accounting_date = _accounting_date",
  "period.period_code = _period_code",
  "reversal.total_debit = v_original.total_credit",
@@ -383,7 +385,9 @@ for (const marker of [
 assert.ok(sql.includes("ONEXA_MANUAL_JOURNAL_REVERSAL_REPLAY_CONFLICT") &&
  sql.includes("reversal.source_snapshot = jsonb_build_object(") &&
  sql.includes("original.reversal_journal_id = reversal.id") &&
- sql.includes("line.tenant_id = _tenant_id"),
+ sql.includes("line.tenant_id = _tenant_id") &&
+ sql.includes("where l.journal_id = original.id and l.tenant_id = _tenant_id") &&
+ sql.includes("where l.journal_id = reversal.id and l.tenant_id = _tenant_id"),
  "Gate58 reversed status must verify a real matching B4 GL receipt");
 for(const marker of [
  "B4_LEGACY_CHANGED_REVERSAL_RETRY_NOT_REPRODUCED",
@@ -397,6 +401,8 @@ for(const marker of [
  "B4_MISMATCHED_CONTRA_LINES_CONFIRMED",
  "B4_MISSING_REVERSAL_LINK_CONFIRMED",
  "B4_MISMATCHED_REVERSAL_TOTALS_CONFIRMED",
+ "B4_BOTH_GL_LINE_SETS_MISSING_CONFIRMED",
+ "B4_GL_LINE_TOTALS_DIVERGE_FROM_HEADERS_CONFIRMED",
  "B4_REVERSE_RETRY_CREATED_DUPLICATE_GL_OR_AUDIT",
  "B4_CROSS_TENANT_REVERSE_RETRY_ACCEPTED",
 ]) assert.ok(b4ReverseStrict.includes(marker), `B4 reversal test missing: ${marker}`);
@@ -407,6 +413,8 @@ for(const marker of [
  "G58_TAMPERED_REVERSAL_SNAPSHOT_CONFIRMED",
  "G58_TAMPERED_REVERSAL_LINES_CONFIRMED",
  "G58_MISSING_REVERSE_LINK_CONFIRMED",
+ "G58_BOTH_GL_LINE_SETS_MISSING_CONFIRMED",
+ "G58_GL_LINE_TOTALS_DIVERGE_FROM_HEADERS_CONFIRMED",
  "G58_REVERSE_REPLAY_LEDGER_OR_AUDIT_DUPLICATED",
  "G58_CROSS_TENANT_REVERSE_REPLAY_ACCEPTED",
 ]) assert.ok(g58ReverseReplaySmoke.includes(marker), `Gate58 historical reverse test missing: ${marker}`);
