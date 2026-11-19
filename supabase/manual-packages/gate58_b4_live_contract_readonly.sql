@@ -50,7 +50,13 @@ select schema_name,function_name,function_oid is not null as installed,
    else null end as current_core_has_half_cent_tolerance,
  case when function_name = 'post_journal' and schema_name = 'onexa_private'
    then ddl like '%onexa_posting_registry%'
-   else null end as private_post_uses_idempotency_registry
+   else null end as private_post_uses_idempotency_registry,
+ case when function_name = 'post_journal' and schema_name = 'onexa_private'
+   then ddl like '%ONEXA_B4_POSTING_PAYLOAD_CONFLICT%'
+   else null end as private_post_checks_retry_payload,
+ case when function_name = 'post_journal' and schema_name = 'onexa_private'
+   then ddl like '%l.dimensions%' and ddl like '%h.source_snapshot%'
+   else null end as private_post_compares_full_ledger_receipt
 from definitions
 order by schema_name,function_name;
 

@@ -164,6 +164,59 @@ begin
   where r.idempotency_key = v_key;
 
   if v_existing is not null then
+    -- An idempotency key protects against *duplicate inserts*, but does not
+    -- establish that a retry carries the same approved accounting payload.
+    -- Compare the stored receipt and the ordered GL lines under the same
+    -- advisory transaction lock before returning the original posting ID.
+    if not exists (
+      select 1
+      from public.onexa_posting_registry r
+      join public.onexa_journal_headers h
+        on h.id = r.journal_id
+       and h.tenant_id = v_tenant_id
+      where r.idempotency_key = v_key
+        and r.tenant_id = v_tenant_id
+        and r.legal_entity_id = _legal_entity_id
+        and r.source_document_type = _source_document_type
+        and r.source_document_id = _source_document_id
+        and r.source_revision = _source_revision
+        and h.id = v_existing
+        and h.legal_entity_id = _legal_entity_id
+        and h.source_document_type = _source_document_type
+        and h.source_document_id = _source_document_id
+        and h.source_revision = _source_revision
+        and h.accounting_date = _accounting_date
+        and h.fiscal_period_id = v_period_id
+        and h.currency = _currency
+        and h.memo is not distinct from _memo
+        and h.source_snapshot = coalesce(_source_snapshot, '{}'::jsonb)
+        and h.total_debit = v_debit
+        and h.total_credit = v_credit
+        and h.state in ('posted', 'reversed')
+        and (
+          select coalesce(jsonb_agg(jsonb_build_object(
+            'account_code', l.account_code,
+            'debit', l.debit,
+            'credit', l.credit,
+            'description', l.description,
+            'dimensions', l.dimensions
+          ) order by l.line_number), '[]'::jsonb)
+          from public.onexa_journal_lines l
+          where l.journal_id = h.id
+            and l.tenant_id = v_tenant_id
+        ) = (
+          select coalesce(jsonb_agg(jsonb_build_object(
+            'account_code', x->>'account_code',
+            'debit', (x->>'debit')::numeric,
+            'credit', (x->>'credit')::numeric,
+            'description', nullif(x->>'description', ''),
+            'dimensions', coalesce(x->'dimensions', '{}'::jsonb)
+          ) order by ordinality), '[]'::jsonb)
+          from jsonb_array_elements(_lines) with ordinality as t(x, ordinality)
+        )
+    ) then
+      raise exception 'ONEXA_B4_POSTING_PAYLOAD_CONFLICT';
+    end if;
     return v_existing;
   end if;
 
