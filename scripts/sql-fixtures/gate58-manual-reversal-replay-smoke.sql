@@ -111,6 +111,27 @@ begin
    if sqlerrm <> 'G58_MISSING_REVERSE_LINK_CONFIRMED' then raise; end if;
  end;
 
+ begin
+   delete from public.onexa_journal_lines
+     where journal_id in (_ledger,_reversal);
+   perform pg_temp.expect_manual_reverse_conflict(
+     _manual,date '2026-12-03','2026-12','documented correction');
+   raise exception 'G58_BOTH_GL_LINE_SETS_MISSING_CONFIRMED';
+ exception when others then
+   if sqlerrm<>'G58_BOTH_GL_LINE_SETS_MISSING_CONFIRMED' then raise; end if;
+ end;
+ begin
+   update public.onexa_journal_lines set debit=131.25
+     where journal_id=_ledger and line_number=1;
+   update public.onexa_journal_lines set credit=131.25
+     where journal_id=_reversal and line_number=1;
+   perform pg_temp.expect_manual_reverse_conflict(
+     _manual,date '2026-12-03','2026-12','documented correction');
+   raise exception 'G58_GL_LINE_TOTALS_DIVERGE_FROM_HEADERS_CONFIRMED';
+ exception when others then
+   if sqlerrm<>'G58_GL_LINE_TOTALS_DIVERGE_FROM_HEADERS_CONFIRMED' then raise; end if;
+ end;
+
  if (select count(*) from public.onexa_manual_journal_events
     where manual_journal_id=_manual and event_type='reversal_completed')<>1
    or (select count(*) from public.onexa_journal_headers
