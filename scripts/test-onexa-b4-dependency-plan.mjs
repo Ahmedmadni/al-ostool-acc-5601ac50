@@ -1,0 +1,38 @@
+import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+import {validateFinanceDependencyPlan} from "./lib/onexa-b4-dependency-plan.mjs";
+const data=JSON.parse(readFileSync("docs/runbooks/onexa-b4-install-dependency-manifest.json","utf8"));
+const pub=JSON.parse(readFileSync("docs/runbooks/onexa-b4-module-publisher-manifest.json","utf8"));
+const clone=()=>structuredClone(data);
+const node=(p,id)=>p.nodes.find(n=>n.id===id);
+const pass=validateFinanceDependencyPlan(data,pub);
+assert.deepEqual(pass.waves.map(x=>x.wave),[0,1,2,3,4,5],
+ "Release planner must EXCLUDE the legacy SaaS maintenance writer stage");
+assert.ok(pass.waves.some(x=>x.nodes.includes("g64")) &&
+  !pass.waves.some(x=>x.nodes.includes("g66")));
+let p=clone();
+node(p,"g64").depends_on=node(p,"g64").depends_on.filter(x=>x!=="g40");
+assert.throws(()=>validateFinanceDependencyPlan(p,pub),/Mandatory finance ordering dependency removed/);
+p=clone();node(p,"g65").depends_on=["g35"];
+assert.throws(()=>validateFinanceDependencyPlan(p,pub),/Mandatory finance ordering dependency removed/);
+p=clone();node(p,"g66").policy="standard";
+assert.throws(()=>validateFinanceDependencyPlan(p,pub),/legacy Gate66 writer/i);
+p=clone();node(p,"g67").policy="standard";
+assert.throws(()=>validateFinanceDependencyPlan(p,pub),/Legacy lease tables need independent/);
+p=clone();node(p,"g36").depends_on=["g64"];
+assert.throws(()=>validateFinanceDependencyPlan(p,pub),/Unsafe same\/later wave/);
+p=clone();node(p,"g63").depends_on=["g63"];
+assert.throws(()=>validateFinanceDependencyPlan(p,pub),/Unsafe same\/later wave/);
+p=clone();node(p,"g63").depends_on=["not_a_real_gate"];
+assert.throws(()=>validateFinanceDependencyPlan(p,pub),/Unknown required prerequisite/);
+p=clone();node(p,"g64").wave=2;
+assert.throws(()=>validateFinanceDependencyPlan(p,pub),/Unsafe same\/later wave/);
+p=clone();node(p,"g40").requires.push({...node(p,"g40").requires[0]});
+assert.throws(()=>validateFinanceDependencyPlan(p,pub),/Duplicated probe/);
+p=clone();p.nodes.splice(p.nodes.findIndex(n=>n.id==="g62"),1);
+assert.throws(()=>validateFinanceDependencyPlan(p,pub),/17 nodes required/);
+p=clone();node(p,"g37").targets=[];
+assert.throws(()=>validateFinanceDependencyPlan(p,pub),/owning publisher RPC/);
+p=clone();node(p,"g40").package="supabase/manual-packages/gate35_sales_inventory_posting.sql";
+assert.throws(()=>validateFinanceDependencyPlan(p,pub),/wrong SQL source/);
+console.log("B4 dependency negative tests passed: G62/G63/G64 topology, source maps, cycles, legacy ban and spoofed gate order ✓");

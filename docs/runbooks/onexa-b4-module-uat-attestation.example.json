@@ -184,5 +184,18 @@
       "tenant_boundary_and_role_denial": false,
       "module_owner_approved": false
     }
+  },
+  "legacy_maintenance_retirement": {
+    "mode": "UNAPPROVED",
+    "retired_writer": "g66",
+    "approved_cost_posting_path": "g42",
+    "native_attribution_gate": "g74",
+    "legacy_writer_retired": false,
+    "source_provenance_reconciled": false,
+    "double_posting_prevention_verified": false,
+    "native_tenant_isolation_verified": false,
+    "finance_approved": false,
+    "security_approved": false,
+    "evidence_reference": ""
   }
 }
