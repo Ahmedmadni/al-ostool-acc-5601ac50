@@ -62,6 +62,10 @@ jobs:
         run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-b4-idempotency-legacy-smoke.sql
       - name: Reproduce legacy B4 changed-reason and changed-period reversal replay
         run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-b4-reversal-legacy-smoke.sql
+      - name: Validate Gate7 Gate8 payroll and Gate64 source compatibility without customer data
+        run: node scripts/check-onexa-g37-g64-source-contract.mjs && node scripts/test-onexa-g37-g64-foundation-gate.mjs
+      - name: Verify actual PostgreSQL catalog fails closed for incomplete G7/G8/G37/G64
+        run: bash scripts/sql-fixtures/onexa-g37-g64-catalog-smoke.sh
       - name: Verify version-pinned finance dependency DAG and SaaS-only Gate66 blocker
         run: node scripts/check-onexa-b4-dependency-plan.mjs && node scripts/test-onexa-b4-dependency-plan.mjs
       - name: Verify real B4 source dependency metadata before allowed-type patch
