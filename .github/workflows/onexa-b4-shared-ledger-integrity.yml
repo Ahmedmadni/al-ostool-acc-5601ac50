@@ -58,17 +58,27 @@ jobs:
         run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-b4-hosted-baseline-defects-smoke.sql
       - name: Reproduce legacy silent conflicting retry on real B4 source
         run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-b4-idempotency-legacy-smoke.sql
+      - name: Reproduce legacy B4 changed-reason and changed-period reversal replay
+        run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-b4-reversal-legacy-smoke.sql
       - name: Dry-run source-type allowlist migration (review-only package on disposable DB)
         run: psql -X -v ON_ERROR_STOP=1 -f supabase/manual-packages/gate58_b4_gl_source_type_REVIEW_ONLY.sql
       - name: Dry-run historical balance guard and exact GL header constraint
         run: psql -X -v ON_ERROR_STOP=1 -f supabase/manual-packages/gate58_b4_gl_exact_balance_REVIEW_ONLY.sql
       - name: Install proposed strict B4 monetary function in synthetic DB ONLY
         run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-b4-strict-monetary-fixture.sql
+      - name: Install reviewed B4 reversal idempotency function on disposable DB only
+        run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-b4-reversal-idempotency-fixture.sql
       - name: Exercise shared B4 exact monetary contract for ten source types
         run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-b4-strict-cross-module-smoke.sql
       - name: Verify strict B4 idempotency payload integrity on retry
         run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-b4-idempotency-strict-smoke.sql
+      - name: Validate exact B4 reverse retry across date period reason and ledger tampering
+        run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-b4-reversal-strict-smoke.sql
+      - name: Validate manual journal replay contract against actual linked B4 reversal
+        run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-manual-reversal-replay-smoke.sql
       - name: Exercise Gate58 with strict B4, real closed periods and reversals
         run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-real-b4-post-reverse-smoke.sql
       - name: Test concurrent same-key source drift across two real PostgreSQL sessions
         run: bash scripts/sql-fixtures/gate58-b4-idempotency-concurrency.sh
+      - name: Test concurrent conflicting GL reversal instructions against one original
+        run: bash scripts/sql-fixtures/gate58-b4-reversal-concurrency.sh

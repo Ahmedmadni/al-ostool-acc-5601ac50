@@ -40,6 +40,12 @@ const b4StrictSmoke = read("scripts/sql-fixtures/gate58-b4-strict-cross-module-s
 const b4IdempotencyLegacy = read("scripts/sql-fixtures/gate58-b4-idempotency-legacy-smoke.sql");
 const b4IdempotencyStrict = read("scripts/sql-fixtures/gate58-b4-idempotency-strict-smoke.sql");
 const b4IdempotencyConcurrency = read("scripts/sql-fixtures/gate58-b4-idempotency-concurrency.sh");
+const b4ReverseReview = read("supabase/manual-packages/gate58_b4_reversal_idempotency_REVIEW_ONLY.sql");
+const b4ReverseFixture = read("scripts/sql-fixtures/gate58-b4-reversal-idempotency-fixture.sql");
+const b4ReverseLegacy = read("scripts/sql-fixtures/gate58-b4-reversal-legacy-smoke.sql");
+const b4ReverseStrict = read("scripts/sql-fixtures/gate58-b4-reversal-strict-smoke.sql");
+const g58ReverseReplaySmoke = read("scripts/sql-fixtures/gate58-manual-reversal-replay-smoke.sql");
+const b4ReverseConcurrency = read("scripts/sql-fixtures/gate58-b4-reversal-concurrency.sh");
 
 const service = read("src/lib/accounting/manual-journal-service.ts");
 const panel = read("src/components/accounting/manual-journal-panel.tsx");
@@ -344,6 +350,95 @@ for (const invariant of [
   "'dimensions', coalesce(x->'dimensions', '{}'::jsonb)",
   "'description', nullif(x->>'description', '')",
 ]) assert.ok(b4StrictReview.includes(invariant), `B4 source-identity payload guard missing: ${invariant}`);
+
+const reverseBodyStart = "CREATE OR REPLACE FUNCTION onexa_private.reverse_journal(";
+function extractB4ReversalFunction(source) {
+  const i = source.indexOf(reverseBodyStart);
+  const j = source.indexOf("\n$function$;",i+reverseBodyStart.length);
+  assert.ok(i>=0 && j>i, "B4 reviewed reversal body boundaries missing");
+  return source.slice(i,j+"\n$function$;".length).trim();
+}
+assert.equal(extractB4ReversalFunction(b4ReverseReview),
+  extractB4ReversalFunction(b4ReverseFixture),
+  "Review-only B4 reversal must be identical to tested disposable function");
+for (const marker of [
+ "ONEXA_B4_REVERSAL_DEFINITION_DRIFT_STOP_REVIEW_REQUIRED",
+ "f51a890027057a0e838c13cbfd6ddb61",
+ "ONEXA_B4_REVERSAL_REQUIRED_LEDGER_PARENTS_MISSING",
+]) assert.ok(b4ReverseReview.includes(marker), `B4 reverse deployment gate missing: ${marker}`);
+for (const marker of [
+ "ONEXA_B4_REVERSAL_PAYLOAD_CONFLICT",
+ "ONEXA_B4_REVERSAL_RECEIPT_INVALID",
+ "reversal.reversal_of_id = v_original.id",
+ "reversal.source_document_type = 'journal_reversal'",
+ "reversal.source_snapshot = jsonb_build_object(",
+ "reversal.memo = concat(",
+ "(select count(*) from public.onexa_journal_lines l",
+ "(select coalesce(sum(l.debit), 0) from public.onexa_journal_lines l",
+ "reversal.accounting_date = _accounting_date",
+ "period.period_code = _period_code",
+ "reversal.total_debit = v_original.total_credit",
+ "reversal.total_credit = v_original.total_debit",
+ "and line.tenant_id = v_original.tenant_id",
+ "order by line.line_number",
+]) assert.ok(b4ReverseReview.includes(marker), `B4 reverse historical receipt guard missing: ${marker}`);
+assert.ok(sql.includes("ONEXA_MANUAL_JOURNAL_REVERSAL_REPLAY_CONFLICT") &&
+ sql.includes("reversal.source_snapshot = jsonb_build_object(") &&
+ sql.includes("original.reversal_journal_id = reversal.id") &&
+ sql.includes("line.tenant_id = _tenant_id") &&
+ sql.includes("where l.journal_id = original.id and l.tenant_id = _tenant_id") &&
+ sql.includes("where l.journal_id = reversal.id and l.tenant_id = _tenant_id"),
+ "Gate58 reversed status must verify a real matching B4 GL receipt");
+for(const marker of [
+ "B4_LEGACY_CHANGED_REVERSAL_RETRY_NOT_REPRODUCED",
+ "B4_LEGACY_INVALID_REVERSAL_PERIOD_NOT_REPRODUCED",
+]) assert.ok(b4ReverseLegacy.includes(marker), `Actual legacy reversal test missing: ${marker}`);
+for(const marker of [
+ "B4_CHANGED_REVERSAL_REPLAY_ACCEPTED",
+ "B4_IDENTICAL_REVERSE_RETRY_CLOSED_PERIOD_FAILED",
+ "B4_MISMATCHED_MEMO_CONFIRMED",
+ "B4_MISMATCHED_SNAPSHOT_CONFIRMED",
+ "B4_MISMATCHED_CONTRA_LINES_CONFIRMED",
+ "B4_MISSING_REVERSAL_LINK_CONFIRMED",
+ "B4_MISMATCHED_REVERSAL_TOTALS_CONFIRMED",
+ "B4_BOTH_GL_LINE_SETS_MISSING_CONFIRMED",
+ "B4_GL_LINE_TOTALS_DIVERGE_FROM_HEADERS_CONFIRMED",
+ "B4_REVERSE_RETRY_CREATED_DUPLICATE_GL_OR_AUDIT",
+ "B4_CROSS_TENANT_REVERSE_RETRY_ACCEPTED",
+]) assert.ok(b4ReverseStrict.includes(marker), `B4 reversal test missing: ${marker}`);
+for(const marker of [
+ "G58_CHANGED_REVERSAL_REPLAY_ACCEPTED",
+ "G58_IDENTICAL_REVERSE_RETRY_CLOSED_PERIOD_FAILED",
+ "G58_MISMATCHED_REPLAY_PERIOD_ACCEPTED",
+ "G58_TAMPERED_REVERSAL_SNAPSHOT_CONFIRMED",
+ "G58_TAMPERED_REVERSAL_LINES_CONFIRMED",
+ "G58_MISSING_REVERSE_LINK_CONFIRMED",
+ "G58_BOTH_GL_LINE_SETS_MISSING_CONFIRMED",
+ "G58_GL_LINE_TOTALS_DIVERGE_FROM_HEADERS_CONFIRMED",
+ "G58_REVERSE_REPLAY_LEDGER_OR_AUDIT_DUPLICATED",
+ "G58_CROSS_TENANT_REVERSE_REPLAY_ACCEPTED",
+]) assert.ok(g58ReverseReplaySmoke.includes(marker), `Gate58 historical reverse test missing: ${marker}`);
+for(const marker of [
+ "onexa_gate_test",
+ "ONEXA_B4_REVERSAL_PAYLOAD_CONFLICT",
+ "B4_REVERSE_FIRST_LOCK_HELD",
+ "1|1|1|1",
+]) assert.ok(b4ReverseConcurrency.includes(marker), `B4 reverse concurrency test missing: ${marker}`);
+for(const file of [
+ "gate58-b4-reversal-legacy-smoke.sql",
+ "gate58-b4-reversal-idempotency-fixture.sql",
+ "gate58-b4-reversal-strict-smoke.sql",
+ "gate58-manual-reversal-replay-smoke.sql",
+ "gate58-b4-reversal-concurrency.sh",
+]) assert.ok(b4FoundationWorkflow.includes(file), `B4 finance CI missing: ${file}`);
+for(const fixture of [b4ReverseLegacy,b4ReverseStrict,g58ReverseReplaySmoke])
+ assert.ok(fixture.trimEnd().endsWith("rollback;"),
+ "B4 and Gate58 reversal fixtures must rollback synthetic postings");
+assert.ok(b4LiveAudit.includes("private_reverse_checks_replay_payload") &&
+ b4LiveAudit.includes("private_reverse_validates_new_receipt") &&
+ b4LiveAudit.includes("manual_reverse_checks_replay_payload"),
+ "Catalog-only hosted B4 reversal readiness must be visible without finance data");
+
 assert.ok(b4IdempotencyLegacy.includes("B4_LEGACY_IDEMPOTENCY_BUG_NOT_REPRODUCED") &&
   b4IdempotencyLegacy.includes("LEGACY-IDEMPOTENCY-01"),
   "Idempotency baseline test must prove identical key accepts different approved content");

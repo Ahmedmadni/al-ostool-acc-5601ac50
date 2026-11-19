@@ -154,6 +154,81 @@ begin
   for update;
   if not found then raise exception 'ONEXA_MANUAL_JOURNAL_NOT_FOUND'; end if;
   if _journal.status = 'reversed' and _journal.reversal_journal_id is not null then
+    -- Do not claim a repeated reversal succeeded merely because this manual
+    -- source is already marked reversed. Verify the historic accounting
+    -- instruction, contra GL receipt and period without requiring the old
+    -- fiscal period to remain open after the original reversal was posted.
+    if not exists (
+      select 1
+      from public.onexa_journal_headers original
+      join public.onexa_journal_headers reversal
+        on reversal.id = _journal.reversal_journal_id
+       and reversal.tenant_id = _tenant_id
+      join public.onexa_fiscal_periods period
+        on period.id = reversal.fiscal_period_id
+       and period.tenant_id = _tenant_id
+       and period.legal_entity_id = _journal.legal_entity_id
+      where original.id = _journal.posted_journal_id
+        and original.tenant_id = _tenant_id
+        and original.legal_entity_id = _journal.legal_entity_id
+        and original.state = 'reversed'
+        and original.reversal_journal_id = reversal.id
+        and reversal.reversal_of_id = original.id
+        and reversal.legal_entity_id = _journal.legal_entity_id
+        and reversal.state = 'posted'
+        and reversal.source_document_type = 'journal_reversal'
+        and reversal.source_document_id = original.id::text
+        and reversal.source_revision = 1
+        and reversal.accounting_date = _accounting_date
+        and period.period_code = _period_code
+        and _accounting_date between period.starts_on and period.ends_on
+        and reversal.currency = _journal.currency
+        and reversal.total_debit = original.total_credit
+        and reversal.total_credit = original.total_debit
+        and reversal.source_snapshot = jsonb_build_object(
+          'reversal_of', original.id, 'reason', btrim(_reason)
+        )
+        and reversal.memo = concat(
+          'Reversal of ', original.journal_number, ' — ', btrim(_reason)
+        )
+        and (select count(*) from public.onexa_journal_lines l
+             where l.journal_id = original.id and l.tenant_id = _tenant_id) >= 2
+        and (select count(*) from public.onexa_journal_lines l
+             where l.journal_id = reversal.id and l.tenant_id = _tenant_id) >= 2
+        and (select coalesce(sum(l.debit), 0) from public.onexa_journal_lines l
+             where l.journal_id = original.id and l.tenant_id = _tenant_id) = original.total_debit
+        and (select coalesce(sum(l.credit), 0) from public.onexa_journal_lines l
+             where l.journal_id = original.id and l.tenant_id = _tenant_id) = original.total_credit
+        and (select coalesce(sum(l.debit), 0) from public.onexa_journal_lines l
+             where l.journal_id = reversal.id and l.tenant_id = _tenant_id) = reversal.total_debit
+        and (select coalesce(sum(l.credit), 0) from public.onexa_journal_lines l
+             where l.journal_id = reversal.id and l.tenant_id = _tenant_id) = reversal.total_credit
+        and (
+          select coalesce(jsonb_agg(jsonb_build_object(
+            'account_code', line.account_code,
+            'debit', line.debit,
+            'credit', line.credit,
+            'description', line.description,
+            'dimensions', line.dimensions
+          ) order by line.line_number), '[]'::jsonb)
+          from public.onexa_journal_lines line
+          where line.journal_id = reversal.id and line.tenant_id = _tenant_id
+        ) = (
+          select coalesce(jsonb_agg(jsonb_build_object(
+            'account_code', line.account_code,
+            'debit', line.credit,
+            'credit', line.debit,
+            'description', concat(
+              'عكس القيد ', original.journal_number, ' — ', btrim(_reason)
+            ),
+            'dimensions', line.dimensions
+          ) order by line.line_number), '[]'::jsonb)
+          from public.onexa_journal_lines line
+          where line.journal_id = original.id and line.tenant_id = _tenant_id
+        )
+    ) then
+      raise exception 'ONEXA_MANUAL_JOURNAL_REVERSAL_REPLAY_CONFLICT';
+    end if;
     return _journal.reversal_journal_id;
   end if;
   if _journal.status <> 'posted' or _journal.posted_journal_id is null then

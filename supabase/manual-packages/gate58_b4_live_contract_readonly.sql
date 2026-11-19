@@ -56,7 +56,13 @@ select schema_name,function_name,function_oid is not null as installed,
    else null end as private_post_checks_retry_payload,
  case when function_name = 'post_journal' and schema_name = 'onexa_private'
    then ddl like '%l.dimensions%' and ddl like '%h.source_snapshot%'
-   else null end as private_post_compares_full_ledger_receipt
+   else null end as private_post_compares_full_ledger_receipt,
+ case when function_name = 'reverse_journal' and schema_name = 'onexa_private'
+   then ddl like '%ONEXA_B4_REVERSAL_PAYLOAD_CONFLICT%'
+   else null end as private_reverse_checks_replay_payload,
+ case when function_name = 'reverse_journal' and schema_name = 'onexa_private'
+   then ddl like '%ONEXA_B4_REVERSAL_RECEIPT_INVALID%'
+   else null end as private_reverse_validates_new_receipt
 from definitions
 order by schema_name,function_name;
 
@@ -116,3 +122,15 @@ select constraint_name,
             else 'PERMISSIVE_OR_DRIFTED'
        end as operational_readiness
 from observed order by constraint_name;
+
+-- Gate58 reversal RPC has its own safety boundary and may be deployed later
+-- than B4. These source-body checks do not inspect customer data.
+select
+  to_regprocedure('public.onexa_reverse_manual_journal(uuid,date,text,text)')
+    is not null as manual_reverse_rpc_installed,
+  case when to_regprocedure('public.onexa_reverse_manual_journal(uuid,date,text,text)') is null
+    then null
+    else pg_get_functiondef(
+      to_regprocedure('public.onexa_reverse_manual_journal(uuid,date,text,text)')::oid
+    ) like '%ONEXA_MANUAL_JOURNAL_REVERSAL_REPLAY_CONFLICT%'
+  end as manual_reverse_checks_replay_payload;
