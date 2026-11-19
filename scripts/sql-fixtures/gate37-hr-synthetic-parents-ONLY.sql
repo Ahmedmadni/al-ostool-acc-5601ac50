@@ -11,6 +11,11 @@ begin
  end if;
 end $preflight$;
 
+-- Native B4 fixture models account-role mappings without its surrogate UUID.
+-- Real installed production onexa_account_role_mappings DOES have id.
+alter table public.onexa_account_role_mappings
+  add column id uuid not null default gen_random_uuid();
+
 create table public.hr_payroll_runs(
   id uuid primary key,tenant_id text not null,run_no text not null,
   status text not null,period_year integer not null,period_month integer not null,
