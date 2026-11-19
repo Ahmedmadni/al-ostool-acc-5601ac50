@@ -40,6 +40,8 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v4
+      - name: Offline Staging gate must fail closed without independent approvals
+        run: node scripts/test-onexa-b4-staging-evidence-gate.mjs
       - name: Confirm disposable database is clean
         run: |
           test "$(psql -X -v ON_ERROR_STOP=1 -Atc 'select current_database()')" = "onexa_gate_test"
@@ -82,3 +84,5 @@ jobs:
         run: bash scripts/sql-fixtures/gate58-b4-idempotency-concurrency.sh
       - name: Test concurrent conflicting GL reversal instructions against one original
         run: bash scripts/sql-fixtures/gate58-b4-reversal-concurrency.sh
+      - name: Audit cross-source B4 GL and registry integrity before release
+        run: bash scripts/sql-fixtures/onexa-b4-integrity-smoke.sh

@@ -46,6 +46,11 @@ const b4ReverseLegacy = read("scripts/sql-fixtures/gate58-b4-reversal-legacy-smo
 const b4ReverseStrict = read("scripts/sql-fixtures/gate58-b4-reversal-strict-smoke.sql");
 const g58ReverseReplaySmoke = read("scripts/sql-fixtures/gate58-manual-reversal-replay-smoke.sql");
 const b4ReverseConcurrency = read("scripts/sql-fixtures/gate58-b4-reversal-concurrency.sh");
+const b4IntegrityAudit = read("supabase/manual-packages/onexa_b4_ledger_integrity_READ_ONLY.sql");
+const b4ReleaseCatalog = read("supabase/manual-packages/onexa_b4_release_catalog_READ_ONLY.sql");
+const b4IntegritySeed = read("scripts/sql-fixtures/onexa-b4-integrity-seed-ONLY.sql");
+const b4IntegrityCorruption = read("scripts/sql-fixtures/onexa-b4-integrity-corrupt-ROLLBACK.sql");
+const b4IntegritySmoke = read("scripts/sql-fixtures/onexa-b4-integrity-smoke.sh");
 
 const service = read("src/lib/accounting/manual-journal-service.ts");
 const panel = read("src/components/accounting/manual-journal-panel.tsx");
@@ -438,6 +443,75 @@ assert.ok(b4LiveAudit.includes("private_reverse_checks_replay_payload") &&
  b4LiveAudit.includes("private_reverse_validates_new_receipt") &&
  b4LiveAudit.includes("manual_reverse_checks_replay_payload"),
  "Catalog-only hosted B4 reversal readiness must be visible without finance data");
+
+
+const requiredGLIntegrityCodes = [
+  "REGISTRY_TARGET_MISSING","REGISTRY_SOURCE_MISMATCH",
+  "REGISTRY_KEY_MISMATCH","HEADER_WITHOUT_REGISTRY",
+  "DUPLICATE_SOURCE_RECEIPT","HEADER_IMBALANCED",
+  "LINE_COUNT_LT_TWO","LINE_SUM_MISMATCH",
+  "LINE_SIDE_INVALID","LINE_TENANT_MISMATCH",
+  "PERIOD_ENTITY_DATE_MISMATCH",
+  "REVERSED_ORIGINAL_LINK_MISMATCH",
+  "POSTED_WITH_REVERSAL_POINTER",
+  "REVERSAL_SOURCE_LINK_MISMATCH",
+  "REVERSAL_TOTALS_MISMATCH",
+  "REVERSAL_REASON_RECEIPT_MISMATCH",
+  "REVERSAL_ORDERED_LINES_MISMATCH",
+];
+for (const code of requiredGLIntegrityCodes) {
+ assert.ok(b4IntegrityAudit.includes(`('${code}',`) &&
+   b4IntegrityAudit.includes(`select '${code}'`),
+   `B4 aggregate GL integrity check missing: ${code}`);
+ assert.ok(b4IntegritySmoke.includes(code),
+   `Disposable GL corruption smoke missing expected code: ${code}`);
+}
+function assertReadonlySql(source,label) {
+  const tokens=source.replace(/--[^\n]*/g,"").replace(/'(?:''|[^'])*'/g,"''");
+  assert.match(tokens,/^\s*with\b/i, `${label} must start as a single read-only CTE query`);
+  assert.doesNotMatch(tokens,/\b(?:INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE|GRANT|REVOKE|EXECUTE|CALL|COPY|SET|BEGIN|COMMIT|ROLLBACK|DO|VACUUM)\b/i,
+    `${label} must never mutate hosted financial data, roles or schema`);
+  assert.ok(tokens.trim().endsWith(";"), `${label} must be one complete query`);
+  assert.equal((tokens.match(/;/g)||[]).length,1,
+    `${label} must not include additional statements`);
+}
+assertReadonlySql(b4IntegrityAudit,"B4 financial integrity audit");
+assertReadonlySql(b4ReleaseCatalog,"B4 hosted catalog release inventory");
+for (const marker of [
+ "count(f.issue_code)::bigint",
+ "onexa_posting_registry",
+ "onexa_journal_headers",
+ "onexa_journal_lines",
+ "onexa_fiscal_periods",
+ "jsonb_agg",
+ "order by l.line_number",
+ "coalesce(ol.line_count,0)<2",
+ "rev.source_snapshot->>'reason'",
+]) assert.ok(b4IntegrityAudit.includes(marker), `B4 GL audit safety invariant missing: ${marker}`);
+for (const marker of [
+ "GL_MANUAL_SOURCE_ALLOWED","GL_HEADER_EXACTLY_BALANCED",
+ "B4_STRICT_MONEY_CHECKS","B4_POST_RETRY_CONTENT_GUARD",
+ "B4_REVERSE_RETRY_CONTENT_GUARD",
+ "G58_POST_REAL_GL_RECEIPT_VALIDATION",
+ "G58_REVERSE_REPLAY_GL_VALIDATION",
+ "G58_AMENDMENT_FUNCTION_INSTALLED",
+ "G58_TABLE_RLS_ENABLED",
+ "B4_PRIVATE_POST_NOT_DIRECTLY_EXECUTABLE",
+ "B4_PRIVATE_REVERSE_NOT_DIRECTLY_EXECUTABLE",
+]) assert.ok(b4ReleaseCatalog.includes(marker), `Production catalog readiness signal missing: ${marker}`);
+for (const file of [
+ "onexa-b4-integrity-seed-ONLY.sql",
+ "onexa-b4-integrity-corrupt-ROLLBACK.sql",
+ "onexa_b4_ledger_integrity_READ_ONLY.sql",
+]) assert.ok(b4IntegritySmoke.includes(file), `GL synthetic financial tests must execute: ${file}`);
+assert.ok(b4IntegrityCorruption.includes("ONEXA_B4_INTEGRITY_CORRUPTION_DISPOSABLE_ONLY") &&
+  b4IntegrityCorruption.trimEnd().endsWith("rollback;") &&
+  b4IntegrityCorruption.includes("\\i supabase/manual-packages/onexa_b4_ledger_integrity_READ_ONLY.sql"),
+  "Synthetic corruption must be isolated, use the exact operator audit query, and rollback");
+assert.ok(b4IntegritySeed.includes("ONEXA_B4_INTEGRITY_SEED_DISPOSABLE_ONLY"),
+  "Synthetic financial test data must be strictly isolated from hosted ledgers");
+assert.ok(b4FoundationWorkflow.includes("onexa-b4-integrity-smoke.sh"),
+  "B4 real-SQL disposable CI must run full GL integrity acceptance");
 
 assert.ok(b4IdempotencyLegacy.includes("B4_LEGACY_IDEMPOTENCY_BUG_NOT_REPRODUCED") &&
   b4IdempotencyLegacy.includes("LEGACY-IDEMPOTENCY-01"),
