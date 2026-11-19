@@ -35,7 +35,7 @@ else
  assert_status g58 CATALOG_PRESENT_STAGING_REQUIRED
 fi
 # Require G64 to report absent prerequisite publisher RPCs.
-if ! printf '%s\n' "$report" | awk -F '|' '$1=="g64" && $6>0 && $8>0{ok=1}END{exit !ok}'; then
+if ! printf '%s\n' "$report" | awk -F '|' '$1=="g64" && $6>0 && $9>0{ok=1}END{exit !ok}'; then
  echo "Approval bridge must report actual missing module prerequisites" >&2;exit 1
 fi
 echo "ONEXA B4 dependency catalog $phase: 17 metadata nodes, G64/G65 withheld, legacy G66 forbidden"
