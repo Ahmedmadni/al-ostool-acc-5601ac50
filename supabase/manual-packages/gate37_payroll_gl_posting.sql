@@ -18,6 +18,21 @@ begin
      or to_regprocedure('public.hr_payroll_employer_cost(numeric,numeric,numeric,numeric,numeric,numeric,numeric)') is null then
     raise exception 'ONEXA_GATE8_PAYROLL_COST_LEDGER_REQUIRED';
   end if;
+  if exists (
+    select 1
+    from (values
+      ('hr_payroll_runs'),('hr_payroll_lines'),('cost_entries'),
+      ('hr_employees'),('projects')
+    ) as required(table_name)
+    where not exists (
+      select 1 from information_schema.columns c
+      where c.table_schema='public'
+        and c.table_name=required.table_name
+        and c.column_name='tenant_id'
+    )
+  ) then
+    raise exception 'ONEXA_PAYROLL_TENANT_BOUNDARY_COLUMNS_REQUIRED';
+  end if;
   if to_regclass('public.onexa_account_role_mappings') is null
      or to_regprocedure('onexa_private.has_module_action(uuid,text,text)') is null then
     raise exception 'ONEXA_ACCOUNTING_AUTHORIZATION_FOUNDATION_REQUIRED';
@@ -41,8 +56,8 @@ create table if not exists public.onexa_payroll_posting_runs (
   posted_by uuid not null,
   posted_at timestamptz not null default now(),
   constraint onexa_payroll_posting_runs_balanced check (
-    abs(employer_cost - (net_pay + gosi_payable + loan_recovery)) <= 0.01
-    and abs(employer_cost - cost_ledger_amount) <= 0.01
+    employer_cost = (net_pay + gosi_payable + loan_recovery)
+    and employer_cost = cost_ledger_amount
   )
 );
 
@@ -79,11 +94,13 @@ with payroll as (
       line.sick_leave_deduction, line.absence_deduction,
       line.late_deduction, line.gosi_employer
     ) <> 0)::integer as expected_cost_line_count,
-    count(line.cost_entry_id)::integer as cost_line_count,
+    count(cost.id)::integer as cost_line_count,
     coalesce(sum(cost.amount), 0) as cost_ledger_amount
   from public.hr_payroll_runs run
-  left join public.hr_payroll_lines line on line.run_id = run.id
-  left join public.cost_entries cost on cost.id = line.cost_entry_id
+  left join public.hr_payroll_lines line
+    on line.run_id = run.id and line.tenant_id = run.tenant_id
+  left join public.cost_entries cost
+    on cost.id = line.cost_entry_id and cost.tenant_id = run.tenant_id
     and coalesce(cost.meta->>'source', '') = 'hr_payroll'
     and cost.meta->>'payroll_line_id' = line.id::text
   group by run.id, run.run_no, run.period_year, run.period_month,
@@ -98,10 +115,10 @@ select
     when payroll.payroll_status not in ('approved', 'paid') then 'not_approved'
     when public.hr_payroll_attendance_is_stale(payroll.payroll_run_id) then 'attendance_stale'
     when payroll.cost_line_count <> payroll.expected_cost_line_count then 'cost_sync_pending'
-    when abs(payroll.cost_ledger_amount - payroll.employer_cost) > 0.01 then 'cost_value_mismatch'
+    when payroll.cost_ledger_amount <> payroll.employer_cost then 'cost_value_mismatch'
     when posting.payroll_run_id is null then 'not_posted'
     when posting.journal_id is null then 'journal_missing'
-    when abs(posting.employer_cost - (posting.net_pay + posting.gosi_payable + posting.loan_recovery)) > 0.01
+    when posting.employer_cost <> (posting.net_pay + posting.gosi_payable + posting.loan_recovery)
       then 'journal_unbalanced'
     else 'reconciled'
   end as reconciliation_status
@@ -161,6 +178,8 @@ declare
   _accounting_date date;
   _journal_lines jsonb := '[]'::jsonb;
   _journal_id uuid;
+  _existing public.onexa_payroll_posting_runs%rowtype;
+  _expected_snapshot jsonb;
 begin
   if _actor is null or nullif(_tenant_id, '') is null then
     raise exception 'ONEXA_AUTHENTICATED_TENANT_REQUIRED';
@@ -175,13 +194,12 @@ begin
   perform pg_advisory_xact_lock(hashtextextended(_tenant_id || ':payroll:' || _payroll_run_id::text, 0));
 
   select * into _run from public.hr_payroll_runs
-  where id = _payroll_run_id for update;
+  where id = _payroll_run_id and tenant_id = _tenant_id for update;
   if not found then raise exception 'ONEXA_PAYROLL_RUN_NOT_FOUND'; end if;
 
-  select journal_id into _journal_id
-  from public.onexa_payroll_posting_runs
-  where payroll_run_id = _payroll_run_id and tenant_id = _tenant_id;
-  if found then return _journal_id; end if;
+  select * into _existing from public.onexa_payroll_posting_runs
+  where payroll_run_id = _payroll_run_id and tenant_id = _tenant_id
+  for update;
 
   if _run.status::text not in ('approved', 'paid') then
     raise exception 'ONEXA_PAYROLL_RUN_MUST_BE_APPROVED';
@@ -202,8 +220,26 @@ begin
       and tenant_id = _tenant_id and is_active = true
   ) then raise exception 'ONEXA_BRANCH_NOT_FOUND'; end if;
 
+  if exists (
+    select 1 from public.hr_payroll_lines
+    where run_id = _payroll_run_id and tenant_id is distinct from _tenant_id
+  ) then raise exception 'ONEXA_PAYROLL_SOURCE_TENANT_MISMATCH'; end if;
+  if exists (
+    select 1 from public.hr_payroll_lines line
+    join public.hr_employees employee on employee.id = line.employee_id
+    where line.run_id = _payroll_run_id
+      and employee.tenant_id is distinct from _tenant_id
+  ) then raise exception 'ONEXA_PAYROLL_EMPLOYEE_TENANT_MISMATCH'; end if;
+  if exists (
+    select 1 from public.hr_payroll_lines line
+    left join public.projects project on project.id=line.project_id
+    where line.run_id=_payroll_run_id and line.project_id is not null
+      and (project.id is null or project.tenant_id is distinct from _tenant_id)
+  ) then raise exception 'ONEXA_PAYROLL_PROJECT_TENANT_MISMATCH'; end if;
+
   perform 1 from public.hr_payroll_lines
-  where run_id = _payroll_run_id order by id for update;
+  where run_id = _payroll_run_id and tenant_id = _tenant_id
+  order by id for update;
   if not found then raise exception 'ONEXA_PAYROLL_LINES_REQUIRED'; end if;
 
   select
@@ -221,23 +257,25 @@ begin
       line.sick_leave_deduction, line.absence_deduction,
       line.late_deduction, line.gosi_employer
     ) <> 0)::integer,
-    count(line.cost_entry_id)::integer,
+    count(cost.id)::integer,
     coalesce(sum(cost.amount), 0)
   into _employee_count, _employer_cost, _net_pay, _gosi_payable,
     _loan_recovery, _expected_cost_count, _actual_cost_count, _cost_ledger_amount
   from public.hr_payroll_lines line
-  left join public.cost_entries cost on cost.id = line.cost_entry_id
+  left join public.cost_entries cost
+    on cost.id = line.cost_entry_id
+    and cost.tenant_id = _tenant_id
     and coalesce(cost.meta->>'source', '') = 'hr_payroll'
     and cost.meta->>'payroll_line_id' = line.id::text
-  where line.run_id = _payroll_run_id;
+  where line.run_id = _payroll_run_id and line.tenant_id = _tenant_id;
 
   if _actual_cost_count <> _expected_cost_count then
     raise exception 'ONEXA_PAYROLL_COST_SYNC_REQUIRED';
   end if;
-  if abs(_cost_ledger_amount - _employer_cost) > 0.01 then
+  if _cost_ledger_amount <> _employer_cost then
     raise exception 'ONEXA_PAYROLL_COST_LEDGER_MISMATCH';
   end if;
-  if abs(_employer_cost - (_net_pay + _gosi_payable + _loan_recovery)) > 0.01 then
+  if _employer_cost <> (_net_pay + _gosi_payable + _loan_recovery) then
     raise exception 'ONEXA_PAYROLL_ACCOUNTING_EQUATION_MISMATCH';
   end if;
 
@@ -266,8 +304,9 @@ begin
         line.late_deduction, line.gosi_employer
       )) as amount
     from public.hr_payroll_lines line
-    join public.hr_employees employee on employee.id = line.employee_id
-    where line.run_id = _payroll_run_id
+    join public.hr_employees employee
+      on employee.id = line.employee_id and employee.tenant_id = _tenant_id
+    where line.run_id = _payroll_run_id and line.tenant_id = _tenant_id
     group by line.project_id, employee.department_id
     order by line.project_id nulls last, employee.department_id nulls last
   loop
@@ -304,20 +343,75 @@ begin
 
   _accounting_date := (make_date(_run.period_year, _run.period_month, 1)
     + interval '1 month - 1 day')::date;
+  _expected_snapshot := jsonb_build_object(
+    'run_no', _run.run_no, 'period_year', _run.period_year,
+    'period_month', _run.period_month, 'attendance_period_id', _run.attendance_period_id,
+    'employer_cost', _employer_cost, 'net_pay', _net_pay,
+    'gosi_payable', _gosi_payable, 'loan_recovery', _loan_recovery,
+    'posting_contract_version', 'payroll-v1'
+  );
+
+  -- A previous posting is NOT a valid idempotent receipt merely because the
+  -- payroll UUID is present. Verify the current tenant, source, legal entity,
+  -- branch, accounting date/period, exact GL and original snapshot first.
+  -- No additional journal is posted on an unchanged historical replay.
+  if _existing.journal_id is not null then
+    if _existing.legal_entity_id is distinct from _legal_entity_id
+       or _existing.branch_id is distinct from _branch_id
+       or _existing.source_revision is distinct from 1
+       or _existing.employer_cost is distinct from _employer_cost
+       or _existing.net_pay is distinct from _net_pay
+       or _existing.gosi_payable is distinct from _gosi_payable
+       or _existing.loan_recovery is distinct from _loan_recovery
+       or _existing.cost_ledger_amount is distinct from _cost_ledger_amount
+       or _existing.employee_count is distinct from _employee_count
+       or not exists (
+         select 1
+         from public.onexa_journal_headers h
+         join public.onexa_fiscal_periods period
+           on period.id = h.fiscal_period_id
+         where h.id = _existing.journal_id
+           and h.tenant_id = _tenant_id
+           and h.legal_entity_id = _legal_entity_id
+           and h.source_document_type = 'payroll_run'
+           and h.source_document_id = _run.id::text
+           and h.source_revision = 1
+           and h.state = 'posted'
+           and h.currency = 'SAR'
+           and h.accounting_date = _accounting_date
+           and period.tenant_id = _tenant_id
+           and period.legal_entity_id = _legal_entity_id
+           and period.period_code = btrim(_period_code)
+           and _accounting_date between period.starts_on and period.ends_on
+           and h.total_debit = _employer_cost
+           and h.total_credit = _employer_cost
+           and h.source_snapshot = _expected_snapshot
+           and h.memo = 'Payroll ' || _run.run_no
+           and (select count(*) from public.onexa_journal_lines l
+                where l.journal_id = h.id and l.tenant_id = _tenant_id)
+             = jsonb_array_length(_journal_lines)
+           and (select coalesce(jsonb_agg(jsonb_build_object(
+                  'account_code', l.account_code,
+                  'debit', l.debit, 'credit', l.credit,
+                  'description', l.description, 'dimensions', l.dimensions
+                ) order by l.line_number),'[]'::jsonb)
+                from public.onexa_journal_lines l
+                where l.journal_id=h.id and l.tenant_id=_tenant_id
+               ) = _journal_lines
+       ) then
+      raise exception 'ONEXA_PAYROLL_POSTING_RETRY_CONFLICT';
+    end if;
+    return _existing.journal_id;
+  end if;
 
   select public.onexa_post_journal(
     _legal_entity_id => _legal_entity_id,
     _source_document_type => 'payroll_run',
     _source_document_id => _run.id::text,
     _source_revision => 1,
-    _source_status => _run.status::text,
-    _source_snapshot => jsonb_build_object(
-      'run_no', _run.run_no, 'period_year', _run.period_year,
-      'period_month', _run.period_month, 'attendance_period_id', _run.attendance_period_id,
-      'employer_cost', _employer_cost, 'net_pay', _net_pay,
-      'gosi_payable', _gosi_payable, 'loan_recovery', _loan_recovery,
-      'posting_contract_version', 'payroll-v1'
-    ),
+    -- B4 accepts exactly "approved"; a paid run is already approved.
+    _source_status => 'approved',
+    _source_snapshot => _expected_snapshot,
     _accounting_date => _accounting_date,
     _period_code => btrim(_period_code),
     _currency => 'SAR',

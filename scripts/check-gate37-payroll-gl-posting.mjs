@@ -28,7 +28,30 @@ assert.ok(sql.includes("alter table public.onexa_payroll_posting_runs enable row
 assert.ok(sql.includes("security_invoker = true"), "views must use security_invoker");
 assert.ok(sql.includes("pg_advisory_xact_lock"), "advisory lock is missing");
 assert.ok(sql.includes("order by id for update"), "deterministic line locking is missing");
-assert.ok(sql.includes("if found then return _journal_id"), "safe retry is missing");
+assert.ok(sql.includes("ONEXA_PAYROLL_POSTING_RETRY_CONFLICT") &&
+  sql.includes("return _existing.journal_id;") &&
+  sql.includes("and h.source_snapshot = _expected_snapshot") &&
+  sql.includes("and h.total_debit = _employer_cost") &&
+  sql.includes("and h.state = 'posted'") &&
+  sql.includes("= _journal_lines"),
+  "Safe retry must compare source, tenant, currency, fiscal period, totals and ordered GL lines");
+assert.ok(sql.includes("ONEXA_PAYROLL_TENANT_BOUNDARY_COLUMNS_REQUIRED") &&
+  sql.includes("ONEXA_PAYROLL_SOURCE_TENANT_MISMATCH") &&
+  sql.includes("ONEXA_PAYROLL_EMPLOYEE_TENANT_MISMATCH") &&
+  sql.includes("ONEXA_PAYROLL_PROJECT_TENANT_MISMATCH") &&
+  sql.includes("where id = _payroll_run_id and tenant_id = _tenant_id for update") &&
+  sql.includes("and cost.tenant_id = _tenant_id") &&
+  sql.includes("join public.hr_employees employee on employee.id = line.employee_id\n    where line.run_id = _payroll_run_id\n      and employee.tenant_id is distinct from _tenant_id") &&
+  sql.includes("employee.id = line.employee_id and employee.tenant_id = _tenant_id\n    where line.run_id = _payroll_run_id and line.tenant_id = _tenant_id"),
+  "Payroll source/employee/project, GL debit grouping and cost ledger must remain within claimant tenant");
+assert.ok(sql.includes("_source_status => 'approved'") &&
+  sql.includes("_run.status::text not in ('approved', 'paid')"),
+  "B4 accepts approved source status even when payroll is already paid");
+assert.ok(sql.includes("employer_cost = (net_pay + gosi_payable + loan_recovery)") &&
+  sql.includes("_cost_ledger_amount <> _employer_cost") &&
+  sql.includes("_employer_cost <> (_net_pay + _gosi_payable + _loan_recovery)") &&
+  !sql.includes("<= 0.01") && !sql.includes("> 0.01"),
+  "Payroll source/GL equation must be exact, without tolerated halala drift");
 assert.ok(sql.includes("ONEXA_POSTER_MUST_DIFFER_FROM_CREATOR"), "separation of duties is missing");
 assert.ok(sql.includes("ONEXA_PAYROLL_COST_LEDGER_MISMATCH"), "cost reconciliation is missing");
 assert.ok(sql.includes("hr_payroll_attendance_is_stale"), "attendance guard is missing");
@@ -52,6 +75,69 @@ for (const marker of [
   "rollback;",
 ]) assert.ok(smoke.includes(marker), `smoke-test invariant missing: ${marker}`);
 assert.ok(!smoke.includes("commit;"), "smoke test must never commit");
+
+const b4PayrollContract = read("scripts/sql-fixtures/gate37-paid-payroll-b4-strict-smoke.sql");
+const syntheticParents = read("scripts/sql-fixtures/gate37-hr-synthetic-parents-ONLY.sql");
+const realB4Integration = read("scripts/sql-fixtures/gate37-real-b4-payroll-integration-smoke.sql");
+const ledgerAudit = read("supabase/manual-packages/onexa_g37_payroll_contract_READ_ONLY.sql");
+const financeB4Workflow = read(".github/workflows/onexa-b4-shared-ledger-integrity.yml");
+for(const marker of [
+  "G37_PAID_SOURCE_STATUS_WAS_ACCEPTED_BY_B4",
+  "G37_APPROVED_CANONICAL_B4_PAYROLL_POST_FAILED",
+  "G37_ONE_HALALA_IMBALANCED_B4_PAYROLL_ACCEPTED",
+]) assert.ok(b4PayrollContract.includes(marker),
+  "Strict B4 payroll API status/amount contract must be exercised: "+marker);
+for(const marker of [
+  "ONEXA_GATE37_HR_FIXTURE_DISPOSABLE_ONLY",
+  "create table public.hr_payroll_runs(",
+  "create table public.hr_payroll_lines(",
+  "create table public.cost_entries(",
+  "create function public.hr_payroll_attendance_is_stale(uuid)",
+]) assert.ok(syntheticParents.includes(marker),
+  "Real Gate37 integration must isolate fake HR foundation: "+marker);
+for(const marker of [
+  "G37_REAL_B4_E2E_DISPOSABLE_ONLY",
+  "G37_CROSS_TENANT_PAYROLL_RUN_ACCEPTED",
+  "G37_FOREIGN_TENANT_SOURCE_ACCEPTED",
+  "G37_FOREIGN_TENANT_EMPLOYEE_ACCEPTED",
+  "G37_FOREIGN_TENANT_PROJECT_ACCEPTED",
+  "G37_FOREIGN_TENANT_COST_ACCEPTED",
+  "G37_ONE_HALALA_COST_DRIFT_ACCEPTED",
+  "G37_ONE_HALALA_ACCOUNTING_DRIFT_ACCEPTED",
+  "G37_PAID_RUN_CANONICAL_B4_JOURNAL_NOT_POSTED",
+  "G37_IDENTICAL_REPLAY_NOT_IDEMPOTENT",
+  "G37_CONFLICTING_PERIOD_REPLAY_ACCEPTED",
+  "G37_MUTATED_ORIGINAL_GL_LINE_ACCEPTED",
+  "G37_MUTATED_SOURCE_SNAPSHOT_ACCEPTED",
+  "G37_REVERSED_JOURNAL_REPLAY_ACCEPTED_AS_POSTED",
+  "G37_REPLAY_CREATED_DUPLICATE_PAYROLL_LEDGER_OR_REGISTRY",
+]) assert.ok(realB4Integration.includes(marker),
+  "Real Gate37 + B4 integration test missing: "+marker);
+assert.ok(b4PayrollContract.trimEnd().endsWith("rollback;") &&
+  realB4Integration.trimEnd().endsWith("rollback;"),
+  "Actual B4 and Gate37 transactional tests MUST rollback");
+for(const marker of [
+  "onexa_g37_payroll_contract_READ_ONLY.sql",
+  "gate37-hr-synthetic-parents-ONLY.sql",
+  "gate37-real-b4-payroll-integration-smoke.sql",
+  "gate37-paid-payroll-b4-strict-smoke.sql",
+]) assert.ok(financeB4Workflow.includes(marker) ||
+  (marker === "onexa_g37_payroll_contract_READ_ONLY.sql" && ledgerAudit.includes("PAYROLL_RETRY_PAYLOAD_VERIFIED")),
+  "Shared B4 CI must run complete Gate37 tests/audits: "+marker);
+for(const marker of [
+  "PAYROLL_CANONICAL_B4_APPROVED",
+  "PAYROLL_TENANT_RUN_SCOPED",
+  "PAYROLL_TENANT_COST_SCOPED",
+  "PAYROLL_RETRY_LEDGER_LINES_VERIFIED",
+  "PAYROLL_EXACT_FINANCIAL_EQUATION",
+  "PAYROLL_EXACT_BALANCE_CONSTRAINT",
+]) assert.ok(ledgerAudit.includes(marker),"Read-only Gate37 hosted readiness omitted "+marker);
+const noComments=ledgerAudit.replace(/^--.*$/gm,"").replace(/'(?:''|[^'])*'/g,"''");
+assert.match(noComments,/^\s*with\b/i);
+assert.doesNotMatch(noComments,/\b(?:CREATE|ALTER|DELETE|UPDATE|INSERT|DROP|GRANT|REVOKE|EXECUTE|CALL|TRUNCATE|DO)\b/i);
+assert.equal((noComments.match(/;/g)??[]).length,1,
+  "Hosted Gate37 readiness audit must be one SELECT-only SQL statement");
+
 
 assert.ok(postcheck.includes("authenticated direct insert/update/delete must remain false"), "postcheck privilege assertion missing");
 assert.ok(service.includes('db.rpc("onexa_post_payroll_run"'), "service RPC missing");
