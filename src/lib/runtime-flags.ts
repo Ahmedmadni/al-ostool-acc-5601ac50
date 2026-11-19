@@ -53,7 +53,14 @@ export const ONEXA_INVENTORY_POSTING_ENABLED =
   ONEXA_POSTING_ENABLED &&
   import.meta.env.VITE_ENABLE_ONEXA_INVENTORY_POSTING === "true";
 
+// The Gate66 legacy writer explicitly refuses ONEXA SaaS tenants and can
+// duplicate costs already recorded in G42/procurement/payroll/inventory.
+// This fixed safety barrier intentionally ignores a mistakenly enabled env
+// flag. Native G73/G74 maintenance attribution is a separate, READ-ONLY path.
+// Re-enable ONLY after a new tenant-aware publisher and independent finance UAT.
+export const ONEXA_LEGACY_MAINTENANCE_COST_WRITER_ALLOWED = false;
 export const ONEXA_MAINTENANCE_COST_POSTING_ENABLED =
+  ONEXA_LEGACY_MAINTENANCE_COST_WRITER_ALLOWED &&
   ONEXA_PROJECT_COST_POSTING_ENABLED &&
   import.meta.env.VITE_ENABLE_ONEXA_MAINTENANCE_COST_POSTING === "true";
 
