@@ -81,7 +81,8 @@ where source_document_id='INTEGRITY-SEED-purchase_invoice';
 
 -- Simulate source/contra divergence in the one legitimate seeded reversal.
 update public.onexa_journal_headers
-set reversal_of_id=null, memo='tampered reversal reason',
+set source_document_id='BROKEN-REVERSAL-LINK',
+    memo='tampered reversal reason',
     total_debit=total_debit+1,total_credit=total_credit+1
 where source_document_type='journal_reversal' and tenant_id='tenant-smoke-A';
 
