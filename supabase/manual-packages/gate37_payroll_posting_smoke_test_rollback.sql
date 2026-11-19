@@ -65,6 +65,19 @@ begin
     raise exception 'ONEXA_SMOKE_PAYROLL_RETRY_NOT_IDEMPOTENT';
   end if;
 
+  -- Historical retry with a new fiscal instruction must NEVER silently
+  -- return an old journal UUID. It must leave the synthetic transaction clean.
+  begin
+    perform public.onexa_post_payroll_run(
+      _run_id, _legal_entity_id, _branch_id, '1900-01'
+    );
+    raise exception 'ONEXA_SMOKE_CONFLICTING_PAYROLL_PERIOD_ACCEPTED';
+  exception when others then
+    if sqlerrm <> 'ONEXA_PAYROLL_POSTING_RETRY_CONFLICT' then
+      raise;
+    end if;
+  end;
+
   raise notice 'gate37_payroll_posting_smoke_test | passed | rollback follows';
 end;
 $smoke$;
