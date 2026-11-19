@@ -84,6 +84,8 @@ jobs:
         run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-b4-strict-monetary-fixture.sql
       - name: Install reviewed B4 reversal idempotency function on disposable DB only
         run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-b4-reversal-idempotency-fixture.sql
+      - name: Verify actual B4 canonical paid-payroll source and exact one-halalah GL balance
+        run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate37-paid-payroll-b4-strict-smoke.sql
       - name: Exercise shared B4 exact monetary contract for ten source types
         run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-b4-strict-cross-module-smoke.sql
       - name: Verify strict B4 idempotency payload integrity on retry
