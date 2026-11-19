@@ -327,18 +327,26 @@
       ]
     },
     {
-      "id": "g63",
+      "id": "g62",
       "wave": 1,
       "depends_on": [
         "b4"
       ],
       "kind": "foundation",
-      "package": "supabase/manual-packages/gate63_approval_workflow_runtime.sql",
+      "package": "supabase/manual-packages/gate62_tenant_approval_workflows.sql",
       "policy": "standard",
       "requires": [
         {
           "kind": "table",
-          "ref": "public.onexa_business_documents"
+          "ref": "public.onexa_workspace"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_workspace_memberships"
+        },
+        {
+          "kind": "function",
+          "ref": "onexa_private.claim_tenant_id()"
         }
       ],
       "targets": [
@@ -347,8 +355,54 @@
           "ref": "public.onexa_approval_separation_required(text,text)"
         },
         {
+          "kind": "table",
+          "ref": "public.onexa_approval_workflows"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_approval_workflow_steps"
+        }
+      ]
+    },
+    {
+      "id": "g63",
+      "wave": 2,
+      "depends_on": [
+        "g62"
+      ],
+      "kind": "foundation",
+      "package": "supabase/manual-packages/gate63_approval_workflow_runtime.sql",
+      "policy": "standard",
+      "requires": [
+        {
+          "kind": "table",
+          "ref": "public.onexa_approval_workflows"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_approval_workflow_steps"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_business_documents"
+        },
+        {
+          "kind": "function",
+          "ref": "public.onexa_approval_separation_required(text,text)"
+        }
+      ],
+      "targets": [
+        {
           "kind": "function",
           "ref": "onexa_private.approval_actor_matches_step(uuid,uuid,uuid)"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_approval_instances"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_approval_decisions"
         }
       ]
     },
