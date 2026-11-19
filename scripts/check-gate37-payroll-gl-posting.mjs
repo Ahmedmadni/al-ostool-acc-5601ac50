@@ -40,8 +40,10 @@ assert.ok(sql.includes("ONEXA_PAYROLL_TENANT_BOUNDARY_COLUMNS_REQUIRED") &&
   sql.includes("ONEXA_PAYROLL_EMPLOYEE_TENANT_MISMATCH") &&
   sql.includes("ONEXA_PAYROLL_PROJECT_TENANT_MISMATCH") &&
   sql.includes("where id = _payroll_run_id and tenant_id = _tenant_id for update") &&
-  sql.includes("and cost.tenant_id = _tenant_id"),
-  "Payroll source/employee/project and cost ledger must remain within claiming tenant");
+  sql.includes("and cost.tenant_id = _tenant_id") &&
+  sql.includes("join public.hr_employees employee on employee.id = line.employee_id\n    where line.run_id = _payroll_run_id\n      and employee.tenant_id is distinct from _tenant_id") &&
+  sql.includes("employee.id = line.employee_id and employee.tenant_id = _tenant_id\n    where line.run_id = _payroll_run_id and line.tenant_id = _tenant_id"),
+  "Payroll source/employee/project, GL debit grouping and cost ledger must remain within claimant tenant");
 assert.ok(sql.includes("_source_status => 'approved'") &&
   sql.includes("_run.status::text not in ('approved', 'paid')"),
   "B4 accepts approved source status even when payroll is already paid");
