@@ -23,7 +23,8 @@ begin
   where run.payroll_status in ('approved', 'paid')
     and run.reconciliation_status = 'not_posted'
     and run.cost_line_count = run.expected_cost_line_count
-    and abs(run.cost_ledger_amount - run.employer_cost) <= 0.01
+    and run.cost_ledger_amount = run.employer_cost
+    and payroll.tenant_id = _tenant_id
   order by run.period_year desc, run.period_month desc
   limit 1;
   if _run_id is null then
