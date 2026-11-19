@@ -39,7 +39,10 @@ for(const n of manifest.nodes){
  const header="("+[q(n.id),n.wave,q(n.policy),q(n.package??""),q(n.depends_on.join(","))].join(",")+")";
  assert.ok(sql.includes(header),"Catalog omitted DAG node "+n.id);
  if(n.package){
-  const source=read(n.package);
+  const source=read(n.package) + (n.id==="g37"
+    ? read("supabase/migrations/20260902090000_gate7_attendance_payroll_cost_hardening.sql") +
+      read("supabase/migrations/20260903090000_gate8_payroll_cost_ledger.sql")
+    : "");
   for(const req of n.requires){
    assert.ok(source.includes(req.ref) || (req.kind==="trigger" && source.includes(req.name)),
      "Installed SQL source does not reference metadata prerequisite "+n.id+" / "+req.ref);
@@ -62,6 +65,7 @@ for(const n of manifest.nodes){
 }
 for(const expected of [
  "'SAAS_LEGACY_WRITER_FORBIDDEN'","'LEGACY_REAL_ESTATE_COMPAT_REVIEW'",
+ "'PAYROLL_GATE7_8_FOUNDATION_REVIEW'",
  "'MANUAL_JOURNAL_ALLOWLIST_BLOCKED'","'PREREQUISITES_MISSING'",
  "'INSTALLATION_MISSING'","'CATALOG_PRESENT_STAGING_REQUIRED'",
  "to_regprocedure(o.object_ref)","to_regclass(o.object_ref)",

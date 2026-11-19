@@ -72,7 +72,7 @@
       ],
       "kind": "publisher",
       "package": "supabase/manual-packages/gate37_payroll_gl_posting.sql",
-      "policy": "standard",
+      "policy": "payroll_gate7_8_compatibility_review",
       "requires": [
         {
           "kind": "function",
@@ -105,6 +105,69 @@
         {
           "kind": "table",
           "ref": "public.onexa_account_role_mappings"
+        },
+        {
+          "kind": "table",
+          "ref": "public.hr_attendance_periods"
+        },
+        {
+          "kind": "table",
+          "ref": "public.hr_attendance_days"
+        },
+        {
+          "kind": "table",
+          "ref": "public.cost_periods"
+        },
+        {
+          "kind": "table",
+          "ref": "public.uq_cost_entries_hr_payroll_line_source"
+        },
+        {
+          "kind": "function",
+          "ref": "public.hr_attendance_lock_periods(date,date)"
+        },
+        {
+          "kind": "function",
+          "ref": "public.hr_apply_attendance_to_payroll(uuid)"
+        },
+        {
+          "kind": "function",
+          "ref": "public.hr_attendance_payroll_snapshot_hash(uuid)"
+        },
+        {
+          "kind": "function",
+          "ref": "public.hr_apply_attendance_to_payroll_gate7_core(uuid)"
+        },
+        {
+          "kind": "function",
+          "ref": "public.hr_sync_payroll_cost_entries_gate7_core(uuid)"
+        },
+        {
+          "kind": "function",
+          "ref": "public.hr_payroll_attendance_status_guard()"
+        },
+        {
+          "kind": "function",
+          "ref": "public.hr_payroll_line_gate7_guard()"
+        },
+        {
+          "kind": "function",
+          "ref": "public.cost_period_set_status(text,boolean,text)"
+        },
+        {
+          "kind": "column",
+          "ref": "public.hr_payroll_runs",
+          "column": "attendance_snapshot_hash"
+        },
+        {
+          "kind": "trigger",
+          "ref": "public.hr_payroll_runs",
+          "name": "trg_hr_payroll_runs_attendance_status_guard"
+        },
+        {
+          "kind": "trigger",
+          "ref": "public.hr_payroll_lines",
+          "name": "trg_hr_payroll_lines_gate7_guard"
         }
       ],
       "targets": [

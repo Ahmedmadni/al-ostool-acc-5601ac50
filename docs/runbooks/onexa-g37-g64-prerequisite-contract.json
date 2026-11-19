@@ -1,0 +1,251 @@
+{
+  "schema_version": 1,
+  "purpose": "SELECT-only Gate7/8/37 payroll and Gate64 bridge precondition catalogue, source presence is not financial readiness",
+  "checks": [
+    {
+      "stage": "G7_PRE",
+      "id": "attendance_periods",
+      "kind": "relation",
+      "ref": "public.hr_attendance_periods",
+      "extra": ""
+    },
+    {
+      "stage": "G7_PRE",
+      "id": "attendance_days",
+      "kind": "relation",
+      "ref": "public.hr_attendance_days",
+      "extra": ""
+    },
+    {
+      "stage": "G7_PRE",
+      "id": "payroll_runs",
+      "kind": "relation",
+      "ref": "public.hr_payroll_runs",
+      "extra": ""
+    },
+    {
+      "stage": "G7_PRE",
+      "id": "payroll_lines",
+      "kind": "relation",
+      "ref": "public.hr_payroll_lines",
+      "extra": ""
+    },
+    {
+      "stage": "G7_PRE",
+      "id": "cost_entries",
+      "kind": "relation",
+      "ref": "public.cost_entries",
+      "extra": ""
+    },
+    {
+      "stage": "G7_PRE",
+      "id": "cost_periods",
+      "kind": "relation",
+      "ref": "public.cost_periods",
+      "extra": ""
+    },
+    {
+      "stage": "G7_PRE",
+      "id": "lock_attendance",
+      "kind": "function",
+      "ref": "public.hr_attendance_lock_periods(date,date)",
+      "extra": ""
+    },
+    {
+      "stage": "G7_PRE",
+      "id": "apply_attendance",
+      "kind": "function",
+      "ref": "public.hr_apply_attendance_to_payroll(uuid)",
+      "extra": ""
+    },
+    {
+      "stage": "G7_PRE",
+      "id": "sync_costs",
+      "kind": "function",
+      "ref": "public.hr_sync_payroll_cost_entries(uuid)",
+      "extra": ""
+    },
+    {
+      "stage": "G7_INST",
+      "id": "snapshot_hash",
+      "kind": "function",
+      "ref": "public.hr_attendance_payroll_snapshot_hash(uuid)",
+      "extra": ""
+    },
+    {
+      "stage": "G7_INST",
+      "id": "stale_attendance",
+      "kind": "function",
+      "ref": "public.hr_payroll_attendance_is_stale(uuid)",
+      "extra": ""
+    },
+    {
+      "stage": "G7_INST",
+      "id": "apply_attendance_core",
+      "kind": "function",
+      "ref": "public.hr_apply_attendance_to_payroll_gate7_core(uuid)",
+      "extra": ""
+    },
+    {
+      "stage": "G7_INST",
+      "id": "cost_sync_core",
+      "kind": "function",
+      "ref": "public.hr_sync_payroll_cost_entries_gate7_core(uuid)",
+      "extra": ""
+    },
+    {
+      "stage": "G7_INST",
+      "id": "payroll_status_guard_fn",
+      "kind": "function",
+      "ref": "public.hr_payroll_attendance_status_guard()",
+      "extra": ""
+    },
+    {
+      "stage": "G7_INST",
+      "id": "payroll_line_guard_fn",
+      "kind": "function",
+      "ref": "public.hr_payroll_line_gate7_guard()",
+      "extra": ""
+    },
+    {
+      "stage": "G7_INST",
+      "id": "cost_source_unique",
+      "kind": "relation",
+      "ref": "public.uq_cost_entries_hr_payroll_line_source",
+      "extra": ""
+    },
+    {
+      "stage": "G7_INST",
+      "id": "attendance_snapshot_column",
+      "kind": "column",
+      "ref": "public.hr_payroll_runs",
+      "extra": "attendance_snapshot_hash"
+    },
+    {
+      "stage": "G7_INST",
+      "id": "payroll_status_trigger",
+      "kind": "trigger",
+      "ref": "public.hr_payroll_runs",
+      "extra": "trg_hr_payroll_runs_attendance_status_guard"
+    },
+    {
+      "stage": "G7_INST",
+      "id": "payroll_line_trigger",
+      "kind": "trigger",
+      "ref": "public.hr_payroll_lines",
+      "extra": "trg_hr_payroll_lines_gate7_guard"
+    },
+    {
+      "stage": "G8_PRE",
+      "id": "cost_period_status_fn",
+      "kind": "function",
+      "ref": "public.cost_period_set_status(text,boolean,text)",
+      "extra": ""
+    },
+    {
+      "stage": "G8_INST",
+      "id": "employer_cost_fn",
+      "kind": "function",
+      "ref": "public.hr_payroll_employer_cost(numeric,numeric,numeric,numeric,numeric,numeric,numeric)",
+      "extra": ""
+    },
+    {
+      "stage": "G37_INST",
+      "id": "payroll_journal_rpc",
+      "kind": "function",
+      "ref": "public.onexa_post_payroll_run(uuid,uuid,uuid,text)",
+      "extra": ""
+    },
+    {
+      "stage": "G37_INST",
+      "id": "payroll_postings",
+      "kind": "relation",
+      "ref": "public.onexa_payroll_posting_runs",
+      "extra": ""
+    },
+    {
+      "stage": "G37_INST",
+      "id": "payroll_reconciliation",
+      "kind": "relation",
+      "ref": "public.onexa_payroll_accounting_reconciliation",
+      "extra": ""
+    },
+    {
+      "stage": "G64_PRE",
+      "id": "approval_instances",
+      "kind": "relation",
+      "ref": "public.onexa_approval_instances",
+      "extra": ""
+    },
+    {
+      "stage": "G64_PRE",
+      "id": "approval_decisions",
+      "kind": "relation",
+      "ref": "public.onexa_approval_decisions",
+      "extra": ""
+    },
+    {
+      "stage": "G64_PRE",
+      "id": "approval_assignment_fn",
+      "kind": "function",
+      "ref": "onexa_private.approval_actor_matches_step(uuid,uuid,uuid)",
+      "extra": ""
+    },
+    {
+      "stage": "G64_PRE",
+      "id": "approval_segregation_fn",
+      "kind": "function",
+      "ref": "public.onexa_approval_separation_required(text,text)",
+      "extra": ""
+    },
+    {
+      "stage": "G64_PRE",
+      "id": "sales_rpc",
+      "kind": "function",
+      "ref": "public.onexa_post_sales_invoice(uuid,text)",
+      "extra": ""
+    },
+    {
+      "stage": "G64_PRE",
+      "id": "purchase_rpc",
+      "kind": "function",
+      "ref": "public.onexa_post_purchase_invoice(uuid,text)",
+      "extra": ""
+    },
+    {
+      "stage": "G64_PRE",
+      "id": "customer_receipt_rpc",
+      "kind": "function",
+      "ref": "public.onexa_post_customer_receipt(uuid,text)",
+      "extra": ""
+    },
+    {
+      "stage": "G64_PRE",
+      "id": "supplier_payment_rpc",
+      "kind": "function",
+      "ref": "public.onexa_post_supplier_payment(uuid,text)",
+      "extra": ""
+    },
+    {
+      "stage": "G64_PRE",
+      "id": "bank_transfer_rpc",
+      "kind": "function",
+      "ref": "public.onexa_post_bank_transfer(uuid,text)",
+      "extra": ""
+    },
+    {
+      "stage": "G64_PRE",
+      "id": "project_cost_rpc",
+      "kind": "function",
+      "ref": "public.onexa_post_project_cost(uuid,text)",
+      "extra": ""
+    },
+    {
+      "stage": "G64_PRE",
+      "id": "fleet_trip_rpc",
+      "kind": "function",
+      "ref": "public.onexa_post_fleet_trip_cost(uuid,text)",
+      "extra": ""
+    }
+  ]
+}
