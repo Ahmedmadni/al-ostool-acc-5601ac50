@@ -37,6 +37,9 @@ const b4HeaderBalanceReview = read("supabase/manual-packages/gate58_b4_gl_exact_
 const b4LegacyConstraints = read("scripts/sql-fixtures/gate58-b4-hosted-check-constraints-ONLY.sql");
 const b4LegacyProbe = read("scripts/sql-fixtures/gate58-b4-hosted-baseline-defects-smoke.sql");
 const b4StrictSmoke = read("scripts/sql-fixtures/gate58-b4-strict-cross-module-smoke.sql");
+const b4IdempotencyLegacy = read("scripts/sql-fixtures/gate58-b4-idempotency-legacy-smoke.sql");
+const b4IdempotencyStrict = read("scripts/sql-fixtures/gate58-b4-idempotency-strict-smoke.sql");
+const b4IdempotencyConcurrency = read("scripts/sql-fixtures/gate58-b4-idempotency-concurrency.sh");
 
 const service = read("src/lib/accounting/manual-journal-service.ts");
 const panel = read("src/components/accounting/manual-journal-panel.tsx");
@@ -325,6 +328,53 @@ for(const marker of [
 ]) assert.ok(b4FoundationWorkflow.includes(marker),`B4 GL foundation CI missing: ${marker}`);
 assert.ok(!b4FoundationWorkflow.includes("gate58-disposable-b4-adapter.sql"),
   "B4 shared-ledger acceptance must not fake the actual B4 publisher");
+
+for (const invariant of [
+  "ONEXA_B4_POSTING_PAYLOAD_CONFLICT",
+  "h.source_snapshot = coalesce(_source_snapshot, '{}'::jsonb)",
+  "h.memo is not distinct from _memo",
+  "h.fiscal_period_id = v_period_id",
+  "h.total_debit = v_debit",
+  "h.total_credit = v_credit",
+  "h.state in ('posted', 'reversed')",
+  "r.idempotency_key = v_key",
+  "l.tenant_id = v_tenant_id",
+  "order by l.line_number",
+  "order by ordinality",
+  "'dimensions', coalesce(x->'dimensions', '{}'::jsonb)",
+  "'description', nullif(x->>'description', '')",
+]) assert.ok(b4StrictReview.includes(invariant), `B4 source-identity payload guard missing: ${invariant}`);
+assert.ok(b4IdempotencyLegacy.includes("B4_LEGACY_IDEMPOTENCY_BUG_NOT_REPRODUCED") &&
+  b4IdempotencyLegacy.includes("LEGACY-IDEMPOTENCY-01"),
+  "Idempotency baseline test must prove identical key accepts different approved content");
+for (const denial of [
+  "B4_CHANGED_PAYLOAD_WAS_ACCEPTED",
+  "B4_CORRUPTED_GL_RECEIPT_ACCEPTED",
+  "B4_CORRUPTED_LEDGER_LINE_ACCEPTED",
+  "B4_IDENTICAL_RETRY_MUST_RETURN_SAME_LEDGER_ID",
+  "B4_SEMANTICALLY_IDENTICAL_NUMERIC_RETRY_REJECTED",
+  "B4_REVERSED_ORIGINAL_RETRY_DUPLICATED",
+  "B4_IDEMPOTENCY_CONFLICT_CREATED_DUPLICATE_GL_OR_AUDIT",
+]) assert.ok(b4IdempotencyStrict.includes(denial), `B4 retry acceptance missing: ${denial}`);
+for (const concurrency of [
+  "ONEXA_B4_POSTING_PAYLOAD_CONFLICT",
+  "pg_locks",
+  "pg_sleep(3)",
+  "1|1|2|1",
+  "onexa_gate_test",
+]) assert.ok(b4IdempotencyConcurrency.includes(concurrency), `B4 concurrency regression missing: ${concurrency}`);
+for (const path of [
+  "gate58-b4-idempotency-legacy-smoke.sql",
+  "gate58-b4-idempotency-strict-smoke.sql",
+  "gate58-b4-idempotency-concurrency.sh",
+]) assert.ok(b4FoundationWorkflow.includes(path), `Disposable B4 workflow must execute: ${path}`);
+assert.ok(b4IdempotencyLegacy.trimEnd().endsWith("rollback;") &&
+ b4IdempotencyStrict.trimEnd().endsWith("rollback;"),
+ "Same-key duplicate SQL tests must rollback all synthetic ledger entries");
+assert.ok(b4LiveAudit.includes("private_post_checks_retry_payload") &&
+  b4LiveAudit.includes("private_post_compares_full_ledger_receipt"),
+  "Hosted catalog must surface whether the shared B4 guard has been activated");
+
 assert.ok(b4StrictSmoke.trimEnd().endsWith("rollback;") &&
  b4LegacyProbe.trimEnd().endsWith("rollback;"),
  "B4 financial acceptance tests must rollback every synthetic posting");
