@@ -105,9 +105,11 @@ for (const src of inventory.not_separate_rpc_publishers) {
     "Unimplemented source must be documented in the reporting contract");
 }
 
-const inContract = [...contracts.matchAll(/^\s*\|\s*"([a-z_]+)"/gm)]
- .map(m=>m[1]).filter(x=>x!=="draft"&&x!=="submitted"&&x!=="approved"
-  &&x!=="posted"&&x!=="rejected"&&x!=="cancelled"&&x!=="reversed");
+const sourceTypeSection=contracts.slice(
+  contracts.indexOf("export type SourceDocumentType ="),
+  contracts.indexOf("export type DocumentStatus ="),
+);
+const inContract = [...sourceTypeSection.matchAll(/^\s*\|\s*"([a-z_]+)"/gm)].map(m=>m[1]);
 for (const src of inContract) {
   assert.ok(sourceTypes.has(src) ||
     inventory.not_separate_rpc_publishers.some(x=>x.source_type===src),
