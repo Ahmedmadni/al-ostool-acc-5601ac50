@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // OFFLINE EVIDENCE CHECK ONLY. Never talks to a DB, enables an ONEXA
 // feature, changes SQL or grants production approval. A PASS only means
-// that 14 source modules have complete reviewable STAGING evidence records.
+// that 13 supported publisher modules and one explicitly retired SaaS-incompatible
+// legacy writer have complete reviewable STAGING evidence records.
 import {readFileSync} from "node:fs";
 import {resolve} from "node:path";
 
@@ -48,19 +49,55 @@ function evaluate(catalogFile,attestationFile){
     evidenceIds.some(id=>!expected.some(m=>m.id===id))){
     throw Error("Module attestation must cover exactly every publisher");
   }
+  const validReference=value=>typeof value==="string" &&
+    value.trim().length>=8 &&
+    !/^(?:tbd|todo|none|unknown|test)$/i.test(value.trim());
   for(const entry of expected){
     const {id}=entry;
     const c=observed.get(id);
+    const ev=att.modules[id];
+    if(!ev || typeof ev!=="object" || Array.isArray(ev))throw Error("Invalid module attestation: "+id);
+    if(!validReference(ev.evidence_reference)){
+      blockers.push("EVIDENCE:"+id+":reviewable_reference");
+    }
+
+    // Gate66 has an explicit SQL preflight that REJECTS ONEXA SaaS tenancy.
+    // It cannot be accepted as an installed publisher. The only allowed
+    // outcome is documented RETIREMENT, with independent native G42 accrual
+    // and read-only G74 attribution double-posting reconciliation.
+    if(id==="maintenance_work_order_cost"){
+      if(c.status!=="MISSING_RPC" || c.installed!=="f" ||
+        [c.execute,c.checked,c.authorized,c.receipt].some(x=>x!=="f")){
+        blockers.push("CATALOG:maintenance_work_order_cost:legacy_writer_must_remain_uninstalled");
+      }
+      const legacy=att.legacy_maintenance_retirement;
+      if(!legacy || typeof legacy!=="object" || Array.isArray(legacy)){
+        blockers.push("EVIDENCE:legacy_maintenance_retirement:missing");
+        continue;
+      }
+      for(const [key,value] of Object.entries({
+        mode:"saas_native_attribution_only",
+        retired_writer:"g66",
+        approved_cost_posting_path:"g42",
+        native_attribution_gate:"g74",
+        legacy_writer_retired:true,
+        source_provenance_reconciled:true,
+        double_posting_prevention_verified:true,
+        native_tenant_isolation_verified:true,
+        finance_approved:true,
+        security_approved:true,
+      })){
+        if(legacy[key]!==value)blockers.push("EVIDENCE:legacy_maintenance_retirement:"+key);
+      }
+      if(!validReference(legacy.evidence_reference)){
+        blockers.push("EVIDENCE:legacy_maintenance_retirement:reviewable_reference");
+      }
+      continue;
+    }
+
     if(c.status!=="SOURCE_PRESENT_ONLY_STAGING_REQUIRED" ||
       ![c.installed,c.allowlisted,c.execute,c.checked,c.authorized,c.receipt].every(x=>x==="t")){
       blockers.push("CATALOG:"+id+":"+c.status);
-    }
-    const ev=att.modules[id];
-    if(!ev || typeof ev!=="object" || Array.isArray(ev))throw Error("Invalid module attestation: "+id);
-    if(typeof ev.evidence_reference!=="string" ||
-      ev.evidence_reference.trim().length<8 ||
-      /^(?:tbd|todo|none|unknown|test)$/i.test(ev.evidence_reference.trim())){
-      blockers.push("EVIDENCE:"+id+":reviewable_reference");
     }
     for(const field of fields)if(ev[field]!==true)blockers.push("EVIDENCE:"+id+":"+field);
   }
@@ -77,7 +114,7 @@ try{
    for(const blocker of blockers)console.log(" - "+blocker);
    process.exitCode=1;
  }else{
-   console.log("ONEXA MODULE STAGING EVIDENCE COMPLETE — HUMAN FINANCE/SECURITY REVIEW STILL REQUIRED.");
+   console.log("ONEXA MODULE STAGING EVIDENCE COMPLETE (13 PUBLISHERS + G66 RETIRED) — HUMAN FINANCE/SECURITY REVIEW STILL REQUIRED.");
    console.log("This offline checker DOES NOT deploy, approve production, or enable flags.");
  }
 }catch(error){
