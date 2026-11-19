@@ -304,8 +304,9 @@ begin
         line.late_deduction, line.gosi_employer
       )) as amount
     from public.hr_payroll_lines line
-    join public.hr_employees employee on employee.id = line.employee_id
-    where line.run_id = _payroll_run_id
+    join public.hr_employees employee
+      on employee.id = line.employee_id and employee.tenant_id = _tenant_id
+    where line.run_id = _payroll_run_id and line.tenant_id = _tenant_id
     group by line.project_id, employee.department_id
     order by line.project_id nulls last, employee.department_id nulls last
   loop
