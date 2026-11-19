@@ -20,7 +20,8 @@ export function validateFinanceDependencyPlan(manifest,publishers) {
     assert.ok(Array.isArray(n.depends_on)&&Array.isArray(n.requires),"Invalid dependency metadata for "+n.id);
     assert.ok(["foundation","publisher"].includes(n.kind));
     assert.ok(["foundation","standard","manual_journal_source_fix","strict_posting_bridge",
-      "legacy_real_estate_review","saas_forbidden_legacy_engine"].includes(n.policy));
+      "legacy_real_estate_review","saas_forbidden_legacy_engine",
+      "payroll_gate7_8_compatibility_review"].includes(n.policy));
     if(n.id==="b4") assert.equal(n.package,null);
     else assert.match(n.package,/^supabase\/manual-packages\/[a-zA-Z0-9_]+\.sql$/);
     assert.ok(n.requires.length>0,"No preflight metadata for "+n.id);
@@ -51,6 +52,8 @@ export function validateFinanceDependencyPlan(manifest,publishers) {
     for(const parent of parentIds) assert.ok(parents.includes(parent),
       "Mandatory finance ordering dependency removed: "+parent+" -> "+nodeId);
   }
+  assert.equal(nodes.get("g37").policy,"payroll_gate7_8_compatibility_review",
+    "Payroll cannot be installed until the distinct Gate7/8 foundation is reviewed in Staging");
   assert.equal(nodes.get("g66").policy,"saas_forbidden_legacy_engine",
     "The legacy Gate66 writer MUST NOT be installed in an ONEXA SaaS plane");
   assert.equal(nodes.get("g67").policy,"legacy_real_estate_review",
