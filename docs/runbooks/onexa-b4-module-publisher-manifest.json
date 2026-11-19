@@ -172,7 +172,8 @@
       "env": "VITE_ENABLE_ONEXA_MANUAL_JOURNALS",
       "source_types": [
         "manual_journal"
-      ]
+      ],
+      "flag_usage": "src/components/accounting/manual-journal-panel.tsx"
     }
   ],
   "not_separate_rpc_publishers": [
