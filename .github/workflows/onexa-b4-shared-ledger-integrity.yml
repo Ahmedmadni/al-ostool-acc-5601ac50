@@ -82,3 +82,5 @@ jobs:
         run: bash scripts/sql-fixtures/gate58-b4-idempotency-concurrency.sh
       - name: Test concurrent conflicting GL reversal instructions against one original
         run: bash scripts/sql-fixtures/gate58-b4-reversal-concurrency.sh
+      - name: Audit cross-source B4 GL and registry integrity before release
+        run: bash scripts/sql-fixtures/onexa-b4-integrity-smoke.sh
