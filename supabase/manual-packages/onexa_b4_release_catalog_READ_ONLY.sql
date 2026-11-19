@@ -65,13 +65,17 @@ checks(gate_code, is_ready) as (
        where oid=to_regclass('public.onexa_manual_journal_events')),false)
  union all
  select 'B4_PRIVATE_POST_NOT_DIRECTLY_EXECUTABLE',
-    not coalesce(has_function_privilege('authenticated',
+    to_regprocedure(
+      'onexa_private.post_journal(uuid,text,text,integer,text,jsonb,date,text,text,text,jsonb)'
+    ) is not null
+    and not coalesce(has_function_privilege('authenticated',
       to_regprocedure(
         'onexa_private.post_journal(uuid,text,text,integer,text,jsonb,date,text,text,text,jsonb)'
       ),'EXECUTE'),false)
  union all
  select 'B4_PRIVATE_REVERSE_NOT_DIRECTLY_EXECUTABLE',
-    not coalesce(has_function_privilege('authenticated',
+    to_regprocedure('onexa_private.reverse_journal(uuid,date,text,text)') is not null
+    and not coalesce(has_function_privilege('authenticated',
       to_regprocedure('onexa_private.reverse_journal(uuid,date,text,text)')
       ,'EXECUTE'),false)
 )
