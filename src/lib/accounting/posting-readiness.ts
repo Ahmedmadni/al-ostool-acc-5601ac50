@@ -1,3 +1,4 @@
+import { inspectPostingMoneyTotals } from "@/lib/accounting/posting-money";
 import {
   getPostingContract,
   type AccountingDimension,
@@ -57,9 +58,7 @@ export function evaluatePostingReadiness(draft: PostingDraft): PostingReadiness 
   if (!hasValue(draft.accountingDate)) errors.push("accounting_date_required");
   if (!hasValue(draft.fiscalPeriodId)) errors.push("fiscal_period_required");
   if (!/^[A-Z]{3}$/.test(draft.currency)) errors.push("iso_currency_required");
-  if (!Number.isFinite(draft.totalDebit) || !Number.isFinite(draft.totalCredit)) errors.push("finite_totals_required");
-  if (draft.totalDebit <= 0 || draft.totalCredit <= 0) errors.push("positive_totals_required");
-  if (Math.abs(draft.totalDebit - draft.totalCredit) > 0.005) errors.push("journal_must_balance");
+  errors.push(...inspectPostingMoneyTotals(draft.totalDebit, draft.totalCredit, draft.currency));
 
   for (const dimension of contract?.requiredDimensions ?? []) {
     if (dimension === "legalEntity") continue;
