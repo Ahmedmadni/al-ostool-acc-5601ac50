@@ -1,0 +1,13 @@
+{
+  "environment": "UNVERIFIED_NOT_INDEPENDENT_STAGING",
+  "restore_test_passed": false,
+  "finance_approved": false,
+  "security_approved": false,
+  "module_e2e_passed": false,
+  "historical_exceptions_reviewed": false,
+  "sql_preconditions_reviewed": false,
+  "deployment_order_reviewed": false,
+  "rollback_drill_passed": false,
+  "feature_flags_disabled": true,
+  "change_record_approved": false
+}
