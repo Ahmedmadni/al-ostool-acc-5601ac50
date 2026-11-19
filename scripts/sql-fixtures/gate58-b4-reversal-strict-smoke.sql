@@ -133,6 +133,27 @@ begin
    if sqlerrm<>'B4_MISMATCHED_REVERSAL_TOTALS_CONFIRMED' then raise; end if;
  end;
 
+ begin
+   delete from public.onexa_journal_lines
+   where journal_id in (_original,_reversal);
+   perform pg_temp.expect_reverse_conflict(
+     _original,date '2026-12-01','2026-12','confirmed reason');
+   raise exception 'B4_BOTH_GL_LINE_SETS_MISSING_CONFIRMED';
+ exception when others then
+   if sqlerrm<>'B4_BOTH_GL_LINE_SETS_MISSING_CONFIRMED' then raise; end if;
+ end;
+ begin
+   update public.onexa_journal_lines set debit=94.25
+     where journal_id=_original and line_number=1;
+   update public.onexa_journal_lines set credit=94.25
+     where journal_id=_reversal and line_number=1;
+   perform pg_temp.expect_reverse_conflict(
+     _original,date '2026-12-01','2026-12','confirmed reason');
+   raise exception 'B4_GL_LINE_TOTALS_DIVERGE_FROM_HEADERS_CONFIRMED';
+ exception when others then
+   if sqlerrm<>'B4_GL_LINE_TOTALS_DIVERGE_FROM_HEADERS_CONFIRMED' then raise; end if;
+ end;
+
  if (select count(*) from public.onexa_journal_headers
        where source_document_type='journal_reversal'
          and source_document_id=_original::text)<>1
