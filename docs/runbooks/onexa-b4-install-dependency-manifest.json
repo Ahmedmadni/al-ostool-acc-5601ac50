@@ -1,0 +1,754 @@
+{
+  "schema_version": 1,
+  "inventory_ref": "docs/runbooks/onexa-b4-module-publisher-manifest.json",
+  "purpose": "NON-EXECUTING dependency/order evidence; never a SQL installer",
+  "requirements_rule": "Every SQL preflight condition must be independently verified; this manifests declared principal metadata dependencies but does not claim to cover business data or module authorization",
+  "nodes": [
+    {
+      "id": "b4",
+      "wave": 0,
+      "depends_on": [],
+      "kind": "foundation",
+      "package": null,
+      "policy": "foundation",
+      "requires": [
+        {
+          "kind": "function",
+          "ref": "public.onexa_post_journal(uuid,text,text,integer,text,jsonb,date,text,text,text,jsonb)"
+        },
+        {
+          "kind": "function",
+          "ref": "public.onexa_reverse_journal(uuid,date,text,text)"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_journal_headers"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_journal_lines"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_posting_registry"
+        }
+      ]
+    },
+    {
+      "id": "g35",
+      "wave": 1,
+      "depends_on": [
+        "b4"
+      ],
+      "kind": "publisher",
+      "package": "supabase/manual-packages/gate35_sales_inventory_posting.sql",
+      "policy": "standard",
+      "requires": [
+        {
+          "kind": "function",
+          "ref": "public.onexa_post_journal(uuid,text,text,integer,text,jsonb,date,text,text,text,jsonb)"
+        },
+        {
+          "kind": "function",
+          "ref": "onexa_private.has_module_action(uuid,text,text)"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_account_role_mappings"
+        }
+      ],
+      "targets": [
+        {
+          "kind": "function",
+          "ref": "public.onexa_post_sales_invoice(uuid,text)"
+        }
+      ]
+    },
+    {
+      "id": "g37",
+      "wave": 1,
+      "depends_on": [
+        "b4"
+      ],
+      "kind": "publisher",
+      "package": "supabase/manual-packages/gate37_payroll_gl_posting.sql",
+      "policy": "standard",
+      "requires": [
+        {
+          "kind": "function",
+          "ref": "public.onexa_post_journal(uuid,text,text,integer,text,jsonb,date,text,text,text,jsonb)"
+        },
+        {
+          "kind": "function",
+          "ref": "onexa_private.has_module_action(uuid,text,text)"
+        },
+        {
+          "kind": "function",
+          "ref": "public.hr_payroll_attendance_is_stale(uuid)"
+        },
+        {
+          "kind": "function",
+          "ref": "public.hr_payroll_employer_cost(numeric,numeric,numeric,numeric,numeric,numeric,numeric)"
+        },
+        {
+          "kind": "table",
+          "ref": "public.hr_payroll_runs"
+        },
+        {
+          "kind": "table",
+          "ref": "public.hr_payroll_lines"
+        },
+        {
+          "kind": "table",
+          "ref": "public.cost_entries"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_account_role_mappings"
+        }
+      ],
+      "targets": [
+        {
+          "kind": "function",
+          "ref": "public.onexa_post_payroll_run(uuid,uuid,uuid,text)"
+        }
+      ]
+    },
+    {
+      "id": "g38",
+      "wave": 1,
+      "depends_on": [
+        "b4"
+      ],
+      "kind": "publisher",
+      "package": "supabase/manual-packages/gate38_fixed_assets_gl_posting.sql",
+      "policy": "standard",
+      "requires": [
+        {
+          "kind": "function",
+          "ref": "public.onexa_post_journal(uuid,text,text,integer,text,jsonb,date,text,text,text,jsonb)"
+        },
+        {
+          "kind": "function",
+          "ref": "onexa_private.has_module_action(uuid,text,text)"
+        },
+        {
+          "kind": "function",
+          "ref": "onexa_private.claim_tenant_id()"
+        },
+        {
+          "kind": "table",
+          "ref": "public.fixed_assets"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_account_role_mappings"
+        }
+      ],
+      "targets": [
+        {
+          "kind": "function",
+          "ref": "public.onexa_post_asset_depreciation(uuid,text,date)"
+        }
+      ]
+    },
+    {
+      "id": "g41",
+      "wave": 1,
+      "depends_on": [
+        "b4"
+      ],
+      "kind": "publisher",
+      "package": "supabase/manual-packages/gate41_bank_transfers.sql",
+      "policy": "standard",
+      "requires": [
+        {
+          "kind": "function",
+          "ref": "public.onexa_post_journal(uuid,text,text,integer,text,jsonb,date,text,text,text,jsonb)"
+        },
+        {
+          "kind": "function",
+          "ref": "onexa_private.has_module_action(uuid,text,text)"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_business_documents"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_journal_headers"
+        },
+        {
+          "kind": "table",
+          "ref": "public.chart_of_accounts"
+        }
+      ],
+      "targets": [
+        {
+          "kind": "function",
+          "ref": "public.onexa_post_bank_transfer(uuid,text)"
+        }
+      ]
+    },
+    {
+      "id": "g42",
+      "wave": 1,
+      "depends_on": [
+        "b4"
+      ],
+      "kind": "publisher",
+      "package": "supabase/manual-packages/gate42_project_costs.sql",
+      "policy": "standard",
+      "requires": [
+        {
+          "kind": "function",
+          "ref": "public.onexa_post_journal(uuid,text,text,integer,text,jsonb,date,text,text,text,jsonb)"
+        },
+        {
+          "kind": "function",
+          "ref": "onexa_private.has_module_action(uuid,text,text)"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_business_documents"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_journal_headers"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_account_role_mappings"
+        }
+      ],
+      "targets": [
+        {
+          "kind": "function",
+          "ref": "public.onexa_post_project_cost(uuid,text)"
+        }
+      ]
+    },
+    {
+      "id": "g43",
+      "wave": 1,
+      "depends_on": [
+        "b4"
+      ],
+      "kind": "publisher",
+      "package": "supabase/manual-packages/gate43_fleet_trip_costs.sql",
+      "policy": "standard",
+      "requires": [
+        {
+          "kind": "function",
+          "ref": "public.onexa_post_journal(uuid,text,text,integer,text,jsonb,date,text,text,text,jsonb)"
+        },
+        {
+          "kind": "function",
+          "ref": "onexa_private.has_module_action(uuid,text,text)"
+        },
+        {
+          "kind": "table",
+          "ref": "public.fleet_trips"
+        },
+        {
+          "kind": "table",
+          "ref": "public.fleet_vehicles"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_business_documents"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_journal_headers"
+        },
+        {
+          "kind": "column",
+          "ref": "public.fleet_trips",
+          "column": "tenant_id"
+        },
+        {
+          "kind": "column",
+          "ref": "public.fleet_vehicles",
+          "column": "tenant_id"
+        }
+      ],
+      "targets": [
+        {
+          "kind": "function",
+          "ref": "public.onexa_post_fleet_trip_cost(uuid,text)"
+        }
+      ]
+    },
+    {
+      "id": "g58",
+      "wave": 1,
+      "depends_on": [
+        "b4"
+      ],
+      "kind": "publisher",
+      "package": "supabase/manual-packages/gate58_manual_journal_workflow.sql",
+      "policy": "manual_journal_source_fix",
+      "requires": [
+        {
+          "kind": "function",
+          "ref": "public.onexa_post_journal(uuid,text,text,integer,text,jsonb,date,text,text,text,jsonb)"
+        },
+        {
+          "kind": "function",
+          "ref": "public.onexa_reverse_journal(uuid,date,text,text)"
+        },
+        {
+          "kind": "function",
+          "ref": "onexa_private.has_module_action(uuid,text,text)"
+        },
+        {
+          "kind": "function",
+          "ref": "onexa_private.claim_tenant_id()"
+        },
+        {
+          "kind": "table",
+          "ref": "public.chart_of_accounts"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_legal_entities"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_branches"
+        }
+      ],
+      "targets": [
+        {
+          "kind": "function",
+          "ref": "public.onexa_post_manual_journal(uuid)"
+        }
+      ]
+    },
+    {
+      "id": "g63",
+      "wave": 1,
+      "depends_on": [
+        "b4"
+      ],
+      "kind": "foundation",
+      "package": "supabase/manual-packages/gate63_approval_workflow_runtime.sql",
+      "policy": "standard",
+      "requires": [
+        {
+          "kind": "table",
+          "ref": "public.onexa_business_documents"
+        }
+      ],
+      "targets": [
+        {
+          "kind": "function",
+          "ref": "public.onexa_approval_separation_required(text,text)"
+        },
+        {
+          "kind": "function",
+          "ref": "onexa_private.approval_actor_matches_step(uuid,uuid,uuid)"
+        }
+      ]
+    },
+    {
+      "id": "g36",
+      "wave": 2,
+      "depends_on": [
+        "g35"
+      ],
+      "kind": "publisher",
+      "package": "supabase/manual-packages/gate36_procurement_inventory_posting.sql",
+      "policy": "standard",
+      "requires": [
+        {
+          "kind": "function",
+          "ref": "public.onexa_post_journal(uuid,text,text,integer,text,jsonb,date,text,text,text,jsonb)"
+        },
+        {
+          "kind": "function",
+          "ref": "onexa_private.has_module_action(uuid,text,text)"
+        },
+        {
+          "kind": "function",
+          "ref": "onexa_private.claim_tenant_id()"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_business_documents"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_business_document_lines"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_business_document_events"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_legal_entities"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_inventory_balances"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_inventory_movements"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_account_role_mappings"
+        },
+        {
+          "kind": "table",
+          "ref": "public.chart_of_accounts"
+        }
+      ],
+      "targets": [
+        {
+          "kind": "function",
+          "ref": "public.onexa_post_purchase_invoice(uuid,text)"
+        }
+      ]
+    },
+    {
+      "id": "g39",
+      "wave": 2,
+      "depends_on": [
+        "g35"
+      ],
+      "kind": "publisher",
+      "package": "supabase/manual-packages/gate39_customer_receipts.sql",
+      "policy": "standard",
+      "requires": [
+        {
+          "kind": "function",
+          "ref": "public.onexa_post_journal(uuid,text,text,integer,text,jsonb,date,text,text,text,jsonb)"
+        },
+        {
+          "kind": "function",
+          "ref": "onexa_private.has_module_action(uuid,text,text)"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_sales_posting_runs"
+        }
+      ],
+      "targets": [
+        {
+          "kind": "function",
+          "ref": "public.onexa_post_customer_receipt(uuid,text)"
+        }
+      ]
+    },
+    {
+      "id": "g40",
+      "wave": 3,
+      "depends_on": [
+        "g36"
+      ],
+      "kind": "publisher",
+      "package": "supabase/manual-packages/gate40_supplier_payments.sql",
+      "policy": "standard",
+      "requires": [
+        {
+          "kind": "function",
+          "ref": "public.onexa_post_journal(uuid,text,text,integer,text,jsonb,date,text,text,text,jsonb)"
+        },
+        {
+          "kind": "function",
+          "ref": "onexa_private.has_module_action(uuid,text,text)"
+        },
+        {
+          "kind": "function",
+          "ref": "onexa_private.claim_tenant_id()"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_purchase_posting_runs"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_journal_headers"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_business_documents"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_business_document_lines"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_business_document_events"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_legal_entities"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_account_role_mappings"
+        },
+        {
+          "kind": "table",
+          "ref": "public.chart_of_accounts"
+        }
+      ],
+      "targets": [
+        {
+          "kind": "function",
+          "ref": "public.onexa_post_supplier_payment(uuid,text)"
+        }
+      ]
+    },
+    {
+      "id": "g64",
+      "wave": 4,
+      "depends_on": [
+        "g35",
+        "g36",
+        "g39",
+        "g40",
+        "g41",
+        "g42",
+        "g43",
+        "g63"
+      ],
+      "kind": "foundation",
+      "package": "supabase/manual-packages/gate64_approval_posting_bridge.sql",
+      "policy": "strict_posting_bridge",
+      "requires": [
+        {
+          "kind": "function",
+          "ref": "public.onexa_approval_separation_required(text,text)"
+        },
+        {
+          "kind": "function",
+          "ref": "onexa_private.approval_actor_matches_step(uuid,uuid,uuid)"
+        },
+        {
+          "kind": "function",
+          "ref": "public.onexa_post_sales_invoice(uuid,text)"
+        },
+        {
+          "kind": "function",
+          "ref": "public.onexa_post_purchase_invoice(uuid,text)"
+        },
+        {
+          "kind": "function",
+          "ref": "public.onexa_post_customer_receipt(uuid,text)"
+        },
+        {
+          "kind": "function",
+          "ref": "public.onexa_post_supplier_payment(uuid,text)"
+        },
+        {
+          "kind": "function",
+          "ref": "public.onexa_post_bank_transfer(uuid,text)"
+        },
+        {
+          "kind": "function",
+          "ref": "public.onexa_post_project_cost(uuid,text)"
+        },
+        {
+          "kind": "function",
+          "ref": "public.onexa_post_fleet_trip_cost(uuid,text)"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_approval_instances"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_approval_decisions"
+        }
+      ],
+      "targets": [
+        {
+          "kind": "function",
+          "ref": "onexa_private.guard_approval_posting()"
+        },
+        {
+          "kind": "function",
+          "ref": "onexa_private.finalize_approval_posting()"
+        }
+      ]
+    },
+    {
+      "id": "g65",
+      "wave": 5,
+      "depends_on": [
+        "g35",
+        "g64"
+      ],
+      "kind": "publisher",
+      "package": "supabase/manual-packages/gate65_inventory_gl_posting.sql",
+      "policy": "standard",
+      "requires": [
+        {
+          "kind": "function",
+          "ref": "public.onexa_post_journal(uuid,text,text,integer,text,jsonb,date,text,text,text,jsonb)"
+        },
+        {
+          "kind": "function",
+          "ref": "public.onexa_approval_separation_required(text,text)"
+        },
+        {
+          "kind": "function",
+          "ref": "onexa_private.guard_approval_posting()"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_inventory_balances"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_inventory_movements"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_business_documents"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_journal_headers"
+        },
+        {
+          "kind": "trigger",
+          "ref": "public.onexa_business_documents",
+          "name": "onexa_guard_approval_posting"
+        }
+      ],
+      "targets": [
+        {
+          "kind": "function",
+          "ref": "public.onexa_post_inventory_document(uuid,text)"
+        }
+      ]
+    },
+    {
+      "id": "g67",
+      "wave": 5,
+      "depends_on": [
+        "g64"
+      ],
+      "kind": "publisher",
+      "package": "supabase/manual-packages/gate67_lease_invoice_receipt_posting.sql",
+      "policy": "legacy_real_estate_review",
+      "requires": [
+        {
+          "kind": "function",
+          "ref": "public.onexa_post_journal(uuid,text,text,integer,text,jsonb,date,text,text,text,jsonb)"
+        },
+        {
+          "kind": "function",
+          "ref": "public.re_has_company_access(uuid)"
+        },
+        {
+          "kind": "function",
+          "ref": "public.onexa_approval_separation_required(text,text)"
+        },
+        {
+          "kind": "function",
+          "ref": "onexa_private.guard_approval_posting()"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_business_documents"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_journal_headers"
+        },
+        {
+          "kind": "table",
+          "ref": "public.re_tenant_leases"
+        },
+        {
+          "kind": "table",
+          "ref": "public.re_lease_schedules"
+        },
+        {
+          "kind": "table",
+          "ref": "public.re_properties"
+        },
+        {
+          "kind": "trigger",
+          "ref": "public.onexa_business_documents",
+          "name": "onexa_guard_approval_posting"
+        }
+      ],
+      "targets": [
+        {
+          "kind": "function",
+          "ref": "public.onexa_post_lease_invoice(uuid,text)"
+        },
+        {
+          "kind": "function",
+          "ref": "public.onexa_post_lease_receipt(uuid,text)"
+        }
+      ]
+    },
+    {
+      "id": "g66",
+      "wave": 6,
+      "depends_on": [
+        "g42",
+        "g64"
+      ],
+      "kind": "publisher",
+      "package": "supabase/manual-packages/gate66_maintenance_work_order_costs.sql",
+      "policy": "saas_forbidden_legacy_engine",
+      "requires": [
+        {
+          "kind": "function",
+          "ref": "public.onexa_post_journal(uuid,text,text,integer,text,jsonb,date,text,text,text,jsonb)"
+        },
+        {
+          "kind": "function",
+          "ref": "public.ops_has_company_access(uuid)"
+        },
+        {
+          "kind": "function",
+          "ref": "public.onexa_approval_separation_required(text,text)"
+        },
+        {
+          "kind": "function",
+          "ref": "onexa_private.guard_approval_posting()"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_business_documents"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_journal_headers"
+        },
+        {
+          "kind": "table",
+          "ref": "public.onexa_project_cost_centers"
+        },
+        {
+          "kind": "table",
+          "ref": "public.ops_work_orders"
+        },
+        {
+          "kind": "trigger",
+          "ref": "public.onexa_business_documents",
+          "name": "onexa_guard_approval_posting"
+        }
+      ],
+      "targets": [
+        {
+          "kind": "function",
+          "ref": "public.onexa_post_maintenance_work_order_cost(uuid,text)"
+        }
+      ]
+    }
+  ]
+}
