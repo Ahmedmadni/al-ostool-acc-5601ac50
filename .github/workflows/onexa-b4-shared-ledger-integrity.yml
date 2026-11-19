@@ -40,6 +40,8 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v4
+      - name: Offline Staging gate must fail closed without independent approvals
+        run: node scripts/test-onexa-b4-staging-evidence-gate.mjs
       - name: Confirm disposable database is clean
         run: |
           test "$(psql -X -v ON_ERROR_STOP=1 -Atc 'select current_database()')" = "onexa_gate_test"
