@@ -56,6 +56,8 @@ jobs:
         run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-b4-hosted-check-constraints-ONLY.sql
       - name: Prove legacy hosted source type, precision and balance flaws with rollback
         run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-b4-hosted-baseline-defects-smoke.sql
+      - name: Reproduce legacy silent conflicting retry on real B4 source
+        run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-b4-idempotency-legacy-smoke.sql
       - name: Dry-run source-type allowlist migration (review-only package on disposable DB)
         run: psql -X -v ON_ERROR_STOP=1 -f supabase/manual-packages/gate58_b4_gl_source_type_REVIEW_ONLY.sql
       - name: Dry-run historical balance guard and exact GL header constraint
@@ -64,5 +66,7 @@ jobs:
         run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-b4-strict-monetary-fixture.sql
       - name: Exercise shared B4 exact monetary contract for ten source types
         run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-b4-strict-cross-module-smoke.sql
+      - name: Verify strict B4 idempotency payload integrity on retry
+        run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-b4-idempotency-strict-smoke.sql
       - name: Exercise Gate58 with strict B4, real closed periods and reversals
         run: psql -X -v ON_ERROR_STOP=1 -f scripts/sql-fixtures/gate58-real-b4-post-reverse-smoke.sql
