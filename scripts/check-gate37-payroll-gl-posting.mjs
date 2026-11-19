@@ -28,7 +28,28 @@ assert.ok(sql.includes("alter table public.onexa_payroll_posting_runs enable row
 assert.ok(sql.includes("security_invoker = true"), "views must use security_invoker");
 assert.ok(sql.includes("pg_advisory_xact_lock"), "advisory lock is missing");
 assert.ok(sql.includes("order by id for update"), "deterministic line locking is missing");
-assert.ok(sql.includes("if found then return _journal_id"), "safe retry is missing");
+assert.ok(sql.includes("ONEXA_PAYROLL_POSTING_RETRY_CONFLICT") &&
+  sql.includes("return _existing.journal_id;") &&
+  sql.includes("and h.source_snapshot = _expected_snapshot") &&
+  sql.includes("and h.total_debit = _employer_cost") &&
+  sql.includes("and h.state = 'posted'") &&
+  sql.includes("= _journal_lines"),
+  "Safe retry must compare source, tenant, currency, fiscal period, totals and ordered GL lines");
+assert.ok(sql.includes("ONEXA_PAYROLL_TENANT_BOUNDARY_COLUMNS_REQUIRED") &&
+  sql.includes("ONEXA_PAYROLL_SOURCE_TENANT_MISMATCH") &&
+  sql.includes("ONEXA_PAYROLL_EMPLOYEE_TENANT_MISMATCH") &&
+  sql.includes("ONEXA_PAYROLL_PROJECT_TENANT_MISMATCH") &&
+  sql.includes("where id = _payroll_run_id and tenant_id = _tenant_id for update") &&
+  sql.includes("and cost.tenant_id = _tenant_id"),
+  "Payroll source/employee/project and cost ledger must remain within claiming tenant");
+assert.ok(sql.includes("_source_status => 'approved'") &&
+  sql.includes("_run.status::text not in ('approved', 'paid')"),
+  "B4 accepts approved source status even when payroll is already paid");
+assert.ok(sql.includes("employer_cost = (net_pay + gosi_payable + loan_recovery)") &&
+  sql.includes("_cost_ledger_amount <> _employer_cost") &&
+  sql.includes("_employer_cost <> (_net_pay + _gosi_payable + _loan_recovery)") &&
+  !sql.includes("<= 0.01") && !sql.includes("> 0.01"),
+  "Payroll source/GL equation must be exact, without tolerated halala drift");
 assert.ok(sql.includes("ONEXA_POSTER_MUST_DIFFER_FROM_CREATOR"), "separation of duties is missing");
 assert.ok(sql.includes("ONEXA_PAYROLL_COST_LEDGER_MISMATCH"), "cost reconciliation is missing");
 assert.ok(sql.includes("hr_payroll_attendance_is_stale"), "attendance guard is missing");
