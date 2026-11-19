@@ -8,7 +8,7 @@ nodes(node_id,wave,policy,sql_package,depends_on) as (
   values
     ('b4',0,'foundation','',''),
     ('g35',1,'standard','supabase/manual-packages/gate35_sales_inventory_posting.sql','b4'),
-    ('g37',1,'standard','supabase/manual-packages/gate37_payroll_gl_posting.sql','b4'),
+    ('g37',1,'payroll_gate7_8_compatibility_review','supabase/manual-packages/gate37_payroll_gl_posting.sql','b4'),
     ('g38',1,'standard','supabase/manual-packages/gate38_fixed_assets_gl_posting.sql','b4'),
     ('g41',1,'standard','supabase/manual-packages/gate41_bank_transfers.sql','b4'),
     ('g42',1,'standard','supabase/manual-packages/gate42_project_costs.sql','b4'),
@@ -42,6 +42,21 @@ requirements(node_id,object_kind,object_ref,extra) as (
     ('g37','table','public.hr_payroll_lines',''),
     ('g37','table','public.cost_entries',''),
     ('g37','table','public.onexa_account_role_mappings',''),
+    ('g37','table','public.hr_attendance_periods',''),
+    ('g37','table','public.hr_attendance_days',''),
+    ('g37','table','public.cost_periods',''),
+    ('g37','table','public.uq_cost_entries_hr_payroll_line_source',''),
+    ('g37','function','public.hr_attendance_lock_periods(date,date)',''),
+    ('g37','function','public.hr_apply_attendance_to_payroll(uuid)',''),
+    ('g37','function','public.hr_attendance_payroll_snapshot_hash(uuid)',''),
+    ('g37','function','public.hr_apply_attendance_to_payroll_gate7_core(uuid)',''),
+    ('g37','function','public.hr_sync_payroll_cost_entries_gate7_core(uuid)',''),
+    ('g37','function','public.hr_payroll_attendance_status_guard()',''),
+    ('g37','function','public.hr_payroll_line_gate7_guard()',''),
+    ('g37','function','public.cost_period_set_status(text,boolean,text)',''),
+    ('g37','column','public.hr_payroll_runs','attendance_snapshot_hash'),
+    ('g37','trigger','public.hr_payroll_runs','trg_hr_payroll_runs_attendance_status_guard'),
+    ('g37','trigger','public.hr_payroll_lines','trg_hr_payroll_lines_gate7_guard'),
     ('g38','function','public.onexa_post_journal(uuid,text,text,integer,text,jsonb,date,text,text,text,jsonb)',''),
     ('g38','function','onexa_private.has_module_action(uuid,text,text)',''),
     ('g38','function','onexa_private.claim_tenant_id()',''),
@@ -233,6 +248,8 @@ select s.node_id,s.wave,s.sql_package,s.depends_on,
       then 'SAAS_LEGACY_WRITER_FORBIDDEN'
     when s.policy='legacy_real_estate_review'
       then 'LEGACY_REAL_ESTATE_COMPAT_REVIEW'
+    when s.policy='payroll_gate7_8_compatibility_review'
+      then 'PAYROLL_GATE7_8_FOUNDATION_REVIEW'
     when s.policy='manual_journal_source_fix' and not (select manual_allowed from source_types)
       then 'MANUAL_JOURNAL_ALLOWLIST_BLOCKED'
     when s.missing_requirements_count>0 then 'PREREQUISITES_MISSING'
