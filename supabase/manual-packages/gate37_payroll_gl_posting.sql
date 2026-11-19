@@ -226,9 +226,8 @@ begin
   ) then raise exception 'ONEXA_PAYROLL_SOURCE_TENANT_MISMATCH'; end if;
   if exists (
     select 1 from public.hr_payroll_lines line
-    join public.hr_employees employee
-      on employee.id = line.employee_id and employee.tenant_id = _tenant_id
-    where line.run_id = _payroll_run_id and line.tenant_id = _tenant_id
+    join public.hr_employees employee on employee.id = line.employee_id
+    where line.run_id = _payroll_run_id
       and employee.tenant_id is distinct from _tenant_id
   ) then raise exception 'ONEXA_PAYROLL_EMPLOYEE_TENANT_MISMATCH'; end if;
   if exists (
