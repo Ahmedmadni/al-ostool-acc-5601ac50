@@ -4,6 +4,7 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 const read = (path) => readFileSync(path, "utf8");
 const contracts = read("src/lib/accounting/posting-contracts.ts");
 const readiness = read("src/lib/accounting/posting-readiness.ts");
+const postingMoney = read("src/lib/accounting/posting-money.ts");
 const reports = read("src/lib/reporting/report-catalog.ts");
 const overview = read("src/components/accounting/integration-overview.tsx");
 const launcher = read("src/routes/_authenticated/apps.tsx");
@@ -28,9 +29,14 @@ assert.ok(contracts.includes('posted: ["reversed"]'), "posted documents must be 
 assert.ok(!contracts.includes('posted: ["draft"') && !contracts.includes('posted: ["cancelled"'), "posted documents must be immutable");
 
 for (const invariant of [
-  "buildPostingIdempotencyKey", "onexa-posting-v1", "journal_must_balance",
+  "buildPostingIdempotencyKey", "onexa-posting-v1",
   "document_must_be_approved", "fiscal_period_required", "dimension_required",
 ]) assert.ok(readiness.includes(invariant), `posting preflight invariant missing: ${invariant}`);
+
+assert.ok(readiness.includes("inspectPostingMoneyTotals") &&
+  postingMoney.includes("journal_must_balance") &&
+  postingMoney.includes("sar_halalah_precision_invalid"),
+  "Client preflight must delegate exact posting balance and SAR precision to the authoritative money helper");
 
 for (const report of [
   "general_ledger", "trial_balance", "balance_sheet", "income_statement", "cash_flow",

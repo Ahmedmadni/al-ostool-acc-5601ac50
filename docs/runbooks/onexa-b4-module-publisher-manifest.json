@@ -1,0 +1,189 @@
+{
+  "schema_version": 1,
+  "kind": "ONEXA_B4_PUBLISHING_MODULE_INVENTORY",
+  "generated_for": "review-only source/DB catalog pairing; never permits production enablement",
+  "shared_gate": "ONEXA_POSTING_ENABLED",
+  "shared_env": "VITE_ENABLE_ONEXA_POSTING",
+  "modules": [
+    {
+      "id": "sales_invoice",
+      "gate": "g35",
+      "rpc": "onexa_post_sales_invoice",
+      "sql": "supabase/manual-packages/gate35_sales_inventory_posting.sql",
+      "client": "src/lib/sales/sales-posting-service.ts",
+      "flag": "ONEXA_SALES_POSTING_ENABLED",
+      "env": "VITE_ENABLE_ONEXA_SALES_POSTING",
+      "source_types": [
+        "sales_invoice"
+      ]
+    },
+    {
+      "id": "purchase_invoice",
+      "gate": "g36",
+      "rpc": "onexa_post_purchase_invoice",
+      "sql": "supabase/manual-packages/gate36_procurement_inventory_posting.sql",
+      "client": "src/lib/procurement/purchase-posting-service.ts",
+      "flag": "ONEXA_PROCUREMENT_POSTING_ENABLED",
+      "env": "VITE_ENABLE_ONEXA_PROCUREMENT_POSTING",
+      "source_types": [
+        "purchase_invoice"
+      ]
+    },
+    {
+      "id": "payroll_run",
+      "gate": "g37",
+      "rpc": "onexa_post_payroll_run",
+      "sql": "supabase/manual-packages/gate37_payroll_gl_posting.sql",
+      "client": "src/lib/payroll/payroll-posting-service.ts",
+      "flag": "ONEXA_PAYROLL_POSTING_ENABLED",
+      "env": "VITE_ENABLE_ONEXA_PAYROLL_POSTING",
+      "source_types": [
+        "payroll_run"
+      ]
+    },
+    {
+      "id": "asset_depreciation",
+      "gate": "g38",
+      "rpc": "onexa_post_asset_depreciation",
+      "sql": "supabase/manual-packages/gate38_fixed_assets_gl_posting.sql",
+      "client": "src/lib/assets/asset-posting-service.ts",
+      "flag": "ONEXA_ASSET_POSTING_ENABLED",
+      "env": "VITE_ENABLE_ONEXA_ASSET_POSTING",
+      "source_types": [
+        "depreciation_run"
+      ]
+    },
+    {
+      "id": "customer_receipt",
+      "gate": "g39",
+      "rpc": "onexa_post_customer_receipt",
+      "sql": "supabase/manual-packages/gate39_customer_receipts.sql",
+      "client": "src/lib/sales/customer-receipt-service.ts",
+      "flag": "ONEXA_CUSTOMER_RECEIPT_POSTING_ENABLED",
+      "env": "VITE_ENABLE_ONEXA_CUSTOMER_RECEIPT_POSTING",
+      "source_types": [
+        "customer_receipt"
+      ]
+    },
+    {
+      "id": "supplier_payment",
+      "gate": "g40",
+      "rpc": "onexa_post_supplier_payment",
+      "sql": "supabase/manual-packages/gate40_supplier_payments.sql",
+      "client": "src/lib/procurement/supplier-payment-service.ts",
+      "flag": "ONEXA_SUPPLIER_PAYMENT_POSTING_ENABLED",
+      "env": "VITE_ENABLE_ONEXA_SUPPLIER_PAYMENT_POSTING",
+      "source_types": [
+        "supplier_payment"
+      ]
+    },
+    {
+      "id": "bank_transfer",
+      "gate": "g41",
+      "rpc": "onexa_post_bank_transfer",
+      "sql": "supabase/manual-packages/gate41_bank_transfers.sql",
+      "client": "src/lib/finance/bank-transfer-service.ts",
+      "flag": "ONEXA_BANK_TRANSFER_POSTING_ENABLED",
+      "env": "VITE_ENABLE_ONEXA_BANK_TRANSFER_POSTING",
+      "source_types": [
+        "bank_transfer"
+      ]
+    },
+    {
+      "id": "project_cost",
+      "gate": "g42",
+      "rpc": "onexa_post_project_cost",
+      "sql": "supabase/manual-packages/gate42_project_costs.sql",
+      "client": "src/lib/projects/project-cost-service.ts",
+      "flag": "ONEXA_PROJECT_COST_POSTING_ENABLED",
+      "env": "VITE_ENABLE_ONEXA_PROJECT_COST_POSTING",
+      "source_types": [
+        "project_cost"
+      ]
+    },
+    {
+      "id": "fleet_trip_cost",
+      "gate": "g43",
+      "rpc": "onexa_post_fleet_trip_cost",
+      "sql": "supabase/manual-packages/gate43_fleet_trip_costs.sql",
+      "client": "src/lib/fleet/fleet-trip-cost-service.ts",
+      "flag": "ONEXA_FLEET_TRIP_COST_POSTING_ENABLED",
+      "env": "VITE_ENABLE_ONEXA_FLEET_TRIP_COST_POSTING",
+      "source_types": [
+        "fleet_trip_cost"
+      ]
+    },
+    {
+      "id": "inventory_document",
+      "gate": "g65",
+      "rpc": "onexa_post_inventory_document",
+      "sql": "supabase/manual-packages/gate65_inventory_gl_posting.sql",
+      "client": "src/lib/inventory/inventory-posting-service.ts",
+      "flag": "ONEXA_INVENTORY_POSTING_ENABLED",
+      "env": "VITE_ENABLE_ONEXA_INVENTORY_POSTING",
+      "source_types": [
+        "inventory_receipt",
+        "inventory_issue"
+      ]
+    },
+    {
+      "id": "maintenance_work_order_cost",
+      "gate": "g66",
+      "rpc": "onexa_post_maintenance_work_order_cost",
+      "sql": "supabase/manual-packages/gate66_maintenance_work_order_costs.sql",
+      "client": "src/lib/maintenance/maintenance-cost-service.ts",
+      "flag": "ONEXA_MAINTENANCE_COST_POSTING_ENABLED",
+      "env": "VITE_ENABLE_ONEXA_MAINTENANCE_COST_POSTING",
+      "source_types": [
+        "maintenance_work_order_cost"
+      ]
+    },
+    {
+      "id": "lease_invoice",
+      "gate": "g67",
+      "rpc": "onexa_post_lease_invoice",
+      "sql": "supabase/manual-packages/gate67_lease_invoice_receipt_posting.sql",
+      "client": "src/lib/real-estate/lease-accounting-service.ts",
+      "flag": "ONEXA_LEASE_ACCOUNTING_ENABLED",
+      "env": "VITE_ENABLE_ONEXA_LEASE_ACCOUNTING",
+      "source_types": [
+        "lease_invoice"
+      ]
+    },
+    {
+      "id": "lease_receipt",
+      "gate": "g67",
+      "rpc": "onexa_post_lease_receipt",
+      "sql": "supabase/manual-packages/gate67_lease_invoice_receipt_posting.sql",
+      "client": "src/lib/real-estate/lease-accounting-service.ts",
+      "flag": "ONEXA_LEASE_ACCOUNTING_ENABLED",
+      "env": "VITE_ENABLE_ONEXA_LEASE_ACCOUNTING",
+      "source_types": [
+        "lease_receipt"
+      ]
+    },
+    {
+      "id": "manual_journal",
+      "gate": "g58",
+      "rpc": "onexa_post_manual_journal",
+      "sql": "supabase/manual-packages/gate58_manual_journal_workflow.sql",
+      "client": "src/lib/accounting/manual-journal-service.ts",
+      "flag": "ONEXA_MANUAL_JOURNALS_ENABLED",
+      "env": "VITE_ENABLE_ONEXA_MANUAL_JOURNALS",
+      "source_types": [
+        "manual_journal"
+      ],
+      "flag_usage": "src/components/accounting/manual-journal-panel.tsx"
+    }
+  ],
+  "not_separate_rpc_publishers": [
+    {
+      "source_type": "fixed_asset_acquisition",
+      "note": "Capitalized acquisition flows through purchase_invoice; no dedicated B4 publishing RPC established by this review"
+    },
+    {
+      "source_type": "fuel_issue",
+      "note": "Listed in B4 source contract but no dedicated module publishing RPC established by this review"
+    }
+  ]
+}
