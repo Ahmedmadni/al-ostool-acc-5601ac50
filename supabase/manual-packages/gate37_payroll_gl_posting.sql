@@ -101,6 +101,7 @@ with payroll as (
     on line.run_id = run.id and line.tenant_id = run.tenant_id
   left join public.cost_entries cost
     on cost.id = line.cost_entry_id and cost.tenant_id = run.tenant_id
+    and cost.project_id is not distinct from line.project_id
     and coalesce(cost.meta->>'source', '') = 'hr_payroll'
     and cost.meta->>'payroll_line_id' = line.id::text
   group by run.id, run.run_no, run.period_year, run.period_month,
@@ -226,9 +227,9 @@ begin
   ) then raise exception 'ONEXA_PAYROLL_SOURCE_TENANT_MISMATCH'; end if;
   if exists (
     select 1 from public.hr_payroll_lines line
-    join public.hr_employees employee on employee.id = line.employee_id
+    left join public.hr_employees employee on employee.id = line.employee_id
     where line.run_id = _payroll_run_id
-      and employee.tenant_id is distinct from _tenant_id
+      and (employee.id is null or employee.tenant_id is distinct from _tenant_id)
   ) then raise exception 'ONEXA_PAYROLL_EMPLOYEE_TENANT_MISMATCH'; end if;
   if exists (
     select 1 from public.hr_payroll_lines line
@@ -265,6 +266,7 @@ begin
   left join public.cost_entries cost
     on cost.id = line.cost_entry_id
     and cost.tenant_id = _tenant_id
+    and cost.project_id is not distinct from line.project_id
     and coalesce(cost.meta->>'source', '') = 'hr_payroll'
     and cost.meta->>'payroll_line_id' = line.id::text
   where line.run_id = _payroll_run_id and line.tenant_id = _tenant_id;
@@ -274,6 +276,26 @@ begin
   end if;
   if _cost_ledger_amount <> _employer_cost then
     raise exception 'ONEXA_PAYROLL_COST_LEDGER_MISMATCH';
+  end if;
+  -- Aggregated totals can conceal equal/opposite errors on different
+  -- employees. Every cost row must match its OWN payroll source exactly.
+  if exists (
+    select 1
+    from public.hr_payroll_lines line
+    join public.cost_entries cost
+      on cost.id = line.cost_entry_id
+      and cost.tenant_id = _tenant_id
+      and cost.project_id is not distinct from line.project_id
+      and cost.meta->>'source' = 'hr_payroll'
+      and cost.meta->>'payroll_line_id' = line.id::text
+    where line.run_id = _payroll_run_id and line.tenant_id = _tenant_id
+      and cost.amount is distinct from public.hr_payroll_employer_cost(
+        line.gross_salary, line.overtime, line.unpaid_leave_deduction,
+        line.sick_leave_deduction, line.absence_deduction,
+        line.late_deduction, line.gosi_employer
+      )
+  ) then
+    raise exception 'ONEXA_PAYROLL_COST_LINE_MISMATCH';
   end if;
   if _employer_cost <> (_net_pay + _gosi_payable + _loan_recovery) then
     raise exception 'ONEXA_PAYROLL_ACCOUNTING_EQUATION_MISMATCH';
