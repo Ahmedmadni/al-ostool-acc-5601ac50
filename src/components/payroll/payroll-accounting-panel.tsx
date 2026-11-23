@@ -71,7 +71,7 @@ export function PayrollAccountingPanel() {
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {[
           { label: "المسيرات المرتبطة بقيد (ضمن النتائج)", value: posted.length, icon: Landmark },
-          { label: "المطابق بالكامل", value: reconciled.length, icon: CheckCircle2 },
+          { label: "المسيرات المطابقة (ضمن النتائج)", value: reconciled.length, icon: CheckCircle2 },
           { label: "تكلفة صاحب العمل", value: amount(employerCost), icon: Banknote },
           { label: "صافي مستحقات الموظفين", value: amount(netPay), icon: Users },
         ].map((item) => {
