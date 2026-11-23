@@ -22,7 +22,7 @@ export type PayrollAccountingReconciliation = {
   cost_line_count: number;
   expected_cost_line_count: number;
   posted_journal_id: string | null;
-  reconciliation_status: "not_approved" | "attendance_stale" | "cost_sync_pending" | "cost_value_mismatch" | "not_posted" | "journal_missing" | "journal_unbalanced" | "reconciled";
+  reconciliation_status: "not_approved" | "attendance_stale" | "cost_sync_pending" | "cost_value_mismatch" | "not_posted" | "journal_missing" | "journal_unbalanced" | "journal_reversed" | "journal_receipt_mismatch" | "reconciled";
 };
 
 export type PayrollPostingConfigurationGap = {
