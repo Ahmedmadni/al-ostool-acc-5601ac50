@@ -54,6 +54,15 @@ assert.ok(sql.includes("employer_cost = (net_pay + gosi_payable + loan_recovery)
   "Payroll source/GL equation must be exact, without tolerated halala drift");
 assert.ok(sql.includes("ONEXA_POSTER_MUST_DIFFER_FROM_CREATOR"), "separation of duties is missing");
 assert.ok(sql.includes("ONEXA_PAYROLL_COST_LEDGER_MISMATCH"), "cost reconciliation is missing");
+assert.ok(sql.includes("left join public.hr_employees employee on employee.id = line.employee_id") &&
+  sql.includes("employee.id is null or employee.tenant_id is distinct from _tenant_id"),
+  "Missing employee rows and foreign-tenant employee rows must both block payroll GL");
+assert.ok((sql.match(/cost.project_id is not distinct from line.project_id/g)??[]).length>=3,
+  "Both UI reconciliation and posted payroll must match project attribution for cost entries");
+assert.ok(sql.includes("ONEXA_PAYROLL_COST_LINE_MISMATCH") &&
+  sql.includes("cost.amount is distinct from public.hr_payroll_employer_cost"),
+  "Offsetting employee-cost errors cannot be concealed by a matching aggregate");
+
 assert.ok(sql.includes("hr_payroll_attendance_is_stale"), "attendance guard is missing");
 assert.ok(sql.includes("onexa_private.has_module_action(_actor, 'people', 'post')"), "posting authorization is missing");
 assert.ok(sql.includes("_source_document_id => _run.id::text"), "B4 source adapter is missing");
@@ -102,6 +111,8 @@ for(const marker of [
   "G37_FOREIGN_TENANT_EMPLOYEE_ACCEPTED",
   "G37_FOREIGN_TENANT_PROJECT_ACCEPTED",
   "G37_FOREIGN_TENANT_COST_ACCEPTED",
+  "G37_WRONG_PROJECT_COST_RECEIPT_ACCEPTED",
+  "G37_OFFSETTING_COST_LINE_ERRORS_ACCEPTED",
   "G37_ONE_HALALA_COST_DRIFT_ACCEPTED",
   "G37_ONE_HALALA_ACCOUNTING_DRIFT_ACCEPTED",
   "G37_PAID_RUN_CANONICAL_B4_JOURNAL_NOT_POSTED",
