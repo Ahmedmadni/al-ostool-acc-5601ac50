@@ -98,7 +98,7 @@ export function PayrollAccountingPanel() {
                   <td className="px-4 py-3">{amount(Number(row.gosi_payable))}</td>
                   <td className="px-4 py-3">{amount(Number(row.loan_recovery))}</td>
                   <td className="px-4 py-3">{row.cost_line_count}/{row.expected_cost_line_count} • {amount(Number(row.cost_ledger_amount))}</td>
-                  <td className="px-4 py-3"><Badge variant={row.reconciliation_status === "reconciled" ? "secondary" : "destructive"}>{row.reconciliation_status}</Badge></td>
+                  <td className="px-4 py-3"><Badge variant={row.reconciliation_status === "reconciled" ? "secondary" : row.reconciliation_status === "not_posted" ? "outline" : "destructive"}>{reconciliationStatusLabels[row.reconciliation_status] ?? "تحتاج مراجعة"}</Badge></td>
                 </tr>
               ))}
               {!rows.length && !reconciliation.isLoading && <tr><td colSpan={9} className="px-4 py-10 text-center text-muted-foreground">لا توجد مسيرات رواتب لعرضها.</td></tr>}
