@@ -24,6 +24,36 @@ const architecture = read("docs/architecture/onexa-payroll-gl-posting.md");
 const pkg = JSON.parse(read("package.json"));
 
 assert.ok(sql.includes("public.onexa_payroll_posting_runs"), "posting-run table is missing");
+
+// The dashboard must not treat a posting-registry row as sufficient proof
+// that the original B4 journal still exists and reconciles.
+for (const marker of [
+  "journal_receipt_mismatch", "journal_reversed",
+  "posted_gl.source_snapshot is distinct from jsonb_build_object(",
+  "posted_gl.source_document_type is distinct from 'payroll_run'",
+  "posted_gl.total_debit is distinct from payroll.employer_cost",
+  "posted_gl.total_credit is distinct from payroll.employer_cost",
+  "posted_lines.line_count < 2",
+  "posted_lines.total_debit is distinct from payroll.employer_cost",
+  "posted_period.id is null",
+  "posting.tenant_id = payroll.tenant_id",
+  "posted_gl.tenant_id = payroll.tenant_id",
+  "l.tenant_id = payroll.tenant_id",
+  "posted_gl.state = 'reversed'",
+]) assert.ok(sql.includes(marker), "Payroll read-only B4 GL receipt verification missing: "+marker);
+assert.ok(!sql.includes("  payroll.*,"), "Do not reorder an existing view using payroll.* during CREATE OR REPLACE VIEW");
+for (const marker of [
+  "G37_POSTED_JOURNAL_NOT_ACTUALLY_RECONCILED",
+  "G37_VIEW_ACCEPTED_TAMPERED_SOURCE_SNAPSHOT",
+  "G37_VIEW_ACCEPTED_TAMPERED_DEBIT_TOTAL",
+  "G37_VIEW_ACCEPTED_REVERSED_GL_AS_RECONCILED",
+  "G37_VIEW_ACCEPTED_MISSING_GL_LINES"
+]) assert.ok(realB4Integration.includes(marker), "Actual PostgreSQL view corruption test missing: "+marker);
+assert.ok(service.includes('"journal_receipt_mismatch"') && service.includes('"journal_reversed"'),
+  "The payroll service must expose meaningful source/GL mismatch statuses");
+assert.ok(panel.includes("تعارض مع قيد الأستاذ") && panel.includes("القيد معكوس"),
+  "The payroll dashboard must show Arabic error descriptions instead of a false matching status");
+
 assert.ok(sql.includes("alter table public.onexa_payroll_posting_runs enable row level security"), "RLS is missing");
 assert.ok(sql.includes("security_invoker = true"), "views must use security_invoker");
 assert.ok(sql.includes("pg_advisory_xact_lock"), "advisory lock is missing");
