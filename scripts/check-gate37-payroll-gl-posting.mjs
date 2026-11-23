@@ -11,6 +11,7 @@ const paths = [
 for (const path of paths) assert.ok(existsSync(path), `Gate 37 file is missing: ${path}`);
 
 const sql = read(paths[0]);
+const realB4Integration = read("scripts/sql-fixtures/gate37-real-b4-payroll-integration-smoke.sql");
 const mapping = read(paths[1]);
 const postcheck = read(paths[2]);
 const smoke = read(paths[3]);
@@ -108,7 +109,6 @@ assert.ok(!smoke.includes("commit;"), "smoke test must never commit");
 
 const b4PayrollContract = read("scripts/sql-fixtures/gate37-paid-payroll-b4-strict-smoke.sql");
 const syntheticParents = read("scripts/sql-fixtures/gate37-hr-synthetic-parents-ONLY.sql");
-const realB4Integration = read("scripts/sql-fixtures/gate37-real-b4-payroll-integration-smoke.sql");
 const ledgerAudit = read("supabase/manual-packages/onexa_g37_payroll_contract_READ_ONLY.sql");
 const financeB4Workflow = read(".github/workflows/onexa-b4-shared-ledger-integrity.yml");
 for(const marker of [
