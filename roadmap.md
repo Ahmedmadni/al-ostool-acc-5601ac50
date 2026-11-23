@@ -1,5 +1,9 @@
 # ONEXA development acceptance
 
+- [x] November 23 phase 15 source-only Gate37 payroll integrity: reject missing employees, mismatched project allocations and paired offsetting employee cost errors even when aggregate payroll cost matches. Exact cost receipt project matching now applies in both reconciliation view and posting function; new real Gate37+strict B4 synthetic PostgreSQL negative tests and static guards. See `docs/runbooks/onexa-g37-payroll-source-integrity-2026-11-23.md`. No hosted SQL deployment or financial data reads.
+- [ ] Phase 15 production acceptance: approve independently restored SaaS Staging validation of real Gate7/8 data, payroll employee/project/cost lineage, accounting controls, source ACLs and finance/security signoff before posting activation.
+
+
 - [x] November 23 continuation: reran the independent B4/Gate58/Gate37 workflow (**33/33 execution steps**) on a fresh Unix-socket-only synthetic PostgreSQL 17.12 database and **10/10** additional stage/source/evidence checks. See `docs/runbooks/onexa-accounting-revalidation-2026-11-23.md`. Synthetic HR parents do not prove actual Gate7/8 integration; no production changes or posting activation.
 - [ ] November 23 hosted acceptance: awaiting independent restored-Staging evidence, real Gate7/8 integration, tenant-scoped screen posting/readback/reversal acceptance and finance/security sign-off; production activation still requires separate approval.
 - [x] November 16 source-only Gate 58 editor hardening: exact-precision monetary validation, valid date/account/branch checks, saved-draft retry, fail-closed identity and SQL null-amount rejection; code/test changes in PR #99. This is **not** hosted installation or production activation. See `docs/runbooks/onexa-manual-journal-preflight-2026-11-16.md`.
