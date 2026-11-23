@@ -107,7 +107,13 @@ with payroll as (
     run.status, run.attendance_period_id
 )
 select
-  payroll.*,
+  -- Preserve the published view column order for CREATE OR REPLACE VIEW.
+  -- tenant_id stays internal to the CTE for tenant-isolated joins.
+  payroll.payroll_run_id, payroll.run_no, payroll.period_year, payroll.period_month,
+  payroll.payroll_status, payroll.attendance_period_id, payroll.employees_count,
+  payroll.employer_cost, payroll.net_pay, payroll.gosi_payable,
+  payroll.loan_recovery, payroll.expected_cost_line_count,
+  payroll.cost_line_count, payroll.cost_ledger_amount,
   posting.legal_entity_id,
   posting.branch_id,
   posting.journal_id as posted_journal_id,
