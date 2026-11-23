@@ -71,6 +71,49 @@ begin
   end;
 
   begin
+    -- Cost linked to the correct payroll line but a DIFFERENT project must
+    -- not be counted as a valid project cost receipt.
+    update public.cost_entries set project_id=null where id=cost_id;
+    perform public.onexa_post_payroll_run(run_id,e,b,'2026-11');
+    raise exception 'G37_WRONG_PROJECT_COST_RECEIPT_ACCEPTED';
+  exception when others then
+    if sqlerrm <> 'ONEXA_PAYROLL_COST_SYNC_REQUIRED' then raise; end if;
+  end;
+
+  begin
+    -- Two payroll lines with correctly balanced aggregate amounts can hide
+    -- equal/opposite cost-entry errors. Neither source may pass individually.
+    update public.hr_payroll_lines
+      set gross_salary=500,net_salary=500 where id=l_id;
+    update public.cost_entries set amount=500.01 where id=cost_id;
+    insert into public.hr_employees(id,tenant_id,department_id)
+    values ('a0000000-0000-4000-8000-000000009042','tenant-smoke-A',null);
+    insert into public.cost_entries(id,tenant_id,project_id,meta,amount)
+    values (
+      'a0000000-0000-4000-8000-000000009044','tenant-smoke-A',
+      project_id,
+      '{"source":"hr_payroll","payroll_line_id":"a0000000-0000-4000-8000-000000009043"}'::jsonb,
+      499.99
+    );
+    insert into public.hr_payroll_lines(
+      id,run_id,tenant_id,employee_id,project_id,cost_entry_id,
+      gross_salary,overtime,unpaid_leave_deduction,sick_leave_deduction,
+      absence_deduction,late_deduction,gosi_employer,
+      net_salary,gosi_employee,loan_deduction
+    ) values (
+      'a0000000-0000-4000-8000-000000009043',
+      run_id,'tenant-smoke-A',
+      'a0000000-0000-4000-8000-000000009042',
+      project_id,'a0000000-0000-4000-8000-000000009044',
+      500,0,0,0,0,0,0,500,0,0
+    );
+    perform public.onexa_post_payroll_run(run_id,e,b,'2026-11');
+    raise exception 'G37_OFFSETTING_COST_LINE_ERRORS_ACCEPTED';
+  exception when others then
+    if sqlerrm <> 'ONEXA_PAYROLL_COST_LINE_MISMATCH' then raise; end if;
+  end;
+
+  begin
     update public.cost_entries set amount=1000.01 where id=cost_id;
     perform public.onexa_post_payroll_run(run_id,e,b,'2026-11');
     raise exception 'G37_ONE_HALALA_COST_DRIFT_ACCEPTED';
