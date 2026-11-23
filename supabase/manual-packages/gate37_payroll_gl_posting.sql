@@ -78,7 +78,7 @@ with (security_invoker = true)
 as
 with payroll as (
   select
-    run.id as payroll_run_id, run.run_no, run.period_year, run.period_month,
+    run.id as payroll_run_id, run.tenant_id, run.run_no, run.period_year, run.period_month,
     run.status::text as payroll_status, run.attendance_period_id,
     count(line.id)::integer as employees_count,
     coalesce(sum(public.hr_payroll_employer_cost(
@@ -104,11 +104,17 @@ with payroll as (
     and cost.project_id is not distinct from line.project_id
     and coalesce(cost.meta->>'source', '') = 'hr_payroll'
     and cost.meta->>'payroll_line_id' = line.id::text
-  group by run.id, run.run_no, run.period_year, run.period_month,
+  group by run.id, run.tenant_id, run.run_no, run.period_year, run.period_month,
     run.status, run.attendance_period_id
 )
 select
-  payroll.*,
+  -- Preserve the published view column order for CREATE OR REPLACE VIEW.
+  -- tenant_id stays internal to the CTE for tenant-isolated joins.
+  payroll.payroll_run_id, payroll.run_no, payroll.period_year, payroll.period_month,
+  payroll.payroll_status, payroll.attendance_period_id, payroll.employees_count,
+  payroll.employer_cost, payroll.net_pay, payroll.gosi_payable,
+  payroll.loan_recovery, payroll.expected_cost_line_count,
+  payroll.cost_line_count, payroll.cost_ledger_amount,
   posting.legal_entity_id,
   posting.branch_id,
   posting.journal_id as posted_journal_id,
@@ -118,14 +124,65 @@ select
     when payroll.cost_line_count <> payroll.expected_cost_line_count then 'cost_sync_pending'
     when payroll.cost_ledger_amount <> payroll.employer_cost then 'cost_value_mismatch'
     when posting.payroll_run_id is null then 'not_posted'
-    when posting.journal_id is null then 'journal_missing'
+    when posting.journal_id is null or posted_gl.id is null then 'journal_missing'
+    when posted_gl.state = 'reversed' then 'journal_reversed'
     when posting.employer_cost <> (posting.net_pay + posting.gosi_payable + posting.loan_recovery)
+      or posting.employer_cost <> posting.cost_ledger_amount
       then 'journal_unbalanced'
+    when posted_gl.state <> 'posted'
+      or posted_gl.legal_entity_id is distinct from posting.legal_entity_id
+      or posted_gl.source_document_type is distinct from 'payroll_run'
+      or posted_gl.source_document_id is distinct from payroll.payroll_run_id::text
+      or posted_gl.source_revision is distinct from 1
+      or posted_gl.currency is distinct from 'SAR'
+      or posted_gl.accounting_date is distinct from
+         (make_date(payroll.period_year, payroll.period_month, 1)
+            + interval '1 month - 1 day')::date
+      or posted_gl.total_debit is distinct from payroll.employer_cost
+      or posted_gl.total_credit is distinct from payroll.employer_cost
+      or posting.employer_cost is distinct from payroll.employer_cost
+      or posting.net_pay is distinct from payroll.net_pay
+      or posting.gosi_payable is distinct from payroll.gosi_payable
+      or posting.loan_recovery is distinct from payroll.loan_recovery
+      or posting.cost_ledger_amount is distinct from payroll.cost_ledger_amount
+      or posting.employee_count is distinct from payroll.employees_count
+      or posted_gl.source_snapshot is distinct from jsonb_build_object(
+         'run_no', payroll.run_no,
+         'period_year', payroll.period_year,
+         'period_month', payroll.period_month,
+         'attendance_period_id', payroll.attendance_period_id,
+         'employer_cost', payroll.employer_cost,
+         'net_pay', payroll.net_pay,
+         'gosi_payable', payroll.gosi_payable,
+         'loan_recovery', payroll.loan_recovery,
+         'posting_contract_version', 'payroll-v1'
+      )
+      or posted_lines.line_count < 2
+      or posted_lines.total_debit is distinct from payroll.employer_cost
+      or posted_lines.total_credit is distinct from payroll.employer_cost
+      or posted_period.id is null
+      then 'journal_receipt_mismatch'
     else 'reconciled'
   end as reconciliation_status
 from payroll
 left join public.onexa_payroll_posting_runs posting
-  on posting.payroll_run_id = payroll.payroll_run_id;
+  on posting.payroll_run_id = payroll.payroll_run_id
+ and posting.tenant_id = payroll.tenant_id
+left join public.onexa_journal_headers posted_gl
+  on posted_gl.id = posting.journal_id
+ and posted_gl.tenant_id = payroll.tenant_id
+left join public.onexa_fiscal_periods posted_period
+  on posted_period.id = posted_gl.fiscal_period_id
+ and posted_period.tenant_id = payroll.tenant_id
+ and posted_period.legal_entity_id = posting.legal_entity_id
+ and posted_gl.accounting_date between posted_period.starts_on and posted_period.ends_on
+left join lateral (
+  select count(*)::integer as line_count,
+    coalesce(sum(l.debit),0) as total_debit,
+    coalesce(sum(l.credit),0) as total_credit
+  from public.onexa_journal_lines l
+  where l.journal_id = posted_gl.id and l.tenant_id = payroll.tenant_id
+) posted_lines on true;
 
 create or replace view public.onexa_payroll_posting_configuration_gaps
 with (security_invoker = true)

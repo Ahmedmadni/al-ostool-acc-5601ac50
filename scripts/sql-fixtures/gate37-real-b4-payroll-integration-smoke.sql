@@ -141,6 +141,62 @@ begin
       and h.source_snapshot->>'posting_contract_version'='payroll-v1'
   ) then raise exception 'G37_PAID_RUN_CANONICAL_B4_JOURNAL_NOT_POSTED'; end if;
 
+  if (select reconciliation_status
+      from public.onexa_payroll_accounting_reconciliation
+      where payroll_run_id=run_id) is distinct from 'reconciled' then
+    raise exception 'G37_POSTED_JOURNAL_NOT_ACTUALLY_RECONCILED';
+  end if;
+
+  -- A historical posting row alone must not count as reconciled.
+  -- Each deliberate corruption is reverted by its exception subtransaction.
+  begin
+    update public.onexa_journal_headers set source_snapshot='{}'::jsonb
+    where id=ledger;
+    if (select reconciliation_status
+        from public.onexa_payroll_accounting_reconciliation
+        where payroll_run_id=run_id) is distinct from 'journal_receipt_mismatch' then
+      raise exception 'G37_VIEW_ACCEPTED_TAMPERED_SOURCE_SNAPSHOT';
+    end if;
+    raise exception 'G37_TEST_ROLLBACK_MARKER';
+  exception when others then
+    if sqlerrm <> 'G37_TEST_ROLLBACK_MARKER' then raise; end if;
+  end;
+  begin
+    update public.onexa_journal_lines set debit=debit+1
+    where journal_id=ledger and line_number=1;
+    if (select reconciliation_status
+        from public.onexa_payroll_accounting_reconciliation
+        where payroll_run_id=run_id) is distinct from 'journal_receipt_mismatch' then
+      raise exception 'G37_VIEW_ACCEPTED_TAMPERED_DEBIT_TOTAL';
+    end if;
+    raise exception 'G37_TEST_ROLLBACK_MARKER';
+  exception when others then
+    if sqlerrm <> 'G37_TEST_ROLLBACK_MARKER' then raise; end if;
+  end;
+  begin
+    update public.onexa_journal_headers set state='reversed'
+    where id=ledger;
+    if (select reconciliation_status
+        from public.onexa_payroll_accounting_reconciliation
+        where payroll_run_id=run_id) is distinct from 'journal_reversed' then
+      raise exception 'G37_VIEW_ACCEPTED_REVERSED_GL_AS_RECONCILED';
+    end if;
+    raise exception 'G37_TEST_ROLLBACK_MARKER';
+  exception when others then
+    if sqlerrm <> 'G37_TEST_ROLLBACK_MARKER' then raise; end if;
+  end;
+  begin
+    delete from public.onexa_journal_lines where journal_id=ledger;
+    if (select reconciliation_status
+        from public.onexa_payroll_accounting_reconciliation
+        where payroll_run_id=run_id) is distinct from 'journal_receipt_mismatch' then
+      raise exception 'G37_VIEW_ACCEPTED_MISSING_GL_LINES';
+    end if;
+    raise exception 'G37_TEST_ROLLBACK_MARKER';
+  exception when others then
+    if sqlerrm <> 'G37_TEST_ROLLBACK_MARKER' then raise; end if;
+  end;
+
   replay:=public.onexa_post_payroll_run(run_id,e,b,'2026-11');
   if replay is distinct from ledger then
     raise exception 'G37_IDENTICAL_REPLAY_NOT_IDEMPOTENT';

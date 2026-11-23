@@ -8,6 +8,19 @@ import {
   fetchPayrollPostingConfigurationGaps,
 } from "@/lib/payroll/payroll-posting-service";
 
+const reconciliationStatusLabels: Record<string, string> = {
+  not_approved: "بانتظار الاعتماد",
+  attendance_stale: "الحضور يحتاج تحديث",
+  cost_sync_pending: "تكاليف الرواتب غير مكتملة",
+  cost_value_mismatch: "اختلاف تكلفة صاحب العمل",
+  not_posted: "لم يرحّل",
+  journal_missing: "القيد غير موجود في الأستاذ",
+  journal_unbalanced: "قيد غير متوازن",
+  journal_reversed: "القيد معكوس",
+  journal_receipt_mismatch: "تعارض مع قيد الأستاذ",
+  reconciled: "مطابق للأستاذ",
+};
+
 const amount = (value: number) => new Intl.NumberFormat("ar-SA", {
   style: "currency",
   currency: "SAR",
@@ -57,8 +70,8 @@ export function PayrollAccountingPanel() {
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {[
-          { label: "المسيرات المرحلة", value: posted.length, icon: Landmark },
-          { label: "المطابق بالكامل", value: reconciled.length, icon: CheckCircle2 },
+          { label: "المسيرات المرتبطة بقيد (ضمن النتائج)", value: posted.length, icon: Landmark },
+          { label: "المسيرات المطابقة (ضمن النتائج)", value: reconciled.length, icon: CheckCircle2 },
           { label: "تكلفة صاحب العمل", value: amount(employerCost), icon: Banknote },
           { label: "صافي مستحقات الموظفين", value: amount(netPay), icon: Users },
         ].map((item) => {
@@ -85,7 +98,7 @@ export function PayrollAccountingPanel() {
                   <td className="px-4 py-3">{amount(Number(row.gosi_payable))}</td>
                   <td className="px-4 py-3">{amount(Number(row.loan_recovery))}</td>
                   <td className="px-4 py-3">{row.cost_line_count}/{row.expected_cost_line_count} • {amount(Number(row.cost_ledger_amount))}</td>
-                  <td className="px-4 py-3"><Badge variant={row.reconciliation_status === "reconciled" ? "secondary" : "destructive"}>{row.reconciliation_status}</Badge></td>
+                  <td className="px-4 py-3"><Badge variant={row.reconciliation_status === "reconciled" ? "secondary" : row.reconciliation_status === "not_posted" ? "outline" : "destructive"}>{reconciliationStatusLabels[row.reconciliation_status] ?? "تحتاج مراجعة"}</Badge></td>
                 </tr>
               ))}
               {!rows.length && !reconciliation.isLoading && <tr><td colSpan={9} className="px-4 py-10 text-center text-muted-foreground">لا توجد مسيرات رواتب لعرضها.</td></tr>}
