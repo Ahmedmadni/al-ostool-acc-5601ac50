@@ -8,6 +8,19 @@ import {
   fetchPayrollPostingConfigurationGaps,
 } from "@/lib/payroll/payroll-posting-service";
 
+const reconciliationStatusLabels: Record<string, string> = {
+  not_approved: "بانتظار الاعتماد",
+  attendance_stale: "الحضور يحتاج تحديث",
+  cost_sync_pending: "تكاليف الرواتب غير مكتملة",
+  cost_value_mismatch: "اختلاف تكلفة صاحب العمل",
+  not_posted: "لم يرحّل",
+  journal_missing: "القيد غير موجود في الأستاذ",
+  journal_unbalanced: "قيد غير متوازن",
+  journal_reversed: "القيد معكوس",
+  journal_receipt_mismatch: "تعارض مع قيد الأستاذ",
+  reconciled: "مطابق للأستاذ",
+};
+
 const amount = (value: number) => new Intl.NumberFormat("ar-SA", {
   style: "currency",
   currency: "SAR",
